@@ -661,6 +661,150 @@
             margin-top: 5px;
         }
 
+        /* Rank Badge */
+        .rank-badge {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .rank-badge-icon {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .rank-badge-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .rank-badge-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .rank-badge-progress {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 2px;
+        }
+
+        .rank-badge.rank-level-5 {
+            border-color: rgba(167, 139, 250, 0.6);
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(102, 126, 234, 0.15));
+            animation: rankGlow 1.8s ease-in-out infinite;
+        }
+
+        @keyframes rankGlow {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(167, 139, 250, 0.5), 0 0 16px rgba(167, 139, 250, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(167, 139, 250, 0.9), 0 0 44px rgba(167, 139, 250, 0.6);
+            }
+        }
+
+        /* Rank Up Celebration Overlay */
+        .rank-up-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rank-up-overlay.active {
+            display: flex;
+        }
+
+        .rank-up-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 24px;
+            padding: 44px 32px;
+            text-align: center;
+            max-width: 300px;
+            animation: rankUpPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes rankUpPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .rank-up-icon {
+            font-size: 68px;
+            margin-bottom: 12px;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        .rank-up-icon.glow-icon {
+            filter: drop-shadow(0 0 16px rgba(167, 139, 250, 0.9));
+        }
+
+        .rank-up-eyebrow {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .rank-up-title {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 6px 0 4px;
+        }
+
+        .rank-up-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 24px;
+        }
+
+        /* Search input for transactions */
+        .search-input-container {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .search-input-container .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            opacity: 0.6;
+        }
+
+        .search-input-container input {
+            padding-left: 40px;
+        }
+
+        /* Goal card action buttons */
+        .goal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
         .chart-container {
             height: 300px;
             margin-bottom: 16px;
@@ -1174,6 +1318,10 @@
                     <span class="bottom-nav-icon">📊</span>
                     <span class="bottom-nav-label">Activity</span>
                 </div>
+                <div class="bottom-nav-item" onclick="switchTab('transactions')" id="nav-transactions">
+                    <span class="bottom-nav-icon">🧾</span>
+                    <span class="bottom-nav-label">Transactions</span>
+                </div>
                 <div class="bottom-nav-item" onclick="switchTab('charts')" id="nav-charts">
                     <span class="bottom-nav-icon">📈</span>
                     <span class="bottom-nav-label">Charts</span>
@@ -1209,6 +1357,7 @@
                     <div class="card-amount" id="savingsBalance">0 SAR</div>
                 </div>
                 <div class="card-limit" id="savingsLimit">Flexible savings</div>
+                <div class="rank-badge" id="rankBadge" style="display: none;"></div>
             </div>
 
             <div class="balance-card playstation">
@@ -1248,6 +1397,19 @@
             <div id="activityList">
                 <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
                     No activity yet
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="transactionsSection" style="display: none;">
+            <div class="section-title">All Transactions</div>
+            <div class="search-input-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="form-input" id="transactionSearchInput" placeholder="Search by emoji, text, or date..." oninput="filterTransactions()">
+            </div>
+            <div id="transactionsList">
+                <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
+                    No transactions yet
                 </div>
             </div>
         </div>
@@ -1459,20 +1621,6 @@
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('editModal')">Cancel</button>
                 <button class="modal-btn confirm" onclick="editMoney()">Save Changes</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Settings</div>
-                <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Cancel</button>
-                <button class="modal-btn confirm" onclick="saveSettings()">Save Settings</button>
             </div>
         </div>
     </div>
@@ -1749,6 +1897,12 @@
                 <small style="color: rgba(255,255,255,0.5);">Remaining amount goes to Savings</small>
             </div>
 
+            <div class="form-group" id="rankThresholdSettingsGroup" style="display: none;">
+                <label class="form-label">🏆 1st Rank Savings Goal (SAR)</label>
+                <input type="number" class="form-input" id="settingsRankFirstThreshold" placeholder="40">
+                <small style="color: rgba(255,255,255,0.5);">Reach this amount in Savings to earn your 1st rank. The 5th (top) rank is always 220 SAR.</small>
+            </div>
+
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Cancel</button>
                 <button class="modal-btn confirm" onclick="saveSettings()">Save Settings</button>
@@ -1756,7 +1910,41 @@
         </div>
     </div>
 
+    <!-- Edit Goal Modal -->
+    <div class="modal" id="editGoalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit Goal</div>
+                <button class="close-btn" onclick="closeModal('editGoalModal')">&times;</button>
+            </div>
+            <input type="hidden" id="editGoalId">
+            <div class="form-group">
+                <label class="form-label">Goal Name</label>
+                <input type="text" class="form-input" id="editGoalName" placeholder="FC 27, Keyboard, etc.">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Target Amount (SAR)</label>
+                <input type="number" class="form-input" id="editGoalAmount" placeholder="200">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('editGoalModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveGoalEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <div class="notification" id="notification"></div>
+
+    <!-- Rank Up Celebration Overlay -->
+    <div class="rank-up-overlay" id="rankUpOverlay">
+        <div class="rank-up-card">
+            <div class="rank-up-icon" id="rankUpIcon">🥈</div>
+            <div class="rank-up-eyebrow">Rank Up!</div>
+            <div class="rank-up-title" id="rankUpTitle">Silver Saver</div>
+            <div class="rank-up-name" id="rankUpSubtitle">Your savings just leveled up</div>
+            <button class="modal-btn confirm" onclick="closeRankUpOverlay()">Nice! 🎉</button>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -2471,7 +2659,8 @@ Use the conversation history provided to you to remember what's already been sai
             weeklyHangoutBudget: 4, // Number of hangout days per week
             hangoutBudgetPerDay: 15, // Target spending per hangout
             minimumSavings: 0, // Minimum savings requirement (0 for most users, 50 for Asser)
-            allowanceSchedule: null // Allowance schedule (for Asser)
+            allowanceSchedule: null, // Allowance schedule (for Asser)
+            rankFirstThreshold: 40 // Savings needed for 1st rank (non-Asser users choose this; 5th rank is fixed at 220)
         };
         let balances = {
             hangout: 0,
@@ -2482,6 +2671,16 @@ Use the conversation history provided to you to remember what's already been sai
         let history = [];
         let historyKeys = []; // Store Firebase keys for editing/deleting
         let goals = [];
+        let goalKeys = []; // Store Firebase keys for editing/deleting goals
+
+        // Savings rank tiers — 5th tier gets a glowing badge
+        const RANK_TIERS = [
+            { name: 'Bronze Saver',   icon: '🥉' },
+            { name: 'Silver Saver',   icon: '🥈' },
+            { name: 'Gold Saver',     icon: '🥇' },
+            { name: 'Platinum Saver', icon: '💎' },
+            { name: 'Diamond Saver',  icon: '👑' }
+        ];
         let spendingChart = null;
         let allowanceChart = null;
         let balanceChart = null;
@@ -2563,6 +2762,7 @@ Use the conversation history provided to you to remember what's already been sai
             history = [];
             historyKeys = [];
             goals = [];
+            goalKeys = [];
             
             // Load user preferences
             const prefsRef = ref(database, `users/${username}/preferences`);
@@ -2572,6 +2772,10 @@ Use the conversation history provided to you to remember what's already been sai
                     // Ensure minimumSavings is set (default to 0 if not present)
                     if (userPreferences.minimumSavings === undefined) {
                         userPreferences.minimumSavings = 0;
+                    }
+                    // Ensure rankFirstThreshold is set (default to 40 if not present)
+                    if (userPreferences.rankFirstThreshold === undefined) {
+                        userPreferences.rankFirstThreshold = 40;
                     }
                     // Ensure allowanceSchedule is set for Asser
                     if (username.toLowerCase() === 'asser' && !userPreferences.allowanceSchedule) {
@@ -2615,6 +2819,9 @@ Use the conversation history provided to you to remember what's already been sai
                     if (userPreferences.minimumSavings === undefined) {
                         userPreferences.minimumSavings = 0;
                     }
+                    if (userPreferences.rankFirstThreshold === undefined) {
+                        userPreferences.rankFirstThreshold = 40;
+                    }
                     if (username.toLowerCase() === 'asser' && !userPreferences.allowanceSchedule) {
                         userPreferences.allowanceSchedule = {
                             startDate: null,
@@ -2653,11 +2860,13 @@ Use the conversation history provided to you to remember what's already been sai
                     history = Object.values(historyData).reverse();
                     historyKeys = Object.keys(historyData).reverse();
                     updateActivityList();
+                    updateTransactionsList();
                     updateCharts();
                 } else {
                     history = [];
                     historyKeys = [];
                     updateActivityList();
+                    updateTransactionsList();
                     updateCharts();
                 }
             });
@@ -2665,10 +2874,13 @@ Use the conversation history provided to you to remember what's already been sai
             const goalsRef = ref(database, `users/${username}/goals`);
             onValue(goalsRef, (snapshot) => {
                 if (snapshot.exists()) {
-                    goals = Object.values(snapshot.val());
+                    const goalsData = snapshot.val();
+                    goals = Object.values(goalsData);
+                    goalKeys = Object.keys(goalsData);
                     updateGoalsList();
                 } else {
                     goals = [];
+                    goalKeys = [];
                     updateGoalsList();
                 }
                 
@@ -2728,6 +2940,9 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById('editHangout').placeholder = balances.hangout;
             document.getElementById('editSavings').placeholder = balances.savings;
             document.getElementById('editPlaystation').placeholder = balances.playstation;
+
+            // Update savings rank badge (and fire rank-up celebration if applicable)
+            updateRankDisplay();
         }
 
         // Update activity list
@@ -2741,7 +2956,7 @@ Use the conversation history provided to you to remember what's already been sai
             activityList.innerHTML = history.slice(0, 10).map((item, index) => `
                 <div class="history-item">
                     <div class="history-info">
-                        <div class="history-type">${item.type}</div>
+                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${item.type}</div>
                         <div class="history-date">${new Date(item.date).toLocaleDateString()}</div>
                         ${item.notes ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.notes}</div>` : ''}
                     </div>
@@ -2756,6 +2971,60 @@ Use the conversation history provided to you to remember what's already been sai
             `).join('');
         }
 
+        // Update the full Transactions tab list, applying the search filter if any
+        function updateTransactionsList() {
+            const list = document.getElementById('transactionsList');
+            if (!list) return;
+
+            const searchInput = document.getElementById('transactionSearchInput');
+            const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+
+            let items = history.map((item, index) => ({ item, index }));
+
+            if (query) {
+                items = items.filter(({ item }) => {
+                    const dateObj = new Date(item.date);
+                    const haystack = [
+                        item.type,
+                        item.notes,
+                        item.emoji,
+                        item.category,
+                        item.date,
+                        dateObj.toLocaleDateString(),
+                        dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+                        dateObj.toLocaleTimeString()
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    return haystack.includes(query);
+                });
+            }
+
+            if (items.length === 0) {
+                list.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">${query ? 'No transactions match your search' : 'No transactions yet'}</div>`;
+                return;
+            }
+
+            list.innerHTML = items.map(({ item, index }) => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${item.type}</div>
+                        <div class="history-date">${new Date(item.date).toLocaleDateString()} · ${new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        ${item.notes ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.notes}</div>` : ''}
+                    </div>
+                    <div class="history-amount ${item.amount >= 0 ? 'positive' : 'negative'}">
+                        ${item.amount >= 0 ? '+' : ''}${item.amount} SAR
+                    </div>
+                    <div class="history-actions">
+                        <button class="history-action-btn edit" onclick="openEditTransaction(${index})">✏️</button>
+                        <button class="history-action-btn delete" onclick="openDeleteModal(${index})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.filterTransactions = function() {
+            updateTransactionsList();
+        };
+
         // Update goals list
         function updateGoalsList() {
             const goalsList = document.getElementById('goalsList');
@@ -2765,7 +3034,7 @@ Use the conversation history provided to you to remember what's already been sai
             }
 
             const totalSavings = balances.savings;
-            goalsList.innerHTML = goals.map(goal => {
+            goalsList.innerHTML = goals.map((goal, index) => {
                 const progress = Math.min((totalSavings / goal.amount) * 100, 100);
                 const remaining = Math.max(goal.amount - totalSavings, 0);
                 return `
@@ -2779,6 +3048,10 @@ Use the conversation history provided to you to remember what's already been sai
                         </div>
                         <div class="goal-status">
                             ${progress >= 100 ? '🎉 Goal reached!' : `${remaining} SAR to go`}
+                        </div>
+                        <div class="goal-actions">
+                            <button class="history-action-btn edit" onclick="openEditGoal(${index})">✏️ Edit</button>
+                            <button class="history-action-btn delete" onclick="deleteGoal(${index})">🗑️ Delete</button>
                         </div>
                     </div>
                 `;
@@ -3068,23 +3341,168 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById(`nav-${tab}`).classList.add('active');
 
             document.getElementById('activitySection').style.display = tab === 'activity' ? 'block' : 'none';
+            document.getElementById('transactionsSection').style.display = tab === 'transactions' ? 'block' : 'none';
             document.getElementById('chartsSection').style.display = tab === 'charts' ? 'block' : 'none';
             document.getElementById('aiSection').style.display = tab === 'ai' ? 'block' : 'none';
+
+            if (tab === 'transactions') {
+                updateTransactionsList();
+            }
         };
 
-        // Add to history
-        function addToHistory(type, amount, category = null, notes = null) {
-            if (!currentUser) return;
+        // Fallback emoji when the AI can't be reached (non-purchase transaction types,
+        // or if the Groq emoji lookup fails)
+        function fallbackEmoji(type, category) {
+            switch (type) {
+                case 'Allowance': return '💰';
+                case 'Add Money': return '➕';
+                case 'Transfer': return '🔄';
+                case 'Auto Transfer': return '🔁';
+                case 'Manual Edit': return '✏️';
+                case 'Purchase':
+                    if (category === 'hangout') return '🎉';
+                    if (category === 'savings') return '💰';
+                    if (category === 'playstation') return '🎮';
+                    return '🛍️';
+                default: return '🧾';
+            }
+        }
+
+        // Ask Groq to pick a single emoji that represents a specific purchase.
+        // The AI picks whatever emoji it thinks fits best — not a hardcoded lookup table.
+        async function getAIEmojiForPurchase(name, category) {
+            try {
+                if (!workingGroqModel) {
+                    await initializeGroqAI();
+                }
+                if (!workingGroqModel) {
+                    return null; // AI unavailable, caller will keep the fallback emoji
+                }
+                const prompt = `Purchase: "${name}"\n\nReply with ONLY a single emoji character that best visually represents this specific purchase. No words, no explanation, no quotes — just the one emoji.`;
+                const text = await callGroq(workingGroqModel, prompt);
+                // Pull out the first actual emoji character from the response, in case the
+                // model adds stray whitespace or punctuation around it.
+                const match = text.trim().match(/\p{Extended_Pictographic}(\u200d\p{Extended_Pictographic})*/u);
+                return match ? match[0] : null;
+            } catch (e) {
+                console.log('AI emoji lookup failed:', e.message);
+                return null;
+            }
+        }
+
+        // Add to history. Returns the Firebase ref for the new entry so callers
+        // (e.g. addPurchase) can update it later once the AI emoji comes back.
+        function addToHistory(type, amount, category = null, notes = null, emoji = null) {
+            if (!currentUser) return null;
             const historyRef = ref(database, `users/${currentUser.username}/history`);
             const newEntry = {
                 type,
                 amount,
                 category,
                 notes,
+                emoji: emoji || fallbackEmoji(type, category),
                 date: new Date().toISOString()
             };
-            push(historyRef, newEntry);
+            return push(historyRef, newEntry);
         }
+
+        // ===== Savings Ranks =====
+
+        // Compute the 5 savings thresholds. Asser has fixed thresholds (30 → 150).
+        // Everyone else picks their own 1st-rank amount in Settings; the 5th rank is
+        // always 220 SAR, with ranks 2-4 evenly spaced in between.
+        function getRankThresholds() {
+            if (currentUser && currentUser.username.toLowerCase() === 'asser') {
+                return [30, 60, 90, 120, 150];
+            }
+            const first = (userPreferences && userPreferences.rankFirstThreshold) || 40;
+            const last = 220;
+            const thresholds = [];
+            for (let i = 0; i < 5; i++) {
+                thresholds.push(Math.round(first + (last - first) * i / 4));
+            }
+            return thresholds;
+        }
+
+        // Returns { level (0-5), tier, thresholds, nextThreshold, amountToNext }
+        function getCurrentRankInfo(savings) {
+            const thresholds = getRankThresholds();
+            let level = 0;
+            for (let i = 0; i < thresholds.length; i++) {
+                if (savings >= thresholds[i]) level = i + 1;
+            }
+            const tier = level > 0 ? RANK_TIERS[level - 1] : null;
+            const nextThreshold = level < 5 ? thresholds[level] : null;
+            const amountToNext = nextThreshold !== null ? Math.max(0, nextThreshold - savings) : 0;
+            return { level, tier, thresholds, nextThreshold, amountToNext };
+        }
+
+        // Render the rank badge on the Savings card, and fire the rank-up celebration
+        // if the user just crossed into a new tier.
+        function updateRankDisplay() {
+            const badge = document.getElementById('rankBadge');
+            if (!badge || !currentUser) return;
+
+            const info = getCurrentRankInfo(balances.savings);
+            badge.style.display = 'flex';
+            badge.classList.toggle('rank-level-5', info.level === 5);
+
+            if (info.level === 0) {
+                badge.innerHTML = `
+                    <span class="rank-badge-icon">🔒</span>
+                    <span class="rank-badge-text">
+                        <div class="rank-badge-name">Unranked</div>
+                        <div class="rank-badge-progress">Save ${info.amountToNext} more SAR for your 1st rank</div>
+                    </span>
+                `;
+            } else {
+                const progressText = info.level === 5
+                    ? "Top rank reached! 🎉"
+                    : `${info.amountToNext} SAR to ${RANK_TIERS[info.level].name}`;
+                badge.innerHTML = `
+                    <span class="rank-badge-icon">${info.tier.icon}</span>
+                    <span class="rank-badge-text">
+                        <div class="rank-badge-name">Rank ${info.level} · ${info.tier.name}</div>
+                        <div class="rank-badge-progress">${progressText}</div>
+                    </span>
+                `;
+            }
+
+            checkRankUp(info.level);
+        }
+
+        // Detect a rank-up by comparing against the last known rank stored per-user
+        // in localStorage, and pop the celebration overlay when it goes up.
+        function checkRankUp(newLevel) {
+            if (!currentUser) return;
+            const key = `rankLevel_${currentUser.username}`;
+            const stored = localStorage.getItem(key);
+            const storedLevel = stored !== null ? parseInt(stored) : null;
+
+            if (storedLevel !== null && newLevel > storedLevel) {
+                showRankUpCelebration(newLevel);
+            }
+            if (storedLevel === null || newLevel !== storedLevel) {
+                localStorage.setItem(key, String(newLevel));
+            }
+        }
+
+        function showRankUpCelebration(level) {
+            const tier = RANK_TIERS[level - 1];
+            if (!tier) return;
+            const icon = document.getElementById('rankUpIcon');
+            icon.textContent = tier.icon;
+            icon.classList.toggle('glow-icon', level === 5);
+            document.getElementById('rankUpTitle').textContent = tier.name;
+            document.getElementById('rankUpSubtitle').textContent = level === 5
+                ? "You've hit the top rank! 👑"
+                : `Rank ${level} unlocked — keep saving!`;
+            document.getElementById('rankUpOverlay').classList.add('active');
+        }
+
+        window.closeRankUpOverlay = function() {
+            document.getElementById('rankUpOverlay').classList.remove('active');
+        };
 
         // Check and enforce Hangout limit
         function checkHangoutLimit() {
@@ -3220,6 +3638,7 @@ Use the conversation history provided to you to remember what's already been sai
                         history = [];
                         historyKeys = [];
                         goals = [];
+                        goalKeys = [];
                         
                         // Special handling for Asser
                         if (username.toLowerCase() === 'asser') {
@@ -3328,6 +3747,7 @@ Use the conversation history provided to you to remember what's already been sai
                         history = [];
                         historyKeys = [];
                         goals = [];
+                        goalKeys = [];
                         
                         // Special setup for Asser
                         if (username.toLowerCase() === 'asser') {
@@ -3387,7 +3807,8 @@ Use the conversation history provided to you to remember what's already been sai
                 savingsPercent: 37.5,
                 playstationPercent: 12.5,
                 minimumSavings: 0,
-                allowanceSchedule: null
+                allowanceSchedule: null,
+                rankFirstThreshold: 40
             };
             balances = {
                 hangout: 0,
@@ -3397,6 +3818,7 @@ Use the conversation history provided to you to remember what's already been sai
             history = [];
             historyKeys = [];
             goals = [];
+            goalKeys = [];
             chatHistory = [];
 
             // Reset AI chat panel back to the default welcome message
@@ -3516,6 +3938,17 @@ Use the conversation history provided to you to remember what's already been sai
                 document.getElementById('settingsSavingsPercent').value = userPreferences.savingsPercent;
                 document.getElementById('settingsPlaystationPercent').value = userPreferences.playstationPercent;
             }
+
+            // Rank threshold is only editable for non-Asser users — Asser's ranks
+            // are fixed at 30/60/90/120/150 SAR.
+            const rankGroup = document.getElementById('rankThresholdSettingsGroup');
+            const isAsser = currentUser && currentUser.username.toLowerCase() === 'asser';
+            if (rankGroup) {
+                rankGroup.style.display = isAsser ? 'none' : 'block';
+                if (!isAsser) {
+                    document.getElementById('settingsRankFirstThreshold').value = userPreferences.rankFirstThreshold || 40;
+                }
+            }
             
             document.getElementById('settingsModal').classList.add('active');
         };
@@ -3523,13 +3956,28 @@ Use the conversation history provided to you to remember what's already been sai
         window.saveSettings = function() {
             const hangoutLimit = parseInt(document.getElementById('settingsHangoutLimit').value) || 140;
             const enablePlaystation = document.getElementById('settingsEnablePlaystation').value === 'true';
+
+            const isAsser = currentUser && currentUser.username.toLowerCase() === 'asser';
+            let rankFirstThreshold = userPreferences.rankFirstThreshold || 40;
+            if (!isAsser) {
+                const rankInput = parseInt(document.getElementById('settingsRankFirstThreshold').value);
+                if (!isNaN(rankInput) && rankInput > 0) {
+                    if (rankInput >= 220) {
+                        showNotification('1st rank goal must be less than the top rank (220 SAR)', true);
+                        return;
+                    }
+                    rankFirstThreshold = rankInput;
+                }
+            }
             
             let newPreferences = {
                 hangoutLimit,
                 enablePlaystation,
                 weeklyHangoutBudget: 4,
                 hangoutBudgetPerDay: 15,
-                minimumSavings: userPreferences.minimumSavings || 0 // Preserve existing minimumSavings
+                minimumSavings: userPreferences.minimumSavings || 0, // Preserve existing minimumSavings
+                allowanceSchedule: userPreferences.allowanceSchedule || null, // Preserve Asser's allowance schedule
+                rankFirstThreshold
             };
 
             // Handle fixed amounts vs percentages
@@ -3979,9 +4427,21 @@ Use the conversation history provided to you to remember what's already been sai
 
             balances[category] -= cost;
             set(ref(database, `users/${currentUser.username}/balances`), balances);
-            addToHistory('Purchase', -cost, category, name);
+
+            // Record the purchase right away with a sensible fallback emoji so the UI
+            // never blocks on the AI. Once Groq picks a better, purchase-specific emoji,
+            // we quietly patch the same entry in place.
+            const entryRef = addToHistory('Purchase', -cost, category, name);
             closeModal('purchaseModal');
             showNotification(`Purchase "${name}" recorded`);
+
+            if (entryRef) {
+                getAIEmojiForPurchase(name, category).then(aiEmoji => {
+                    if (aiEmoji) {
+                        update(entryRef, { emoji: aiEmoji });
+                    }
+                });
+            }
         };
 
         // Edit money
@@ -4037,6 +4497,61 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById('goalName').value = '';
             document.getElementById('goalAmount').value = '';
             showNotification('Goal added!');
+        };
+
+        // Open the edit modal for an existing goal, pre-filled with its current values
+        window.openEditGoal = function(index) {
+            const goal = goals[index];
+            const key = goalKeys[index];
+            if (!goal || !key) return;
+
+            document.getElementById('editGoalId').value = key;
+            document.getElementById('editGoalName').value = goal.name;
+            document.getElementById('editGoalAmount').value = goal.amount;
+            document.getElementById('editGoalModal').classList.add('active');
+        };
+
+        // Save changes made in the edit-goal modal
+        window.saveGoalEdit = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const key = document.getElementById('editGoalId').value;
+            const name = document.getElementById('editGoalName').value;
+            const amount = parseInt(document.getElementById('editGoalAmount').value);
+
+            if (!name || isNaN(amount) || amount <= 0) {
+                showNotification('Please fill in all fields', true);
+                return;
+            }
+
+            const goalRef = ref(database, `users/${currentUser.username}/goals/${key}`);
+            update(goalRef, { name, amount });
+
+            closeModal('editGoalModal');
+            showNotification('Goal updated!');
+        };
+
+        // Delete a goal after confirmation
+        window.deleteGoal = function(index) {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const goal = goals[index];
+            const key = goalKeys[index];
+            if (!goal || !key) return;
+
+            if (!confirm(`Delete the goal "${goal.name}"? This action cannot be undone.`)) {
+                return;
+            }
+
+            const goalRef = ref(database, `users/${currentUser.username}/goals/${key}`);
+            set(goalRef, null);
+            showNotification('Goal deleted');
         };
 
 

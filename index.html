@@ -1451,7 +1451,7 @@
             <div class="user-info">
                 <div class="user-email" id="userEmail">user@email.com</div>
                 <div style="display: flex; gap: 10px;">
-                    <button class="logout-btn" onclick="openSettingsModal()" style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.4); color: #667eea;">⚙️ Settings</button>
+                    <button class="logout-btn" onclick="openSettingsModal()" style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.4); color: #667eea; position: relative;">⚙️ Settings<span id="settingsUpdateDot" style="display:none; position:absolute; top:-4px; right:-4px; width:11px; height:11px; background:#ff4757; border-radius:50%; box-shadow:0 0 8px rgba(255,71,87,0.9); border:2px solid #0f0c29;"></span></button>
                     <button class="logout-btn" onclick="logout()">Logout</button>
                 </div>
             </div>
@@ -2055,9 +2055,53 @@
                 <small style="color: rgba(255,255,255,0.5);">Reach this amount in Savings to earn your 1st rank. The 5th (top) rank is always 220 SAR.</small>
             </div>
 
+            <!-- Updates section — always at the very bottom of Settings -->
+            <div class="form-group" id="updatesSettingsSection" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; margin-top: 4px;">
+                <label class="form-label">📦 Updates</label>
+                <div id="settingsCurrentVersion" style="font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.85); margin-top: 4px;">Version 0.1</div>
+                <div id="settingsUpdateAvailableNote" style="display:none; margin-top: 8px; padding: 10px 12px; background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.35); border-radius: 10px; font-size: 13px; color: rgba(255,255,255,0.85);">
+                    <span id="settingsUpdateAvailableText"></span>
+                    <button type="button" onclick="openUpdateModalFromSettings()" style="display:block; margin-top:8px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:700; font-size:13px; cursor:pointer;">View Update</button>
+                </div>
+
+                <div id="zezoUpdateControls" style="display:none; margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,0.18);">
+                    <label class="form-label" style="color:#ff6b6b;">🚀 Send Update (Zezo only)</label>
+                    <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Everyone, including you, will get an update popup right away.</small>
+                    <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Version</label>
+                            <input type="text" class="form-input" id="sendUpdateVersion" placeholder="0.2">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">What's new</label>
+                            <textarea class="form-input" id="sendUpdateDescription" rows="3" placeholder="Describe what changed in this update..." style="resize: vertical; font-family: inherit;"></textarea>
+                        </div>
+                        <button type="button" class="modal-btn confirm" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);" onclick="sendAppUpdate()">Send Update to Everyone</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Cancel</button>
                 <button class="modal-btn confirm" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Available Modal -->
+    <div class="modal" id="updateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🚀 Update Available</div>
+                <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <div id="updateModalVersion" style="font-size: 18px; font-weight: 800; color: #ff6b6b; margin-bottom: 10px;">Version 0.2</div>
+                <p id="updateModalDescription" style="color: rgba(255,255,255,0.8); line-height: 1.5; font-size: 14px;"></p>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('updateModal')">Close</button>
+                <button class="modal-btn confirm" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);" onclick="applyAppUpdate()">Update Now</button>
             </div>
         </div>
     </div>
@@ -2115,6 +2159,158 @@
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+
+        // ===== App Update / Version Announcement System =====
+        // This build starts at version 0.1. Only the "zezo" account can
+        // broadcast a new update from Settings; every device (Safari tab or
+        // installed PWA) sees a red dot + popup until it taps "Update Now",
+        // which clears caches/SW and reloads to fetch the freshest files.
+        const APP_VERSION = '0.1';
+        let latestUpdateInfo = null; // { version, description, releasedAt, releasedBy }
+        let updateListenerAttached = false;
+
+        function getInstalledVersion() {
+            return localStorage.getItem('moneyManagerInstalledVersion') || APP_VERSION;
+        }
+
+        function setInstalledVersion(v) {
+            localStorage.setItem('moneyManagerInstalledVersion', v);
+        }
+
+        function isNewerVersion(remote, local) {
+            const r = parseFloat(remote);
+            const l = parseFloat(local);
+            if (isNaN(r) || isNaN(l)) return false;
+            return r > l + 1e-9;
+        }
+
+        function nextSuggestedVersion(fromVersion) {
+            const base = parseFloat(fromVersion) || parseFloat(APP_VERSION);
+            return (Math.round((base + 0.1) * 10) / 10).toFixed(1);
+        }
+
+        function showUpdateBadge(show) {
+            const dot = document.getElementById('settingsUpdateDot');
+            if (dot) dot.style.display = show ? 'block' : 'none';
+        }
+
+        function showUpdatePopup(data) {
+            const versionEl = document.getElementById('updateModalVersion');
+            const descEl = document.getElementById('updateModalDescription');
+            if (versionEl) versionEl.textContent = 'Version ' + data.version;
+            if (descEl) descEl.textContent = data.description || 'General improvements and bug fixes.';
+            const modal = document.getElementById('updateModal');
+            if (modal) modal.classList.add('active');
+        }
+
+        window.openUpdateModalFromSettings = function() {
+            if (!latestUpdateInfo) return;
+            showUpdatePopup(latestUpdateInfo);
+        };
+
+        // Called from Settings whenever the modal is opened, to keep the
+        // version number and (for zezo) the send-update box up to date.
+        function renderUpdatesSettingsUI() {
+            const versionEl = document.getElementById('settingsCurrentVersion');
+            if (versionEl) versionEl.textContent = 'Version ' + getInstalledVersion();
+
+            const noteBox = document.getElementById('settingsUpdateAvailableNote');
+            const noteText = document.getElementById('settingsUpdateAvailableText');
+            const hasUpdate = latestUpdateInfo && isNewerVersion(latestUpdateInfo.version, getInstalledVersion());
+            if (noteBox) {
+                noteBox.style.display = hasUpdate ? 'block' : 'none';
+            }
+            if (hasUpdate && noteText) {
+                noteText.textContent = `Version ${latestUpdateInfo.version} is available.`;
+            }
+
+            const isZezo = currentUser && currentUser.username.toLowerCase() === 'zezo';
+            const zezoBox = document.getElementById('zezoUpdateControls');
+            if (zezoBox) {
+                zezoBox.style.display = isZezo ? 'block' : 'none';
+                if (isZezo) {
+                    const baseline = (latestUpdateInfo && latestUpdateInfo.version) || getInstalledVersion();
+                    const versionInput = document.getElementById('sendUpdateVersion');
+                    if (versionInput) versionInput.value = nextSuggestedVersion(baseline);
+                }
+            }
+        }
+
+        // Listens for update broadcasts from Firebase (shared across every
+        // device/account). Fires immediately on attach, so it also covers
+        // "check for an update when the user opens/logs into the app".
+        function listenForUpdates() {
+            if (updateListenerAttached) return;
+            updateListenerAttached = true;
+            const updateRef = ref(database, 'appUpdates/latest');
+            onValue(updateRef, (snapshot) => {
+                if (!snapshot.exists()) return;
+                latestUpdateInfo = snapshot.val();
+                renderUpdatesSettingsUI();
+                if (latestUpdateInfo.version && isNewerVersion(latestUpdateInfo.version, getInstalledVersion())) {
+                    showUpdateBadge(true);
+                    showUpdatePopup(latestUpdateInfo);
+                } else {
+                    showUpdateBadge(false);
+                }
+            });
+        }
+
+        // Zezo-only: broadcast a new update to every user/device.
+        window.sendAppUpdate = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Only Zezo can send updates', true);
+                return;
+            }
+            const versionInput = document.getElementById('sendUpdateVersion');
+            const descInput = document.getElementById('sendUpdateDescription');
+            const version = (versionInput.value || '').trim();
+            const description = (descInput.value || '').trim();
+            if (!version) {
+                showNotification('Enter a version number', true);
+                return;
+            }
+            const updateRef = ref(database, 'appUpdates/latest');
+            set(updateRef, {
+                version,
+                description: description || 'General improvements and bug fixes.',
+                releasedAt: Date.now(),
+                releasedBy: currentUser.username
+            }).then(() => {
+                showNotification('Update ' + version + ' sent to everyone! 🚀');
+                descInput.value = '';
+            }).catch((error) => {
+                showNotification('Failed to send update: ' + error.message, true);
+            });
+        };
+
+        // Applies the update: clears the service worker + caches so the PWA
+        // (home screen version) stops serving stale files, then reloads.
+        // The signed-in username stays in localStorage, so login is kept.
+        window.applyAppUpdate = async function() {
+            const versionToApply = (latestUpdateInfo && latestUpdateInfo.version) || APP_VERSION;
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (const reg of regs) {
+                        await reg.unregister();
+                    }
+                }
+                if (window.caches) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                }
+            } catch (e) {
+                console.log('Error clearing caches during update:', e);
+            }
+            setInstalledVersion(versionToApply);
+            showUpdateBadge(false);
+            closeModal('updateModal');
+            showNotification('Updating to version ' + versionToApply + '...');
+            setTimeout(() => {
+                location.reload(true);
+            }, 400);
+        };
 
         // Groq AI Integration (direct REST calls to Groq's OpenAI-compatible API)
         const GROQ_API_KEY = "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";
@@ -2900,6 +3096,9 @@ Use the conversation history provided to you to remember what's already been sai
             if (!currentUser) return;
 
             const username = currentUser.username;
+
+            // Check for / listen for app update announcements (shared, not per-user)
+            listenForUpdates();
 
             // Load this user's on-device AI chat memory (last 50 messages)
             loadChatHistory();
@@ -4102,7 +4301,10 @@ Use the conversation history provided to you to remember what's already been sai
                     document.getElementById('settingsRankFirstThreshold').value = userPreferences.rankFirstThreshold || 40;
                 }
             }
-            
+
+            // Updates section (version display + Zezo's send-update controls)
+            renderUpdatesSettingsUI();
+
             document.getElementById('settingsModal').classList.add('active');
         };
 

@@ -337,11 +337,6 @@
             display: flex;
             gap: 8px;
             margin-left: 12px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .history-item:hover .history-actions {
             opacity: 1;
         }
 
@@ -1464,10 +1459,6 @@
                         <span class="bottom-nav-icon">🏠</span>
                         <span class="bottom-nav-label">Home</span>
                     </div>
-                    <div class="bottom-nav-item" onclick="switchTab('activity')" id="nav-activity">
-                        <span class="bottom-nav-icon">📊</span>
-                        <span class="bottom-nav-label">Activity</span>
-                    </div>
                     <div class="bottom-nav-item" onclick="switchTab('transactions')" id="nav-transactions">
                         <span class="bottom-nav-icon">🧾</span>
                         <span class="bottom-nav-label">Transactions</span>
@@ -1543,15 +1534,6 @@
         </div>
             </div>
 
-
-        <div class="section" id="activitySection" style="display: none;">
-            <div class="section-title">Recent Activity</div>
-            <div id="activityList">
-                <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
-                    No activity yet
-                </div>
-            </div>
-        </div>
 
         <div class="section" id="transactionsSection" style="display: none;">
             <div class="section-title">All Transactions</div>
@@ -1856,13 +1838,13 @@
                 <div class="modal-title">Delete Transaction</div>
                 <button class="close-btn" onclick="closeModal('deleteModal')">&times;</button>
             </div>
-            <p style="margin-bottom: 20px; color: rgba(255,255,255,0.8);">
+            <p style="margin-bottom: 20px; color: rgba(255,255,255,0.8);" id="deleteModalText">
                 Are you sure you want to delete this transaction? This action cannot be undone.
             </p>
             <input type="hidden" id="deleteTransactionId">
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('deleteModal')">Cancel</button>
-                <button class="modal-btn confirm" onclick="confirmDelete()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);">Delete</button>
+                <button class="modal-btn confirm" id="deleteConfirmBtn" onclick="handleDeleteClick()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);">Delete</button>
             </div>
         </div>
     </div>
@@ -3210,13 +3192,11 @@ Use the conversation history provided to you to remember what's already been sai
                     const historyData = snapshot.val();
                     history = Object.values(historyData).reverse();
                     historyKeys = Object.keys(historyData).reverse();
-                    updateActivityList();
                     updateTransactionsList();
                     updateCharts();
                 } else {
                     history = [];
                     historyKeys = [];
-                    updateActivityList();
                     updateTransactionsList();
                     updateCharts();
                 }
@@ -3294,32 +3274,6 @@ Use the conversation history provided to you to remember what's already been sai
 
             // Update savings rank badge (and fire rank-up celebration if applicable)
             updateRankDisplay();
-        }
-
-        // Update activity list
-        function updateActivityList() {
-            const activityList = document.getElementById('activityList');
-            if (history.length === 0) {
-                activityList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No activity yet</div>';
-                return;
-            }
-
-            activityList.innerHTML = history.slice(0, 10).map((item, index) => `
-                <div class="history-item">
-                    <div class="history-info">
-                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${item.type}</div>
-                        <div class="history-date">${new Date(item.date).toLocaleDateString()}</div>
-                        ${item.notes ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.notes}</div>` : ''}
-                    </div>
-                    <div class="history-amount ${item.amount >= 0 ? 'positive' : 'negative'}">
-                        ${item.amount >= 0 ? '+' : ''}${item.amount} SAR
-                    </div>
-                    <div class="history-actions">
-                        <button class="history-action-btn edit" onclick="openEditTransaction(${index})">✏️</button>
-                        <button class="history-action-btn delete" onclick="openDeleteModal(${index})">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Update the full Transactions tab list, applying the search filter if any
@@ -3692,7 +3646,6 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById(`nav-${tab}`).classList.add('active');
 
             document.getElementById('homeSection').style.display = tab === 'home' ? 'block' : 'none';
-            document.getElementById('activitySection').style.display = tab === 'activity' ? 'block' : 'none';
             document.getElementById('transactionsSection').style.display = tab === 'transactions' ? 'block' : 'none';
             document.getElementById('chartsSection').style.display = tab === 'charts' ? 'block' : 'none';
             document.getElementById('aiSection').style.display = tab === 'ai' ? 'block' : 'none';
@@ -4486,10 +4439,37 @@ Use the conversation history provided to you to remember what's already been sai
         };
 
         // Open delete modal
+        // Delete confirmation is a 2-step tap: first tap on 🗑️ opens this modal
+        // showing "Delete"; tapping "Delete" turns it into "Confirm Delete ⚠️"
+        // which must be tapped again before anything is actually removed.
+        let deleteConfirmStage = 0;
+
+        function resetDeleteConfirmStage() {
+            deleteConfirmStage = 0;
+            const btn = document.getElementById('deleteConfirmBtn');
+            const text = document.getElementById('deleteModalText');
+            if (btn) btn.textContent = 'Delete';
+            if (text) text.textContent = 'Are you sure you want to delete this transaction? This action cannot be undone.';
+        }
+
         window.openDeleteModal = function(index) {
             const key = historyKeys[index];
             document.getElementById('deleteTransactionId').value = key;
+            resetDeleteConfirmStage();
             document.getElementById('deleteModal').classList.add('active');
+        };
+
+        // First tap arms the confirm step; second tap actually deletes.
+        window.handleDeleteClick = function() {
+            const btn = document.getElementById('deleteConfirmBtn');
+            const text = document.getElementById('deleteModalText');
+            if (deleteConfirmStage === 0) {
+                deleteConfirmStage = 1;
+                if (btn) btn.textContent = 'Confirm Delete ⚠️';
+                if (text) text.textContent = 'Tap "Confirm Delete" once more to permanently remove this transaction.';
+                return;
+            }
+            confirmDelete();
         };
 
         // Confirm delete
@@ -4513,6 +4493,7 @@ Use the conversation history provided to you to remember what's already been sai
             set(ref(database, `users/${currentUser.username}/balances`), balances);
             checkHangoutLimit();
             
+            resetDeleteConfirmStage();
             closeModal('deleteModal');
             showNotification('Transaction deleted');
         };

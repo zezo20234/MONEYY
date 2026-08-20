@@ -1275,23 +1275,45 @@
             }
 
             /* ===== Bottom nav: mobile-only redesign ===== */
-            /* Smaller, draggable, equal-width buttons separated by divider lines */
+            /* Equal-width buttons separated by divider lines. The whole bar
+               drops down out of view when collapsed, leaving only a red
+               tab poking up above the screen edge to pull it back up. */
             .bottom-nav {
-                padding-top: 4px;
+                padding-top: 0;
+                overflow: visible;
             }
 
             .bottom-nav-handle {
-                display: block;
-                width: 36px;
-                height: 4px;
-                background: rgba(255, 255, 255, 0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 46px;
+                height: 16px;
+                background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+                border-radius: 10px 10px 0 0;
+                margin: 0 auto;
+                position: relative;
+                top: -16px;
+                cursor: pointer;
+                box-shadow: 0 -3px 10px rgba(255, 107, 107, 0.45);
+                transition: all 0.25s ease;
+            }
+
+            .bottom-nav-handle::after {
+                content: '';
+                width: 26px;
+                height: 3px;
+                background: rgba(255, 255, 255, 0.9);
                 border-radius: 2px;
-                margin: 6px auto 2px;
-                cursor: grab;
+                transition: transform 0.25s ease;
             }
 
             .bottom-nav-items {
                 padding: 4px 0;
+                max-height: 200px;
+                overflow: hidden;
+                opacity: 1;
+                transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
             }
 
             .bottom-nav-item {
@@ -1323,21 +1345,25 @@
                 max-width: 100%;
             }
 
-            /* Collapsed state — pushed down / minimized to icons only */
+            /* Collapsed state — the tab bar drops down completely out of
+               view; only the red handle remains, and it grows bigger so
+               it's easy to grab and pull back up. */
             .bottom-nav.collapsed .bottom-nav-items {
-                padding: 3px 0;
+                max-height: 0;
+                padding: 0;
+                opacity: 0;
+                pointer-events: none;
             }
 
-            .bottom-nav.collapsed .bottom-nav-label {
-                display: none;
+            .bottom-nav.collapsed .bottom-nav-handle {
+                width: 68px;
+                height: 24px;
+                top: -24px;
+                box-shadow: 0 -3px 14px rgba(255, 107, 107, 0.6);
             }
 
-            .bottom-nav.collapsed .bottom-nav-icon {
-                font-size: 20px;
-            }
-
-            .bottom-nav.collapsed .bottom-nav-item {
-                padding: 5px 2px;
+            .bottom-nav.collapsed .bottom-nav-handle::after {
+                transform: rotate(180deg);
             }
 
             /* ===== AI chat: mobile-only redesign ===== */
@@ -4871,9 +4897,11 @@ Use the conversation history provided to you to remember what's already been sai
             }, 3000);
         }
 
-        // Bottom nav: mobile drag handle — pull up to expand (show labels),
-        // push down to collapse to a slim icon-only bar. Tapping the handle
-        // toggles between the two states too, for anyone who doesn't want to drag.
+        // Bottom nav: mobile drag handle — pull up to reveal the tab bar,
+        // push down to drop it completely out of view, leaving just the
+        // red handle (which grows bigger when collapsed so it's easy to
+        // grab again). Tapping the handle toggles between the two states
+        // too, for anyone who doesn't want to drag.
         (function setupBottomNavHandle() {
             const nav = document.getElementById('bottomNav');
             const handle = document.getElementById('bottomNavHandle');

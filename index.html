@@ -2193,12 +2193,15 @@
         const database = getDatabase(app);
 
         // ===== Offline mode =====
-        // Money Manager keeps working with no wifi: purchases and edits are
-        // applied to the UI immediately and Firebase itself queues writes
-        // made mid-session and syncs them the moment we're back online. What
-        // this adds on top:
-        //   1. A clear "✕ Offline" indicator (header badge + AI tab cross)
-        //      instead of silently failing.
+        // Money Manager keeps working with no wifi. Every action (purchase,
+        // allowance, transfer, edit...) still updates the screen instantly and
+        // is written to localStorage right away — not just to Firebase — so
+        // nothing is lost even if the app gets closed or the phone locks
+        // before a connection comes back. The moment we're back online, that
+        // durable local queue gets replayed into Firebase in order, and
+        // purchase emojis are looked up by the AI only at that point (there's
+        // no point asking the AI for anything while there's no network).
+        //   1. A clear "✕ Offline" indicator (header badge + AI tab cross).
         //   2. AI chat politely says it's unavailable offline instead of
         //      throwing a network error, and reconnects itself automatically.
         //   3. Balances/history/goals/preferences are mirrored to
@@ -2220,7 +2223,12 @@
         }
 
         function setupConnectivityMonitor() {
-            let wasOnline = isOnline;
+            // Start assuming we don't yet know we're connected, so the very
+            // first genuine ".info/connected" ping — even if it's the first
+            // thing that happens after opening the app — is treated as "just
+            // came back online" and triggers a flush of anything left over
+            // from a previous offline session.
+            let wasOnline = false;
 
             function handleChange(nowOnline) {
                 const cameBackOnline = nowOnline && !wasOnline;
@@ -2229,13 +2237,15 @@
                 updateConnectivityUI();
 
                 if (cameBackOnline) {
-                    // "AI comes back" — re-establish the Groq connection and let
-                    // the user know their data is syncing up to Firebase.
+                    // "AI comes back" — re-establish the Groq connection, push
+                    // anything queued up locally into Firebase, and let the
+                    // user know.
                     workingGroqModel = null;
                     initializeGroqAI();
+                    flushPendingWrites();
                     showNotification('✅ Back online — syncing your data...');
                 } else if (!nowOnline) {
-                    showNotification('✕ You\'re offline. The app still works — AI chat is paused until you\'re back online.', true);
+                    showNotification('✕ You\'re offline. The app still works — everything is saved on your device and will sync once you\'re back online.', true);
                 }
             }
 
@@ -2283,6 +2293,139 @@
                 if (cached.userPreferences) { userPreferences = cached.userPreferences; updateUIForPreferences(); }
             } catch (e) {
                 console.log('Local cache read failed:', e);
+            }
+        }
+
+        // ----- Durable write queue -----
+        // Two kinds of pending writes are tracked in localStorage, per user,
+        // so a lost connection (or the app being closed entirely) never loses
+        // money or transactions:
+        //   - "balances": just the latest full balances object. Since it's a
+        //     whole-object overwrite, we only ever need the most recent one.
+        //   - "history": an ordered list of transactions created while
+        //     offline (or not yet confirmed written), replayed in order.
+
+        function pendingStorageKey(username, kind) {
+            return `mm_pending_${kind}_${username}`;
+        }
+
+        function markBalancesDirty() {
+            if (!currentUser) return;
+            try {
+                localStorage.setItem(pendingStorageKey(currentUser.username, 'balances'), JSON.stringify(balances));
+            } catch (e) {
+                console.log('Could not persist pending balances:', e);
+            }
+        }
+
+        function clearBalancesDirty(username) {
+            localStorage.removeItem(pendingStorageKey(username, 'balances'));
+        }
+
+        // Use this instead of calling set(balancesRef, balances) directly
+        // anywhere in the app. It updates Firebase when it can, but — more
+        // importantly — it always writes the current balances to localStorage
+        // FIRST, so even if the write to Firebase never completes (offline,
+        // or the app gets closed a split second later), the money isn't lost:
+        // flushPendingWrites() will push this exact snapshot up once we're
+        // back online.
+        function saveBalances() {
+            if (!currentUser) return;
+            const username = currentUser.username;
+            markBalancesDirty();
+            cacheUserDataLocally(username);
+            const balancesRef = ref(database, `users/${username}/balances`);
+            set(balancesRef, balances)
+                .then(() => clearBalancesDirty(username))
+                .catch(err => console.log('Balances write pending (offline?):', err.message));
+        }
+
+        function getPendingHistoryQueue(username) {
+            try {
+                const raw = localStorage.getItem(pendingStorageKey(username, 'history'));
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function setPendingHistoryQueue(username, queue) {
+            try {
+                localStorage.setItem(pendingStorageKey(username, 'history'), JSON.stringify(queue));
+            } catch (e) {
+                console.log('Could not persist pending history queue:', e);
+            }
+        }
+
+        let flushInProgress = false;
+
+        // Pushes any locally-queued balances/history writes up to Firebase.
+        // Safe to call any time (on reconnect, on app load, or just to be
+        // sure) — it's a no-op if there's nothing pending or we're offline.
+        async function flushPendingWrites() {
+            if (!currentUser || !isOnline || flushInProgress) return;
+            flushInProgress = true;
+            const username = currentUser.username;
+
+            try {
+                // 1) Balances: just push whatever the latest local snapshot is.
+                const pendingBalancesRaw = localStorage.getItem(pendingStorageKey(username, 'balances'));
+                if (pendingBalancesRaw) {
+                    try {
+                        const pendingBalances = JSON.parse(pendingBalancesRaw);
+                        const balancesRef = ref(database, `users/${username}/balances`);
+                        await set(balancesRef, pendingBalances);
+                        clearBalancesDirty(username);
+                    } catch (e) {
+                        console.log('Retrying balances sync failed, will try again later:', e.message);
+                    }
+                }
+
+                // 2) History: replay each queued transaction in order, then —
+                // now that we're actually online — look up an AI emoji for
+                // any purchase that needs one and patch it onto the saved entry.
+                // The queue is re-read from localStorage on every loop instead of
+                // cached in memory, so a new entry queued mid-flush (e.g. two
+                // purchases made back-to-back) can never be silently dropped.
+                while (true) {
+                    const queue = getPendingHistoryQueue(username);
+                    if (queue.length === 0) break;
+                    const item = queue[0];
+                    let newRef;
+                    try {
+                        const historyRef = ref(database, `users/${username}/history`);
+                        newRef = await push(historyRef, item.entry);
+                    } catch (e) {
+                        console.log('History sync failed, will retry later:', e.message);
+                        break; // stop here; whatever's left stays queued for next time
+                    }
+
+                    // Swap the temporary local id for the real Firebase key in
+                    // the live UI arrays so nothing gets duplicated once the
+                    // authoritative onValue listener fires.
+                    const idx = historyKeys.indexOf(item.localId);
+                    if (idx !== -1) historyKeys[idx] = newRef.key;
+
+                    if (item.needsAIEmoji && item.entry.type === 'Purchase') {
+                        getAIEmojiForPurchase(item.entry.notes, item.entry.category).then(aiEmoji => {
+                            if (!aiEmoji) return;
+                            update(newRef, { emoji: aiEmoji });
+                            const historyIdx = historyKeys.indexOf(newRef.key);
+                            if (historyIdx !== -1 && history[historyIdx]) {
+                                history[historyIdx].emoji = aiEmoji;
+                                updateTransactionsList();
+                            }
+                        }).catch(() => {});
+                    }
+
+                    const freshQueue = getPendingHistoryQueue(username);
+                    const stillIdx = freshQueue.findIndex(q => q.localId === item.localId);
+                    if (stillIdx !== -1) freshQueue.splice(stillIdx, 1);
+                    setPendingHistoryQueue(username, freshQueue);
+                    cacheUserDataLocally(username);
+                }
+            } finally {
+                flushInProgress = false;
             }
         }
 
@@ -3268,6 +3411,7 @@ Use the conversation history provided to you to remember what's already been sai
             // listeners below will override this with fresh data as soon as a
             // connection is available.
             loadCachedUserDataLocally(username);
+            flushPendingWrites();
 
             // Load user preferences
             const prefsRef = ref(database, `users/${username}/preferences`);
@@ -3885,11 +4029,15 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
         }
 
-        // Add to history. Returns the Firebase ref for the new entry so callers
-        // (e.g. addPurchase) can update it later once the AI emoji comes back.
-        function addToHistory(type, amount, category = null, notes = null, emoji = null, extra = null) {
+        // Add to history. Shows the new entry on screen immediately (works
+        // whether we're online or not) and durably queues it so it survives
+        // the app being closed before it's had a chance to sync. Pass
+        // needsAIEmoji=true for purchases so a proper AI-picked emoji gets
+        // looked up and patched in once we're actually online — there's no
+        // point trying while offline, the AI needs a connection too.
+        function addToHistory(type, amount, category = null, notes = null, emoji = null, extra = null, needsAIEmoji = false) {
             if (!currentUser) return null;
-            const historyRef = ref(database, `users/${currentUser.username}/history`);
+            const username = currentUser.username;
             const newEntry = {
                 type,
                 amount,
@@ -3899,7 +4047,24 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 date: new Date().toISOString(),
                 ...(extra || {})
             };
-            return push(historyRef, newEntry);
+
+            // Show it right away.
+            const localId = `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            history.unshift(newEntry);
+            historyKeys.unshift(localId);
+            updateTransactionsList();
+            updateCharts();
+            cacheUserDataLocally(username);
+
+            // Durably queue it, then try to sync immediately (no-ops instantly
+            // if we're offline — it'll get picked up by flushPendingWrites()
+            // the moment we're back online).
+            const queue = getPendingHistoryQueue(username);
+            queue.push({ localId, entry: newEntry, needsAIEmoji: needsAIEmoji && !emoji });
+            setPendingHistoryQueue(username, queue);
+            flushPendingWrites();
+
+            return { __localId: localId };
         }
 
         // ===== Savings Ranks =====
@@ -4007,7 +4172,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 const excess = balances.hangout - userPreferences.hangoutLimit;
                 balances.hangout = userPreferences.hangoutLimit;
                 balances.savings += excess;
-                set(ref(database, `users/${currentUser.username}/balances`), balances);
+                saveBalances();
                 addToHistory('Auto Transfer', excess, 'hangout', `Moved ${excess} SAR from Hangout to Savings (limit exceeded)`);
                 showNotification(`Moved ${excess} SAR to Savings (Hangout limit exceeded)`);
             }
@@ -4585,6 +4750,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         // Save transaction edit
         window.saveTransactionEdit = function() {
             const key = document.getElementById('editTransactionId').value;
+
+            if (key.startsWith('local_')) {
+                showNotification("This transaction hasn't finished syncing yet — try again in a moment once you're online.", true);
+                return;
+            }
+
             const amount = parseInt(document.getElementById('editTransactionAmount').value);
             const category = document.getElementById('editTransactionCategory').value;
             const notes = document.getElementById('editTransactionNotes').value;
@@ -4622,7 +4793,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             });
             
             // Update balances
-            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            saveBalances();
             checkHangoutLimit();
             
             closeModal('editTransactionModal');
@@ -4740,6 +4911,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         // Confirm delete
         window.confirmDelete = function() {
             const key = document.getElementById('deleteTransactionId').value;
+
+            if (key.startsWith('local_')) {
+                showNotification("This transaction hasn't finished syncing yet — try again in a moment once you're online.", true);
+                resetDeleteConfirmStage();
+                closeModal('deleteModal');
+                return;
+            }
             
             // Get the transaction to reverse its effect on balances
             const index = historyKeys.indexOf(key);
@@ -4752,7 +4930,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             set(transactionRef, null);
             
             // Update balances
-            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            saveBalances();
             checkHangoutLimit();
             
             resetDeleteConfirmStage();
@@ -4867,7 +5045,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
             const appliedSavings = savings + (userPreferences.enablePlaystation ? 0 : playstation);
 
-            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            saveBalances();
             // Record exactly what landed in each bucket (splitHangout/splitSavings/
             // splitPlaystation) so deleting this entry later can reverse it precisely.
             addToHistory('Allowance', total, null, `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`, null, {
@@ -4909,7 +5087,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
 
             balances[bucket] += amount;
-            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            saveBalances();
             addToHistory('Add Money', amount, bucket);
             checkHangoutLimit();
             closeModal('addMoneyModal');
@@ -4963,7 +5141,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             balances[from] -= amount;
             balances[to] += amount;
-            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            saveBalances();
             addToHistory('Transfer', -amount, from, `Transferred to ${to}`);
             checkHangoutLimit();
             closeModal('transferModal');
@@ -5033,22 +5211,15 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
 
             balances[category] -= cost;
-            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            saveBalances();
 
-            // Record the purchase right away with a sensible fallback emoji so the UI
-            // never blocks on the AI. Once Groq picks a better, purchase-specific emoji,
-            // we quietly patch the same entry in place.
-            const entryRef = addToHistory('Purchase', -cost, category, name);
+            // Record the purchase right away with a sensible fallback emoji so the
+            // UI never blocks on the AI or on being online. Once we're actually
+            // connected, flushPendingWrites() looks up a proper AI-picked emoji
+            // for it and patches the saved entry in place.
+            addToHistory('Purchase', -cost, category, name, null, null, true);
             closeModal('purchaseModal');
             showNotification(`Purchase "${name}" recorded`);
-
-            if (entryRef) {
-                getAIEmojiForPurchase(name, category).then(aiEmoji => {
-                    if (aiEmoji) {
-                        update(entryRef, { emoji: aiEmoji });
-                    }
-                });
-            }
         };
 
         // Edit money
@@ -5076,7 +5247,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             balances.savings = savings;
             balances.playstation = playstation;
 
-            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            saveBalances();
             addToHistory('Manual Edit', 0, null, `Changed balances: ${oldHangout}→${hangout}, ${oldSavings}→${savings}, ${oldPlaystation}→${playstation}`);
             checkHangoutLimit();
             closeModal('editModal');

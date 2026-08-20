@@ -862,11 +862,19 @@
             background: rgba(15, 12, 41, 0.95);
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: transform 0.25s ease;
+        }
+
+        .bottom-nav-handle {
+            display: none; /* only shown on mobile, see media query below */
+        }
+
+        .bottom-nav-items {
             display: flex;
             justify-content: space-around;
             padding: 12px 0;
-            z-index: 1000;
-            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .bottom-nav-item {
@@ -1265,6 +1273,116 @@
             .action-buttons {
                 grid-template-columns: 1fr;
             }
+
+            /* ===== Bottom nav: mobile-only redesign ===== */
+            /* Smaller, draggable, equal-width buttons separated by divider lines */
+            .bottom-nav {
+                padding-top: 4px;
+            }
+
+            .bottom-nav-handle {
+                display: block;
+                width: 36px;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+                margin: 6px auto 2px;
+                cursor: grab;
+            }
+
+            .bottom-nav-items {
+                padding: 4px 0;
+            }
+
+            .bottom-nav-item {
+                flex: 1;
+                min-width: 0;
+                padding: 6px 2px;
+                border-radius: 0;
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                gap: 2px;
+            }
+
+            .bottom-nav-item:last-child {
+                border-right: none;
+            }
+
+            .bottom-nav-item.active {
+                border-radius: 10px;
+            }
+
+            .bottom-nav-icon {
+                font-size: 18px;
+            }
+
+            .bottom-nav-label {
+                font-size: 9px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+
+            /* Collapsed state — pushed down / minimized to icons only */
+            .bottom-nav.collapsed .bottom-nav-items {
+                padding: 3px 0;
+            }
+
+            .bottom-nav.collapsed .bottom-nav-label {
+                display: none;
+            }
+
+            .bottom-nav.collapsed .bottom-nav-icon {
+                font-size: 20px;
+            }
+
+            .bottom-nav.collapsed .bottom-nav-item {
+                padding: 5px 2px;
+            }
+
+            /* ===== AI chat: mobile-only redesign ===== */
+            .ai-chat-container {
+                padding: 14px;
+                border-radius: 16px;
+                max-height: 65vh;
+            }
+
+            .ai-chat-messages {
+                min-height: 200px;
+                max-height: 46vh;
+                padding-right: 6px;
+            }
+
+            .ai-message-content {
+                max-width: 88%;
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .ai-chat-input-container {
+                gap: 8px;
+            }
+
+            .ai-chat-input {
+                font-size: 16px; /* keeps iOS from auto-zooming on focus */
+                padding: 10px 14px;
+            }
+
+            .ai-chat-send-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+
+            .ai-quick-actions {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+
+            .ai-quick-btn {
+                font-size: 10px;
+                padding: 8px 4px;
+            }
         }
 
         ::-webkit-scrollbar {
@@ -1313,25 +1431,33 @@
             </div>
 
             <!-- Bottom Navigation -->
-            <div class="bottom-nav">
-                <div class="bottom-nav-item active" onclick="switchTab('activity')" id="nav-activity">
-                    <span class="bottom-nav-icon">📊</span>
-                    <span class="bottom-nav-label">Activity</span>
-                </div>
-                <div class="bottom-nav-item" onclick="switchTab('transactions')" id="nav-transactions">
-                    <span class="bottom-nav-icon">🧾</span>
-                    <span class="bottom-nav-label">Transactions</span>
-                </div>
-                <div class="bottom-nav-item" onclick="switchTab('charts')" id="nav-charts">
-                    <span class="bottom-nav-icon">📈</span>
-                    <span class="bottom-nav-label">Charts</span>
-                </div>
-                <div class="bottom-nav-item" onclick="switchTab('ai')" id="nav-ai">
-                    <span class="bottom-nav-icon">🤖</span>
-                    <span class="bottom-nav-label">AI Assistant</span>
+            <div class="bottom-nav" id="bottomNav">
+                <div class="bottom-nav-handle" id="bottomNavHandle"></div>
+                <div class="bottom-nav-items">
+                    <div class="bottom-nav-item active" onclick="switchTab('home')" id="nav-home">
+                        <span class="bottom-nav-icon">🏠</span>
+                        <span class="bottom-nav-label">Home</span>
+                    </div>
+                    <div class="bottom-nav-item" onclick="switchTab('activity')" id="nav-activity">
+                        <span class="bottom-nav-icon">📊</span>
+                        <span class="bottom-nav-label">Activity</span>
+                    </div>
+                    <div class="bottom-nav-item" onclick="switchTab('transactions')" id="nav-transactions">
+                        <span class="bottom-nav-icon">🧾</span>
+                        <span class="bottom-nav-label">Transactions</span>
+                    </div>
+                    <div class="bottom-nav-item" onclick="switchTab('charts')" id="nav-charts">
+                        <span class="bottom-nav-icon">📈</span>
+                        <span class="bottom-nav-label">Charts</span>
+                    </div>
+                    <div class="bottom-nav-item" onclick="switchTab('ai')" id="nav-ai">
+                        <span class="bottom-nav-icon">🤖</span>
+                        <span class="bottom-nav-label">AI</span>
+                    </div>
                 </div>
             </div>
 
+            <div class="section" id="homeSection">
             <div class="header">
                 <div class="header-logo">💰</div>
                 <h1>Money Manager</h1>
@@ -1389,10 +1515,10 @@
                 🎯 Goals
             </button>
         </div>
+            </div>
 
 
-
-        <div class="section" id="activitySection">
+        <div class="section" id="activitySection" style="display: none;">
             <div class="section-title">Recent Activity</div>
             <div id="activityList">
                 <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
@@ -3340,6 +3466,7 @@ Use the conversation history provided to you to remember what's already been sai
             document.querySelectorAll('.bottom-nav-item').forEach(item => item.classList.remove('active'));
             document.getElementById(`nav-${tab}`).classList.add('active');
 
+            document.getElementById('homeSection').style.display = tab === 'home' ? 'block' : 'none';
             document.getElementById('activitySection').style.display = tab === 'activity' ? 'block' : 'none';
             document.getElementById('transactionsSection').style.display = tab === 'transactions' ? 'block' : 'none';
             document.getElementById('chartsSection').style.display = tab === 'charts' ? 'block' : 'none';
@@ -4743,6 +4870,47 @@ Use the conversation history provided to you to remember what's already been sai
                 notification.classList.remove('show');
             }, 3000);
         }
+
+        // Bottom nav: mobile drag handle — pull up to expand (show labels),
+        // push down to collapse to a slim icon-only bar. Tapping the handle
+        // toggles between the two states too, for anyone who doesn't want to drag.
+        (function setupBottomNavHandle() {
+            const nav = document.getElementById('bottomNav');
+            const handle = document.getElementById('bottomNavHandle');
+            if (!nav || !handle) return;
+
+            let startY = null;
+            let dragging = false;
+
+            function collapse() { nav.classList.add('collapsed'); }
+            function expand() { nav.classList.remove('collapsed'); }
+
+            handle.addEventListener('click', () => {
+                nav.classList.toggle('collapsed');
+            });
+
+            handle.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                dragging = true;
+            }, { passive: true });
+
+            handle.addEventListener('touchmove', (e) => {
+                if (!dragging || startY === null) return;
+                const diff = e.touches[0].clientY - startY; // positive = dragged down
+                if (diff > 20) {
+                    collapse();
+                    dragging = false;
+                } else if (diff < -20) {
+                    expand();
+                    dragging = false;
+                }
+            }, { passive: true });
+
+            handle.addEventListener('touchend', () => {
+                dragging = false;
+                startY = null;
+            });
+        })();
 
         // Initialize app
         init();

@@ -1,0 +1,4249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Money Manager</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="icon" type="image/png" href="./icon-192.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Groq AI is called directly via REST fetch (OpenAI-compatible chat completions API) -->
+    <!-- (see generateAIResponse below) -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(46, 213, 115, 0.1) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 16px;
+            padding-bottom: 120px;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .header-logo {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+
+        .total-balance {
+            font-size: 42px;
+            font-weight: 800;
+            margin: 8px 0;
+            text-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .allowance-countdown {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .allowance-countdown #daysRemaining {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .total-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .balance-cards {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .balance-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .balance-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 12px 40px rgba(102, 126, 234, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .balance-card.hangout {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        }
+
+        .balance-card.savings {
+            background: linear-gradient(135deg, rgba(46, 213, 115, 0.15) 0%, rgba(0, 206, 201, 0.15) 100%);
+        }
+
+        .balance-card.playstation {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 159, 67, 0.15) 100%);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .card-amount {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .card-limit {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .limit-warning {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            min-height: 60px;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .action-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn.success {
+            background: linear-gradient(135deg, rgba(46, 213, 115, 0.8) 0%, rgba(0, 206, 201, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn.warning {
+            background: linear-gradient(135deg, rgba(255, 165, 2, 0.8) 0%, rgba(255, 127, 80, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: 20px;
+            padding: 22px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 0 -10px;
+            padding: 14px 10px;
+            border-radius: 10px;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-type {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .history-date {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        .history-amount {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .history-amount.positive {
+            color: #2ed573;
+        }
+
+        .history-amount.negative {
+            color: #ff6b6b;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .history-item:hover .history-actions {
+            opacity: 1;
+        }
+
+        .history-action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .history-action-btn.edit {
+            color: #667eea;
+        }
+
+        .history-action-btn.delete {
+            color: #ff6b6b;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(15, 12, 41, 0.95);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .close-btn:hover {
+            opacity: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .amount-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .amount-option-btn {
+            padding: 24px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .amount-option-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .amount-option-btn.selected {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            border-color: rgba(102, 126, 234, 1);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.6);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.25);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.6);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.25);
+        }
+
+        .form-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .slider-container {
+            margin-bottom: 20px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 18px 24px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+
+        .modal-btn.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-btn.cancel:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .modal-btn.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .goals-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .goal-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .goal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .goal-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .goal-amount {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .goal-progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .goal-progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .goal-status {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .chart-container canvas {
+            max-height: 250px !important;
+        }
+
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .tab {
+            padding: 18px 32px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 25px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Bottom navigation for mobile */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 12, 41, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .bottom-nav-item.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .bottom-nav-icon {
+            font-size: 24px;
+        }
+
+        .bottom-nav-label {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* AI Chat Styles */
+        .ai-chat-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            min-height: 300px;
+            max-height: 400px;
+            padding-right: 10px;
+        }
+
+        .ai-message {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-message.ai-user {
+            flex-direction: row-reverse;
+        }
+
+        .ai-message-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            border-radius: 16px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .ai-message.ai-user .ai-message-content {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .ai-message.ai-assistant .ai-message-content {
+            background: rgba(46, 213, 115, 0.1);
+            border: 1px solid rgba(46, 213, 115, 0.2);
+        }
+
+        .ai-message-content p {
+            margin-bottom: 8px;
+        }
+
+        .ai-message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-message-content ul {
+            margin-left: 20px;
+            margin-bottom: 8px;
+        }
+
+        .ai-message-content li {
+            margin-bottom: 4px;
+        }
+
+        .ai-chat-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .ai-chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .ai-chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .ai-chat-send-btn {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ai-chat-send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .ai-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .ai-quick-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .ai-quick-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* AI Popup Warning */
+        .ai-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 107, 107, 0.15);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 107, 107, 0.4);
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 90%;
+            width: 400px;
+            z-index: 2000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .ai-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .ai-popup-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff6b6b;
+        }
+
+        .ai-popup-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .ai-popup-content {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .ai-popup-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-popup-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ai-popup-btn.primary {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            border: none;
+            color: white;
+        }
+
+        .ai-popup-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .ai-advice-section {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .ai-advice-btn {
+            background: linear-gradient(135deg, rgba(46, 213, 115, 0.2) 0%, rgba(0, 206, 201, 0.2) 100%);
+            border: 1px solid rgba(46, 213, 115, 0.4);
+            color: #2ed573;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .ai-advice-btn:hover {
+            background: linear-gradient(135deg, rgba(46, 213, 115, 0.3) 0%, rgba(0, 206, 201, 0.3) 100%);
+            transform: translateY(-2px);
+        }
+
+        .auth-section {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .auth-section.active {
+            display: block;
+        }
+
+        .app-content {
+            display: none;
+        }
+
+        .app-content.active {
+            display: block;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .user-email {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .logout-btn {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.4);
+            color: #ff6b6b;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 107, 107, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .auth-btn {
+            padding: 24px 48px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .auth-btn.login {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-btn.signup {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #764ba2;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(46, 213, 115, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 24px 36px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 18px;
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 12px 35px rgba(46, 213, 115, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: rgba(255, 107, 107, 0.95);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 15px;
+            }
+
+            .total-balance {
+                font-size: 36px;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Auth Section -->
+        <div class="auth-section" id="authSection">
+            <div class="header">
+                <div class="header-logo">💰</div>
+                <h1>Money Manager</h1>
+                <div class="total-label">Welcome to your personal finance tracker</div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <p style="color: rgba(255,255,255,0.7); font-size: 16px; max-width: 300px; margin: 0 auto;">
+                    Track your allowance, manage spending, and reach your financial goals
+                </p>
+            </div>
+            <div class="auth-buttons">
+                <button class="auth-btn login" onclick="openLoginModal()">Login</button>
+                <button class="auth-btn signup" onclick="openSignupModal()">Sign Up</button>
+            </div>
+        </div>
+
+        <!-- App Content -->
+        <div class="app-content" id="appContent">
+            <div class="user-info">
+                <div class="user-email" id="userEmail">user@email.com</div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="logout-btn" onclick="openSettingsModal()" style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.4); color: #667eea;">⚙️ Settings</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <div class="bottom-nav-item active" onclick="switchTab('activity')" id="nav-activity">
+                    <span class="bottom-nav-icon">📊</span>
+                    <span class="bottom-nav-label">Activity</span>
+                </div>
+                <div class="bottom-nav-item" onclick="switchTab('charts')" id="nav-charts">
+                    <span class="bottom-nav-icon">📈</span>
+                    <span class="bottom-nav-label">Charts</span>
+                </div>
+                <div class="bottom-nav-item" onclick="switchTab('ai')" id="nav-ai">
+                    <span class="bottom-nav-icon">🤖</span>
+                    <span class="bottom-nav-label">AI Assistant</span>
+                </div>
+            </div>
+
+            <div class="header">
+                <div class="header-logo">💰</div>
+                <h1>Money Manager</h1>
+                <div class="total-label">Total Balance</div>
+                <div class="total-balance" id="totalBalance">0 SAR</div>
+                <div class="allowance-countdown" id="allowanceCountdown" style="display: none;">
+                    📅 Next allowance in <span id="daysRemaining">0</span> days (4-week schedule)
+                </div>
+            </div>
+
+        <div class="balance-cards">
+            <div class="balance-card hangout">
+                <div class="card-header">
+                    <div class="card-title">Hangout</div>
+                    <div class="card-amount" id="hangoutBalance">0 SAR</div>
+                </div>
+                <div class="card-limit" id="hangoutLimit">Limit: 140 SAR</div>
+            </div>
+
+            <div class="balance-card savings">
+                <div class="card-header">
+                    <div class="card-title">Savings</div>
+                    <div class="card-amount" id="savingsBalance">0 SAR</div>
+                </div>
+                <div class="card-limit" id="savingsLimit">Flexible savings</div>
+            </div>
+
+            <div class="balance-card playstation">
+                <div class="card-header">
+                    <div class="card-title">PlayStation / Mobily</div>
+                    <div class="card-amount" id="playstationBalance">0 SAR</div>
+                </div>
+                <div class="card-limit">Gaming & Mobile</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn primary" onclick="openAllowanceModal()">
+                💰 I Got Allowance
+            </button>
+            <button class="action-btn success" onclick="openAddMoneyModal()">
+                ➕ Add Money
+            </button>
+            <button class="action-btn warning" onclick="openTransferModal()">
+                🔄 Transfer
+            </button>
+            <button class="action-btn" onclick="openPurchaseModal()">
+                🛒 Purchase
+            </button>
+            <button class="action-btn" onclick="openEditModal()">
+                ✏️ Edit Money
+            </button>
+            <button class="action-btn" onclick="openGoalsModal()">
+                🎯 Goals
+            </button>
+        </div>
+
+
+
+        <div class="section" id="activitySection">
+            <div class="section-title">Recent Activity</div>
+            <div id="activityList">
+                <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
+                    No activity yet
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="chartsSection" style="display: none;">
+            <div class="section-title">Your Charts</div>
+            <div class="chart-container">
+                <canvas id="spendingChart"></canvas>
+            </div>
+            <div class="chart-container" id="allowanceChartContainer" style="display: block;">
+                <canvas id="allowanceChart"></canvas>
+            </div>
+            <div class="chart-container" id="balanceChartContainer" style="display: block;">
+                <canvas id="balanceTrendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section" id="aiSection" style="display: none;">
+            <div class="section-title">AI Financial Assistant</div>
+            <div class="ai-chat-container">
+                <div class="ai-chat-messages" id="aiChatMessages">
+                    <div class="ai-message ai-assistant">
+                        <div class="ai-message-content">
+                            <p>👋 Hi! I'm your AI financial assistant. I can help you with:</p>
+                            <ul>
+                                <li>💡 Purchase advice ("Can I buy X with my savings?")</li>
+                                <li>💰 Transfer suggestions ("Should I move PlayStation money to savings?")</li>
+                                <li>📊 Spending analysis ("How am I doing this month?")</li>
+                                <li>⚠️ Budget warnings and tips</li>
+                            </ul>
+                            <p>Ask me anything about your money!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-chat-input-container">
+                    <input type="text" class="ai-chat-input" id="aiChatInput" placeholder="Ask me anything about your money..." onkeypress="handleAIChatKeypress(event)">
+                    <button class="ai-chat-send-btn" onclick="sendAIMessage()">Send</button>
+                </div>
+            </div>
+            
+            <div class="ai-quick-actions">
+                <button class="ai-quick-btn" onclick="askAIQuick('spending')">📊 Spending Analysis</button>
+                <button class="ai-quick-btn" onclick="askAIQuick('warnings')">⚠️ Check Warnings</button>
+                <button class="ai-quick-btn" onclick="askAIQuick('advice')">💡 Get Advice</button>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- Allowance Modal -->
+    <div class="modal" id="allowanceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Allowance</div>
+                <button class="close-btn" onclick="closeModal('allowanceModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Total Amount (SAR)</label>
+                <div class="amount-options">
+                    <button class="amount-option-btn" id="amount60" onclick="selectAllowanceAmount(60)">60 SAR</button>
+                    <button class="amount-option-btn" id="amount120" onclick="selectAllowanceAmount(120)">120 SAR</button>
+                </div>
+                <input type="hidden" id="allowanceAmount" value="60">
+            </div>
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Hangout (<span id="hangoutPercentLabel">50%</span>)</span>
+                    <span id="hangoutSplit">35 SAR</span>
+                </div>
+                <input type="range" class="slider" id="hangoutSlider" min="0" max="120" value="35" oninput="updateAllowanceSplit()">
+            </div>
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Savings (<span id="savingsPercentLabel">37.5%</span>)</span>
+                    <span id="savingsSplit">25 SAR</span>
+                </div>
+                <input type="range" class="slider" id="savingsSlider" min="0" max="120" value="25" oninput="updateAllowanceSplit()">
+            </div>
+            <div class="slider-container" id="playstationSliderContainer">
+                <div class="slider-label">
+                    <span>PlayStation / Mobily (<span id="playstationPercentLabel">12.5%</span>)</span>
+                    <span id="playstationSplit">0 SAR</span>
+                </div>
+                <input type="range" class="slider" id="playstationSlider" min="0" max="120" value="0" oninput="updateAllowanceSplit()">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('allowanceModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="addAllowance()">Add Allowance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Money Modal -->
+    <div class="modal" id="addMoneyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Money</div>
+                <button class="close-btn" onclick="closeModal('addMoneyModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Select Bucket</label>
+                <select class="form-select" id="addMoneyBucket">
+                    <option value="hangout">Hangout</option>
+                    <option value="savings">Savings</option>
+                    <option value="playstation">PlayStation / Mobily</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Amount (SAR)</label>
+                <input type="number" class="form-input" id="addMoneyAmount" placeholder="50">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('addMoneyModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="addMoney()">Add Money</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal" id="transferModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Transfer Money</div>
+                <button class="close-btn" onclick="closeModal('transferModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">From</label>
+                <select class="form-select" id="transferFrom">
+                    <option value="hangout">Hangout</option>
+                    <option value="savings">Savings</option>
+                    <option value="playstation">PlayStation / Mobily</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">To</label>
+                <select class="form-select" id="transferTo">
+                    <option value="savings">Savings</option>
+                    <option value="hangout">Hangout</option>
+                    <option value="playstation">PlayStation / Mobily</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Amount (SAR)</label>
+                <input type="number" class="form-input" id="transferAmount" placeholder="30">
+            </div>
+            <div class="ai-advice-section">
+                <button class="ai-advice-btn" onclick="askTransferAdviceFromModal()">🤖 Ask AI if this transfer is a good idea</button>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('transferModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="transferMoney()">Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Modal -->
+    <div class="modal" id="purchaseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Purchase</div>
+                <button class="close-btn" onclick="closeModal('purchaseModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Purchase Name</label>
+                <input type="text" class="form-input" id="purchaseName" placeholder="Lunch, Game, etc.">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cost (SAR)</label>
+                <input type="number" class="form-input" id="purchaseCost" placeholder="25">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="purchaseCategory">
+                    <option value="hangout">Hangout</option>
+                    <option value="savings">Savings</option>
+                    <option value="playstation">PlayStation / Mobily</option>
+                </select>
+            </div>
+            <div class="ai-advice-section">
+                <button class="ai-advice-btn" onclick="askPurchaseAdviceFromModal()">🤖 Ask AI if this is a good purchase</button>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('purchaseModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="addPurchase()">Add Purchase</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Money Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit Money</div>
+                <button class="close-btn" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hangout Balance (SAR)</label>
+                <input type="number" class="form-input" id="editHangout" placeholder="Current balance">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Savings Balance (SAR)</label>
+                <input type="number" class="form-input" id="editSavings" placeholder="Current balance">
+            </div>
+            <div class="form-group">
+                <label class="form-label">PlayStation Balance (SAR)</label>
+                <input type="number" class="form-input" id="editPlaystation" placeholder="Current balance">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('editModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="editMoney()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Settings</div>
+                <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals Modal -->
+    <div class="modal" id="goalsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Goals</div>
+                <button class="close-btn" onclick="closeModal('goalsModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">New Goal Name</label>
+                <input type="text" class="form-input" id="goalName" placeholder="FC 27, Keyboard, etc.">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Target Amount (SAR)</label>
+                <input type="number" class="form-input" id="goalAmount" placeholder="200">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('goalsModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="addGoal()">Add Goal</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <div class="section-title">Your Goals</div>
+                <div class="goals-grid" id="goalsList">
+                    <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
+                        No goals yet
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Edit Transaction Modal -->
+    <div class="modal" id="editTransactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit Transaction</div>
+                <button class="close-btn" onclick="closeModal('editTransactionModal')">&times;</button>
+            </div>
+            <input type="hidden" id="editTransactionId">
+            <div class="form-group">
+                <label class="form-label">Transaction Type</label>
+                <select class="form-select" id="editTransactionType" disabled>
+                    <option value="Allowance">Allowance</option>
+                    <option value="Add Money">Add Money</option>
+                    <option value="Transfer">Transfer</option>
+                    <option value="Purchase">Purchase</option>
+                    <option value="Manual Edit">Manual Edit</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Amount (SAR)</label>
+                <input type="number" class="form-input" id="editTransactionAmount">
+            </div>
+            <div class="form-group" id="editTransactionCategoryGroup">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="editTransactionCategory">
+                    <option value="hangout">Hangout</option>
+                    <option value="savings">Savings</option>
+                    <option value="playstation">PlayStation / Mobily</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <input type="text" class="form-input" id="editTransactionNotes" placeholder="Optional notes">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('editTransactionModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveTransactionEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Delete Transaction</div>
+                <button class="close-btn" onclick="closeModal('deleteModal')">&times;</button>
+            </div>
+            <p style="margin-bottom: 20px; color: rgba(255,255,255,0.8);">
+                Are you sure you want to delete this transaction? This action cannot be undone.
+            </p>
+            <input type="hidden" id="deleteTransactionId">
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="confirmDelete()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Login</div>
+                <button class="close-btn" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-input" id="loginUsername" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="loginPassword" placeholder="••••••••">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('loginModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="login()">Login</button>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <span style="color: rgba(255,255,255,0.6);">Don't have an account? </span>
+                <a href="#" onclick="closeModal('loginModal'); openSignupModal();" style="color: #667eea;">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Sign Up</div>
+                <button class="close-btn" onclick="closeModal('signupModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-input" id="signupUsername" placeholder="Choose username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="signupPassword" placeholder="•••••••• (min 4 characters)">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Confirm Password</label>
+                <input type="password" class="form-input" id="signupConfirmPassword" placeholder="••••••••">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('signupModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="signup()">Sign Up</button>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <span style="color: rgba(255,255,255,0.6);">Already have an account? </span>
+                <a href="#" onclick="closeModal('signupModal'); openLoginModal();" style="color: #667eea;">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Setup Modal -->
+    <div class="modal" id="setupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Setup Your Account</div>
+                <button class="close-btn" onclick="closeModal('setupModal')">&times;</button>
+            </div>
+            <p style="margin-bottom: 20px; color: rgba(255,255,255,0.7);">Customize your money manager settings:</p>
+            
+            <div class="form-group">
+                <label class="form-label">Hangout Limit (SAR)</label>
+                <input type="number" class="form-input" id="setupHangoutLimit" placeholder="140" value="140">
+                <small style="color: rgba(255,255,255,0.5);">Maximum amount before excess moves to Savings</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Enable PlayStation/Mobily Bucket</label>
+                <select class="form-select" id="setupEnablePlaystation">
+                    <option value="true">Yes, I need this bucket</option>
+                    <option value="false">No, I don't use this</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Allowance Type</label>
+                <select class="form-select" id="setupAllowanceType" onchange="toggleSetupAllowanceType()">
+                    <option value="percentage">Use Percentages</option>
+                    <option value="fixed">Use Fixed Amounts</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="setupPercentageSettings">
+                <label class="form-label">Default Allowance Split</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
+                        <input type="number" class="form-input" id="setupHangoutPercent" value="50" min="0" max="100">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
+                        <input type="number" class="form-input" id="setupSavingsPercent" value="37.5" min="0" max="100">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
+                        <input type="number" class="form-input" id="setupPlaystationPercent" value="12.5" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="setupFixedAmountSettings" style="display: none;">
+                <label class="form-label">Fixed Allowance Amounts (SAR)</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout</label>
+                        <input type="number" class="form-input" id="setupFixedHangout" placeholder="35">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings</label>
+                        <input type="number" class="form-input" id="setupFixedSavings" placeholder="25">
+                    </div>
+                </div>
+                <small style="color: rgba(255,255,255,0.5);">Remaining amount goes to Savings</small>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('setupModal')">Skip for Now</button>
+                <button class="modal-btn confirm" onclick="completeSetup()">Save & Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Settings</div>
+                <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Hangout Limit (SAR)</label>
+                <input type="number" class="form-input" id="settingsHangoutLimit" placeholder="140">
+                <small style="color: rgba(255,255,255,0.5);">Maximum amount before excess moves to Savings</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Enable PlayStation/Mobily Bucket</label>
+                <select class="form-select" id="settingsEnablePlaystation">
+                    <option value="true">Yes, I need this bucket</option>
+                    <option value="false">No, I don't use this</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="percentageSettings">
+                <label class="form-label">Default Allowance Split</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
+                        <input type="number" class="form-input" id="settingsHangoutPercent" min="0" max="100">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
+                        <input type="number" class="form-input" id="settingsSavingsPercent" min="0" max="100">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
+                        <input type="number" class="form-input" id="settingsPlaystationPercent" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="fixedAmountSettings" style="display: none;">
+                <label class="form-label">Fixed Allowance Amounts (SAR)</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout</label>
+                        <input type="number" class="form-input" id="settingsFixedHangout" placeholder="35">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings</label>
+                        <input type="number" class="form-input" id="settingsFixedSavings" placeholder="25">
+                    </div>
+                </div>
+                <small style="color: rgba(255,255,255,0.5);">Remaining amount goes to Savings</small>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, get, update, onValue, push, remove, query, orderByChild, equalTo } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCugS0qHKstGZArd5vEBzm-DaLZAIDugo",
+            authDomain: "money-e560a.firebaseapp.com",
+            databaseURL: "https://money-e560a-default-rtdb.firebaseio.com",
+            projectId: "money-e560a",
+            storageBucket: "money-e560a.firebasestorage.app",
+            messagingSenderId: "477551627159",
+            appId: "1:477551627159:web:b19f853905331f71ee92d2",
+            measurementId: "G-YYQD2E5J7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Groq AI Integration (direct REST calls to Groq's OpenAI-compatible API)
+        const GROQ_API_KEY = "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";
+        const GROQ_API_BASE = "https://api.groq.com/openai/v1";
+
+        // Models to try, in order. Update this list if Groq renames/retires models —
+        // check https://console.groq.com/docs/models
+        const GROQ_MODELS_TO_TRY = [
+            "openai/gpt-oss-120b",
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant"
+        ];
+
+        let workingGroqModel = null; // set once we find a model that actually responds
+
+        // Low-level call to the Groq REST API (OpenAI-compatible chat completions).
+        // `input` can be a plain string (single-turn) or an array of
+        // { role: 'user'|'assistant', parts: [{text}] } objects (Gemini-style, converted below)
+        // or already an array of { role, content } OpenAI-style messages.
+        // `systemInstruction` is optional text sent as the system message.
+        async function callGroq(modelName, input, systemInstruction = null) {
+            const url = `${GROQ_API_BASE}/chat/completions`;
+
+            let messages;
+            if (typeof input === 'string') {
+                messages = [{ role: 'user', content: input }];
+            } else {
+                // Normalize either {role, parts:[{text}]} or {role, content} shapes
+                messages = input.map(m => ({
+                    role: m.role === 'model' ? 'assistant' : m.role,
+                    content: m.content !== undefined ? m.content : (m.parts || []).map(p => p.text || "").join("")
+                }));
+            }
+
+            if (systemInstruction) {
+                messages = [{ role: 'system', content: systemInstruction }, ...messages];
+            }
+
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${GROQ_API_KEY}`
+                },
+                body: JSON.stringify({ model: modelName, messages })
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok) {
+                // Surface Groq's actual error message instead of a generic one
+                const groqMessage = data?.error?.message || res.statusText;
+                const err = new Error(`HTTP ${res.status}: ${groqMessage}`);
+                err.status = res.status;
+                throw err;
+            }
+
+            const text = data?.choices?.[0]?.message?.content || "";
+            if (!text) {
+                throw new Error("Groq returned an empty response (no choices/message in payload).");
+            }
+            return text;
+        }
+
+        // Initialize Groq AI: find the first model in our list that actually works
+        window.initializeGroqAI = async function() {
+            console.log("Attempting to initialize Groq AI via REST...");
+
+            if (!GROQ_API_KEY || GROQ_API_KEY.trim() === "") {
+                console.error("No Groq API key set.");
+                return;
+            }
+
+            for (const modelName of GROQ_MODELS_TO_TRY) {
+                try {
+                    console.log(`Trying model: ${modelName}`);
+                    await callGroq(modelName, "Hello");
+                    console.log(`Successfully connected using model: ${modelName}`);
+                    workingGroqModel = modelName;
+                    return; // success
+                } catch (modelError) {
+                    console.log(`Model ${modelName} failed: ${modelError.message}`);
+                    // If it's an auth/permission error, no point trying other models —
+                    // the key itself is the problem, not the model name.
+                    if (modelError.status === 401 || modelError.status === 403) {
+                        console.error("Auth/permission error from Groq — likely a bad API key:", modelError.message);
+                        window.lastGroqError = modelError.message;
+                        return;
+                    }
+                    window.lastGroqError = modelError.message;
+                }
+            }
+
+            console.error("All models failed to initialize. Last error:", window.lastGroqError);
+        }
+
+        // Get AI context with user data
+        window.getAIContext = function() {
+            const now = new Date();
+            const thisMonth = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            // Calculate spending analysis
+            const monthlySpending = getMonthlySpending();
+            const weeklySpending = getWeeklySpending();
+            const totalBalance = balances.hangout + balances.savings + balances.playstation;
+            const enhancedAnalysis = getEnhancedSpendingAnalysis();
+            
+            // Get recent transactions
+            const recentTransactions = history.slice(-10).map(item => ({
+                type: item.type,
+                amount: Math.abs(item.amount),
+                category: item.category,
+                date: new Date(item.date).toLocaleDateString(),
+                notes: item.notes
+            }));
+
+            // Get goals
+            const goalsList = goals.map(goal => ({
+                name: goal.name,
+                amount: goal.amount,
+                progress: Math.min(100, (balances.savings / goal.amount) * 100).toFixed(1)
+            }));
+
+            return {
+                userProfile: {
+                    username: currentUser?.username || 'User',
+                    totalBalance: totalBalance,
+                    balances: {
+                        hangout: balances.hangout,
+                        savings: balances.savings,
+                        playstation: balances.playstation
+                    },
+                    preferences: userPreferences
+                },
+                spendingAnalysis: {
+                    monthlySpending: monthlySpending,
+                    weeklySpending: weeklySpending,
+                    currentMonth: thisMonth,
+                    hangoutLimit: userPreferences.hangoutLimit,
+                    hangoutRemaining: userPreferences.hangoutLimit - balances.hangout,
+                    enhancedAnalysis: enhancedAnalysis
+                },
+                recentActivity: recentTransactions,
+                goals: goalsList,
+                timestamp: now.toISOString()
+            };
+        }
+
+        // Generate AI response
+        window.generateAIResponse = async function(userMessage) {
+            console.log("Generating AI response for:", userMessage);
+            
+            if (!workingGroqModel) {
+                console.log("AI model not initialized, attempting initialization...");
+                await initializeGroqAI();
+                if (!workingGroqModel) {
+                    console.error("Failed to initialize AI model");
+                    const detail = window.lastGroqError ? `\n\n**Details from Groq:** ${window.lastGroqError}` : "";
+                    return `❌ **AI Connection Failed**\n\nThe Groq AI could not be initialized.${detail}\n\nCommon causes:\n\n• Invalid or revoked API key\n• The key or project has hit its rate limit\n• Network connectivity problem\n\nCheck your key at https://console.groq.com/keys`;
+                }
+            }
+
+            const context = getAIContext();
+            console.log("AI Context:", context);
+            
+            const systemPrompt = `You are the built-in assistant for a personal money management app. You're a friendly, general-purpose helper — you can chat about anything the user brings up (school, random questions, advice, whatever). You also happen to have access to the user's financial data below, so when the conversation is about money, budgeting, purchases, or their balances, use that data to give personalized, practical advice.
+
+Current Financial Context:
+- Total Balance: ${context.userProfile.totalBalance} SAR
+- Hangout Balance: ${context.userProfile.balances.hangout} SAR (Limit: ${context.spendingAnalysis.hangoutLimit} SAR)
+- Savings Balance: ${context.userProfile.balances.savings} SAR
+- PlayStation Balance: ${context.userProfile.balances.playstation} SAR
+- Monthly Spending: ${context.spendingAnalysis.monthlySpending} SAR
+- Weekly Spending: ${context.spendingAnalysis.weeklySpending} SAR
+- Hangout Remaining: ${context.spendingAnalysis.hangoutRemaining} SAR
+
+Enhanced Spending Analysis:
+- Current Month (${context.spendingAnalysis.enhancedAnalysis.currentMonthName}): ${context.spendingAnalysis.enhancedAnalysis.currentMonthSpending} SAR
+- Last Month (${context.spendingAnalysis.enhancedAnalysis.lastMonthName}): ${context.spendingAnalysis.enhancedAnalysis.lastMonthSpending} SAR
+- Month-over-Month Change: ${context.spendingAnalysis.enhancedAnalysis.monthOverMonthChange > 0 ? '+' : ''}${context.spendingAnalysis.enhancedAnalysis.monthOverMonthChange.toFixed(1)}%
+- Spending by Category: ${JSON.stringify(context.spendingAnalysis.enhancedAnalysis.spendingByCategory)}
+
+Recent Transactions: ${JSON.stringify(context.recentActivity)}
+Goals: ${JSON.stringify(context.goals)}
+
+Guidelines:
+- You can answer ANY question, not just money-related ones. Never refuse a question just because it's not about finances — answer it normally like a helpful assistant would.
+- Match your response length to the question. A greeting or simple message ("hi", "thanks", "ok") gets ONE short friendly sentence — never a paragraph, never bullet points.
+- Only go into detail (multiple sentences, breakdowns, bullet points) when the user actually asks something that needs it — like a purchase decision, spending analysis, or budgeting advice.
+- Be friendly and conversational, not formal or robotic
+- When the topic IS about their money: provide specific, actionable advice based on their actual data, but only include the numbers/details that are relevant to what they asked. Use SAR currency and reference their actual balances when relevant.
+- Warn about potential overspending but don't be overly restrictive
+- Remember: The user can always make their own decisions - you're just advising
+- For purchase questions, consider if they have enough money and if it aligns with their goals
+- For transfer questions, consider the impact on different buckets
+- For spending analysis, compare current spending to last month and their limits
+- If spending increased significantly, briefly explain what might have caused it
+- If spending decreased, congratulate them
+- Default to short answers. Only expand when the topic genuinely requires it.
+
+Use the conversation history provided to you to remember what's already been said — don't ask the user to repeat information they already gave you earlier in the chat.`;
+
+            // Build multi-turn messages from persisted chat history so the AI actually
+            // remembers earlier turns, instead of only ever seeing the latest message.
+            const turns = chatHistory
+                .filter(m => m.sender === 'user' || m.sender === 'assistant')
+                .map(m => ({
+                    role: m.sender === 'user' ? 'user' : 'assistant',
+                    content: m.content
+                }));
+
+            // The current user message was already pushed into chatHistory by
+            // addChatMessage() before this function runs, so `turns` already ends
+            // with it. Just make sure we don't send an empty/malformed sequence.
+            const messages = turns.length > 0 ? turns : [{ role: 'user', content: userMessage }];
+
+            try {
+                console.log(`Sending request to Groq model: ${workingGroqModel} with ${messages.length} turns of history...`);
+                const text = await callGroq(workingGroqModel, messages, systemPrompt);
+                console.log("AI response received:", text);
+                return text;
+            } catch (error) {
+                console.error("AI generation error:", error);
+                // If this specific model started failing mid-session, clear it so the
+                // next request re-runs initialization and can fall back to another model.
+                workingGroqModel = null;
+                return `❌ **AI Request Failed**\n\nError: ${error.message}\n\nThis could be due to:\n• API rate limits\n• Network issues\n• Invalid request format\n\nPlease try again in a moment.`;
+            }
+        }
+
+        // Fallback response generator when AI is not available
+        function generateFallbackResponse(userMessage) {
+            const context = getAIContext();
+            const lowerMessage = userMessage.toLowerCase();
+            
+            let response = "🤖 **Smart Financial Assistant** (AI currently unavailable, using intelligent fallback)\n\n";
+            
+            if (lowerMessage.includes('spending') || lowerMessage.includes('analysis')) {
+                response += `📊 **Detailed Spending Analysis:**\n`;
+                response += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                response += `💰 **Current Balances:**\n`;
+                response += `• Total Balance: ${context.userProfile.totalBalance} SAR\n`;
+                response += `• Hangout: ${context.userProfile.balances.hangout} SAR (Limit: ${context.spendingAnalysis.hangoutLimit} SAR)\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} SAR\n`;
+                response += `• PlayStation: ${context.userProfile.balances.playstation} SAR\n\n`;
+                
+                response += `📈 **Spending Patterns:**\n`;
+                response += `• This Month: ${context.spendingAnalysis.monthlySpending} SAR\n`;
+                response += `• This Week: ${context.spendingAnalysis.weeklySpending} SAR\n`;
+                response += `• Hangout Remaining: ${context.spendingAnalysis.hangoutRemaining} SAR\n\n`;
+                
+                response += `🔄 **Month-over-Month:**\n`;
+                if (context.spendingAnalysis.enhancedAnalysis.monthOverMonthChange > 0) {
+                    response += `⚠️ Spending increased by ${context.spendingAnalysis.enhancedAnalysis.monthOverMonthChange.toFixed(1)}% compared to last month (${context.spendingAnalysis.enhancedAnalysis.lastMonthName}). Review your recent purchases!\n`;
+                } else if (context.spendingAnalysis.enhancedAnalysis.monthOverMonthChange < 0) {
+                    response += `✅ Great job! Spending decreased by ${Math.abs(context.spendingAnalysis.enhancedAnalysis.monthOverMonthChange).toFixed(1)}% compared to last month. Keep it up!\n`;
+                } else {
+                    response += `➡️ Spending is stable compared to last month. You're maintaining consistency!\n`;
+                }
+                
+                response += `\n💡 **Recommendations:**\n`;
+                if (context.spendingAnalysis.hangoutRemaining < 30) {
+                    response += `• ⚠️ Low hangout balance - consider reducing non-essential spending\n`;
+                }
+                if (context.userProfile.balances.savings > 100) {
+                    response += `• ✅ Great savings! Consider setting or reviewing financial goals\n`;
+                }
+                
+            } else if (lowerMessage.includes('buy') || lowerMessage.includes('purchase')) {
+                response += `💡 **Purchase Decision Helper:**\n`;
+                response += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                response += `📋 **Your Available Funds:**\n`;
+                response += `• Hangout: ${context.userProfile.balances.hangout} SAR\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} SAR\n`;
+                response += `• PlayStation: ${context.userProfile.balances.playstation} SAR\n\n`;
+                
+                response += `🎯 **Decision Framework:**\n`;
+                response += `1. **Can you afford it?** Check if the bucket has enough funds\n`;
+                response += `2. **Is it essential?** Distinguish between needs and wants\n`;
+                response += `3. **Does it align with goals?** Consider your savings goals\n`;
+                response += `4. **Can it wait?** Delay non-urgent purchases when possible\n\n`;
+                
+                response += `⚖️ **Remember:** You make the final decision! This is just guidance to help you think through the purchase.\n`;
+                
+            } else if (lowerMessage.includes('transfer') || lowerMessage.includes('move')) {
+                response += `💰 **Transfer Decision Helper:**\n`;
+                response += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                response += `📊 **Current Distribution:**\n`;
+                response += `• Hangout: ${context.userProfile.balances.hangout} SAR (${((context.userProfile.balances.hangout/context.userProfile.totalBalance)*100).toFixed(1)}%)\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} SAR (${((context.userProfile.balances.savings/context.userProfile.totalBalance)*100).toFixed(1)}%)\n`;
+                response += `• PlayStation: ${context.userProfile.balances.playstation} SAR (${((context.userProfile.balances.playstation/context.userProfile.totalBalance)*100).toFixed(1)}%)\n\n`;
+                
+                response += `🎯 **Transfer Strategies:**\n`;
+                response += `• **To Savings:** Builds long-term wealth and helps reach goals\n`;
+                response += `• **From Hangout:** Use excess before it hits the limit\n`;
+                response += `• **To PlayStation:** For gaming/phone expenses only\n\n`;
+                
+                if (context.userProfile.balances.hangout > context.spendingAnalysis.hangoutLimit * 0.8) {
+                    response += `💡 **Tip:** Your hangout balance is high. Consider transferring excess to savings!\n`;
+                }
+                
+            } else if (lowerMessage.includes('warning') || lowerMessage.includes('issue') || lowerMessage.includes('problem')) {
+                response += `⚠️ **Financial Health Check:**\n`;
+                response += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                
+                let warningsFound = false;
+                
+                if (context.spendingAnalysis.hangoutRemaining < 20) {
+                    response += `🔴 **Critical:** Only ${context.spendingAnalysis.hangoutRemaining} SAR remaining in hangout this month!\n`;
+                    warningsFound = true;
+                } else if (context.spendingAnalysis.hangoutRemaining < 40) {
+                    response += `🟡 **Warning:** ${context.spendingAnalysis.hangoutRemaining} SAR remaining in hangout - monitor spending\n`;
+                    warningsFound = true;
+                }
+                
+                if (context.spendingAnalysis.monthlySpending > context.spendingAnalysis.hangoutLimit * 0.9) {
+                    response += `🔴 **Critical:** You've used 90%+ of your hangout limit this month!\n`;
+                    warningsFound = true;
+                } else if (context.spendingAnalysis.monthlySpending > context.spendingAnalysis.hangoutLimit * 0.7) {
+                    response += `🟡 **Warning:** You've used 70%+ of your hangout limit this month\n`;
+                    warningsFound = true;
+                }
+                
+                if (context.goals.length > 0) {
+                    const goal = context.goals[0];
+                    if (goal.progress < 20) {
+                        response += `🟡 **Goal Progress:** "${goal.name}" is only ${goal.progress}% complete\n`;
+                        warningsFound = true;
+                    }
+                }
+                
+                if (context.userProfile.balances.savings < 30 && context.userProfile.totalBalance > 100) {
+                    response += `🟡 **Savings:** Consider building up your savings (currently ${context.userProfile.balances.savings} SAR)\n`;
+                    warningsFound = true;
+                }
+                
+                if (!warningsFound) {
+                    response += `✅ **All Clear!** No major financial issues detected.\n`;
+                    response += `• Spending is within limits\n`;
+                    response += `• Balances are healthy\n`;
+                    response += `• You're managing your money well!\n`;
+                }
+                
+            } else {
+                response += `💡 **Personalized Financial Overview:**\n`;
+                response += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                response += `👋 **Hello!** Here's your current financial snapshot:\n\n`;
+                
+                response += `💰 **Your Money:**\n`;
+                response += `• Total: ${context.userProfile.totalBalance} SAR\n`;
+                response += `• Hangout: ${context.userProfile.balances.hangout} SAR (${context.spendingAnalysis.hangoutRemaining} SAR remaining)\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} SAR\n`;
+                response += `• PlayStation: ${context.userProfile.balances.playstation} SAR\n\n`;
+                
+                response += `📊 **This Month:**\n`;
+                response += `• Spent: ${context.spendingAnalysis.monthlySpending} SAR\n`;
+                response += `• Status: ${context.spendingAnalysis.monthlySpending < context.spendingAnalysis.hangoutLimit * 0.5 ? '✅ On track' : '⚠️ Monitor spending'}\n\n`;
+                
+                response += `🎯 **Quick Tips:**\n`;
+                response += `• Ask me about specific purchases for advice\n`;
+                response += `• Request spending analysis for detailed insights\n`;
+                response += `• Check for warnings to catch issues early\n`;
+                response += `• Transfer questions help optimize your money\n\n`;
+                
+                response += `💪 **You're doing great!** Keep tracking your spending and staying within limits.`;
+            }
+            
+            return response;
+        }
+
+        // Send AI message
+        window.sendAIMessage = async function() {
+            const input = document.getElementById('aiChatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addChatMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            const typingIndicator = addTypingIndicator();
+            
+            // Generate AI response
+            const response = await generateAIResponse(message);
+            
+            // Remove typing indicator and add response
+            removeTypingIndicator(typingIndicator);
+            addChatMessage(response, 'assistant');
+        }
+
+        // Add chat message to UI. Pass save=false when replaying history that's
+        // already in localStorage (e.g. on page load) to avoid duplicating it.
+        function addChatMessage(content, sender, save = true) {
+            const chatMessages = document.getElementById('aiChatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ai-${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'ai-message-content';
+            
+            // Convert URLs to links and format the content
+            const formattedContent = content
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            contentDiv.innerHTML = formattedContent;
+            messageDiv.appendChild(contentDiv);
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            if (save) {
+                chatHistory.push({ sender, content, ts: Date.now() });
+                saveChatHistory();
+            }
+        }
+
+        // Add typing indicator
+        function addTypingIndicator() {
+            const chatMessages = document.getElementById('aiChatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'ai-message ai-assistant typing-indicator';
+            typingDiv.id = 'aiTypingIndicator';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'ai-message-content';
+            contentDiv.innerHTML = '<p>🤔 Thinking...</p>';
+            
+            typingDiv.appendChild(contentDiv);
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return typingDiv;
+        }
+
+        // Remove typing indicator
+        function removeTypingIndicator(indicator) {
+            if (indicator && indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }
+
+        // Make functions globally accessible
+        window.addChatMessage = addChatMessage;
+        window.addTypingIndicator = addTypingIndicator;
+        window.removeTypingIndicator = removeTypingIndicator;
+
+        // Handle AI chat keypress
+        window.handleAIChatKeypress = function(event) {
+            if (event.key === 'Enter') {
+                sendAIMessage();
+            }
+        }
+
+        // Quick AI questions
+        window.askAIQuick = async function(type) {
+            let question = '';
+            
+            switch(type) {
+                case 'spending':
+                    question = "How am I doing with my spending this month? Give me a detailed analysis comparing my spending to last month and tell me if I'm on track.";
+                    break;
+                case 'warnings':
+                    question = "Check my current financial situation and warn me about any potential issues with my spending, savings, or budget.";
+                    break;
+                case 'advice':
+                    question = "What's your best advice for managing my money right now? Consider my current balances and goals.";
+                    break;
+            }
+            
+            if (question) {
+                document.getElementById('aiChatInput').value = question;
+                sendAIMessage();
+            }
+        }
+
+        // Enhanced spending analysis for AI
+        window.getEnhancedSpendingAnalysis = function() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            // Current month spending
+            const currentMonthSpending = history
+                .filter(item => {
+                    const itemDate = new Date(item.date);
+                    return item.type === 'Purchase' && 
+                           itemDate.getMonth() === currentMonth && 
+                           itemDate.getFullYear() === currentYear;
+                })
+                .reduce((sum, item) => sum + Math.abs(item.amount), 0);
+            
+            // Last month spending
+            const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+            const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            
+            const lastMonthSpending = history
+                .filter(item => {
+                    const itemDate = new Date(item.date);
+                    return item.type === 'Purchase' && 
+                           itemDate.getMonth() === lastMonth && 
+                           itemDate.getFullYear() === lastMonthYear;
+                })
+                .reduce((sum, item) => sum + Math.abs(item.amount), 0);
+            
+            // Spending by category
+            const spendingByCategory = {
+                hangout: 0,
+                savings: 0,
+                playstation: 0
+            };
+            
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    const itemDate = new Date(item.date);
+                    if (itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear) {
+                        if (spendingByCategory[item.category] !== undefined) {
+                            spendingByCategory[item.category] += Math.abs(item.amount);
+                        }
+                    }
+                }
+            });
+            
+            // Comparison
+            const monthOverMonthChange = lastMonthSpending > 0 
+                ? ((currentMonthSpending - lastMonthSpending) / lastMonthSpending) * 100 
+                : 0;
+            
+            return {
+                currentMonthSpending,
+                lastMonthSpending,
+                monthOverMonthChange,
+                spendingByCategory,
+                currentMonthName: now.toLocaleString('default', { month: 'long', year: 'numeric' }),
+                lastMonthName: new Date(lastMonthYear, lastMonth).toLocaleString('default', { month: 'long', year: 'numeric' })
+            };
+        }
+
+        // Purchase advice function
+        window.askPurchaseAdvice = async function(itemName, cost, fromBucket) {
+            const question = `Can I buy ${itemName} for ${cost} SAR from my ${fromBucket} money? Is this a good purchase decision given my current financial situation?`;
+            document.getElementById('aiChatInput').value = question;
+            sendAIMessage();
+        }
+
+        // Transfer advice function
+        window.askTransferAdvice = async function(fromBucket, toBucket, amount) {
+            const question = `Should I transfer ${amount} SAR from my ${fromBucket} to my ${toBucket}? What would be the impact on my financial goals?`;
+            document.getElementById('aiChatInput').value = question;
+            sendAIMessage();
+        }
+
+        // Ask AI advice from purchase modal
+        window.askPurchaseAdviceFromModal = function() {
+            const itemName = document.getElementById('purchaseName').value || 'this item';
+            const cost = document.getElementById('purchaseCost').value || 'unknown amount';
+            const fromBucket = document.getElementById('purchaseCategory').value;
+            
+            closeModal('purchaseModal');
+            switchTab('ai');
+            
+            setTimeout(() => {
+                askPurchaseAdvice(itemName, cost, fromBucket);
+            }, 300);
+        }
+
+        // Ask AI advice from transfer modal
+        window.askTransferAdviceFromModal = function() {
+            const fromBucket = document.getElementById('transferFrom').value;
+            const toBucket = document.getElementById('transferTo').value;
+            const amount = document.getElementById('transferAmount').value || 'unknown amount';
+            
+            closeModal('transferModal');
+            switchTab('ai');
+            
+            setTimeout(() => {
+                askTransferAdvice(fromBucket, toBucket, amount);
+            }, 300);
+        }
+
+        // Show AI popup warning
+        window.showAIPopupWarning = function(title, message, onAction = null) {
+            // Remove existing popup if any
+            const existingPopup = document.querySelector('.ai-popup');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+            
+            const popup = document.createElement('div');
+            popup.className = 'ai-popup';
+            popup.innerHTML = `
+                <div class="ai-popup-header">
+                    <div class="ai-popup-title">${title}</div>
+                    <button class="ai-popup-close" onclick="this.closest('.ai-popup').remove()">&times;</button>
+                </div>
+                <div class="ai-popup-content">${message}</div>
+                <div class="ai-popup-actions">
+                    <button class="ai-popup-btn secondary" onclick="this.closest('.ai-popup').remove()">Got it</button>
+                    ${onAction ? '<button class="ai-popup-btn primary" id="aiPopupAction">Ask AI</button>' : ''}
+                </div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            if (onAction) {
+                document.getElementById('aiPopupAction').addEventListener('click', () => {
+                    popup.remove();
+                    switchTab('ai');
+                    onAction();
+                });
+            }
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.remove();
+                }
+            }, 10000);
+        }
+
+        // Check for AI warnings on app load
+        window.checkAIWarnings = function() {
+            const context = getAIContext();
+            const warnings = [];
+            
+            // Check hangout spending
+            if (context.spendingAnalysis.hangoutRemaining < 20) {
+                warnings.push({
+                    title: "⚠️ Low Hangout Balance",
+                    message: `You only have ${context.spendingAnalysis.hangoutRemaining} SAR remaining in your Hangout bucket this month. Consider your spending carefully.`,
+                    action: () => {
+                        document.getElementById('aiChatInput').value = "I have very little hangout money left. What should I do?";
+                        sendAIMessage();
+                    }
+                });
+            }
+            
+            // Check monthly spending rate
+            const now = new Date();
+            const daysPassed = now.getDate();
+            const dailyAverage = context.spendingAnalysis.monthlySpending / daysPassed;
+            const daysRemaining = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - daysPassed;
+            const projectedSpending = dailyAverage * daysRemaining;
+            
+            if (dailyAverage > 15 && daysPassed > 10) {
+                warnings.push({
+                    title: "📈 High Spending Rate",
+                    message: `You're spending about ${dailyAverage.toFixed(1)} SAR per day on average. At this rate, you might run out of hangout money before the month ends.`,
+                    action: () => {
+                        document.getElementById('aiChatInput').value = "My spending rate seems high. Help me understand what's happening.";
+                        sendAIMessage();
+                    }
+                });
+            }
+            
+            // Check savings progress
+            if (context.goals.length > 0) {
+                const goal = context.goals[0];
+                if (goal.progress < 20 && context.userProfile.balances.savings > 0) {
+                    warnings.push({
+                        title: "🎯 Goal Progress",
+                        message: `Your savings goal "${goal.name}" is only ${goal.progress}% complete. Consider increasing your savings rate.`,
+                        action: () => {
+                            document.getElementById('aiChatInput').value = "How can I reach my savings goal faster?";
+                            sendAIMessage();
+                        }
+                    });
+                }
+            }
+            
+            // Show first warning if any
+            if (warnings.length > 0) {
+                const warning = warnings[0];
+                setTimeout(() => {
+                    showAIPopupWarning(warning.title, warning.message, warning.action);
+                }, 2000); // Show after 2 seconds
+            }
+        }
+
+        // Data structure
+        let currentUser = null;
+        let userPreferences = {
+            hangoutLimit: 140,
+            enablePlaystation: true,
+            useFixedAmounts: false,
+            hangoutPercent: 50,
+            savingsPercent: 37.5,
+            playstationPercent: 12.5,
+            fixedHangoutAmount: 35,
+            fixedSavingsAmount: 25,
+            weeklyHangoutBudget: 4, // Number of hangout days per week
+            hangoutBudgetPerDay: 15, // Target spending per hangout
+            minimumSavings: 0, // Minimum savings requirement (0 for most users, 50 for Asser)
+            allowanceSchedule: null // Allowance schedule (for Asser)
+        };
+        let balances = {
+            hangout: 0,
+            savings: 0,
+            playstation: 0
+        };
+
+        let history = [];
+        let historyKeys = []; // Store Firebase keys for editing/deleting
+        let goals = [];
+        let spendingChart = null;
+        let allowanceChart = null;
+        let balanceChart = null;
+
+        // AI chat memory — kept in memory only (per user) for the current session.
+        // It's NOT written to localStorage, so it resets automatically the moment
+        // the page is refreshed or the app is closed. While the app stays open,
+        // each logged-in user still has their own separate memory, isolated by username.
+        const CHAT_HISTORY_MAX = 50;
+        let chatHistory = []; // [{ sender: 'user'|'assistant', content: string, ts: number }]
+        const chatHistoryByUser = {}; // { username: [...messages] } — in-memory only, lost on refresh/close
+
+        function getChatHistoryKey() {
+            return currentUser?.username || 'guest';
+        }
+
+        function loadChatHistory() {
+            const key = getChatHistoryKey();
+            chatHistory = chatHistoryByUser[key] || [];
+        }
+
+        function saveChatHistory() {
+            // Keep only the most recent CHAT_HISTORY_MAX messages
+            if (chatHistory.length > CHAT_HISTORY_MAX) {
+                chatHistory = chatHistory.slice(-CHAT_HISTORY_MAX);
+            }
+            chatHistoryByUser[getChatHistoryKey()] = chatHistory;
+        }
+
+        // Render whatever is saved in chatHistory into the chat panel (used on load)
+        function renderSavedChatHistory() {
+            const chatMessages = document.getElementById('aiChatMessages');
+            if (!chatMessages) return;
+
+            if (chatHistory.length === 0) {
+                return; // keep the default welcome message that's already in the HTML
+            }
+
+            // Remove the default welcome message and replay saved history instead
+            chatMessages.innerHTML = '';
+            chatHistory.forEach(msg => {
+                addChatMessage(msg.content, msg.sender, false);
+            });
+        }
+
+        // Initialize
+        function init() {
+            // Check if user is logged in from localStorage
+            const savedUsername = localStorage.getItem('moneyManagerUsername');
+            if (savedUsername) {
+                currentUser = { username: savedUsername };
+                document.getElementById('userEmail').textContent = savedUsername;
+                document.getElementById('authSection').classList.remove('active');
+                document.getElementById('appContent').classList.add('active');
+                loadUserData();
+            } else {
+                currentUser = null;
+                document.getElementById('authSection').classList.add('active');
+                document.getElementById('appContent').classList.remove('active');
+            }
+        }
+
+        // Load user data
+        function loadUserData() {
+            if (!currentUser) return;
+
+            const username = currentUser.username;
+
+            // Load this user's on-device AI chat memory (last 50 messages)
+            loadChatHistory();
+            renderSavedChatHistory();
+
+            // Clear previous user data before loading new user
+            balances = {
+                hangout: 0,
+                savings: 0,
+                playstation: 0
+            };
+            history = [];
+            historyKeys = [];
+            goals = [];
+            
+            // Load user preferences
+            const prefsRef = ref(database, `users/${username}/preferences`);
+            get(prefsRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    userPreferences = snapshot.val();
+                    // Ensure minimumSavings is set (default to 0 if not present)
+                    if (userPreferences.minimumSavings === undefined) {
+                        userPreferences.minimumSavings = 0;
+                    }
+                    // Ensure allowanceSchedule is set for Asser
+                    if (username.toLowerCase() === 'asser' && !userPreferences.allowanceSchedule) {
+                        userPreferences.allowanceSchedule = {
+                            startDate: null, // Will be set on first allowance
+                            frequency: 4, // Every 4 weeks
+                            lastAllowanceDate: null
+                        };
+                        set(prefsRef, userPreferences);
+                    }
+                    // Update Asser's preferences to new format if needed
+                    if (username.toLowerCase() === 'asser') {
+                        // Update old format to new format
+                        if (userPreferences.allowanceSchedule && userPreferences.allowanceSchedule.dayOfWeek !== undefined) {
+                            userPreferences.allowanceSchedule = {
+                                startDate: null,
+                                frequency: 4, // Every 4 weeks
+                                lastAllowanceDate: userPreferences.allowanceSchedule.lastAllowanceDate || null
+                            };
+                            set(prefsRef, userPreferences);
+                        }
+                        // Update hangout limit to 35 if it's still at old value
+                        if (userPreferences.hangoutLimit === 40 || userPreferences.hangoutLimit === 50) {
+                            userPreferences.hangoutLimit = 35;
+                            set(prefsRef, userPreferences);
+                        }
+                        // Ensure default allowance amount is set
+                        if (!userPreferences.defaultAllowanceAmount) {
+                            userPreferences.defaultAllowanceAmount = 60;
+                            set(prefsRef, userPreferences);
+                        }
+                        // Update minimum savings to 25
+                        if (userPreferences.minimumSavings === 50) {
+                            userPreferences.minimumSavings = 25;
+                            set(prefsRef, userPreferences);
+                        }
+                    }
+                    updateUIForPreferences();
+                } else {
+                    // Use default preferences
+                    if (userPreferences.minimumSavings === undefined) {
+                        userPreferences.minimumSavings = 0;
+                    }
+                    if (username.toLowerCase() === 'asser' && !userPreferences.allowanceSchedule) {
+                        userPreferences.allowanceSchedule = {
+                            startDate: null,
+                            frequency: 4, // Every 4 weeks
+                            lastAllowanceDate: null
+                        };
+                        // Set Asser's complete default preferences
+                        userPreferences.hangoutLimit = 35;
+                        userPreferences.enablePlaystation = false;
+                        userPreferences.useFixedAmounts = true;
+                        userPreferences.fixedHangoutAmount = 35;
+                        userPreferences.fixedSavingsAmount = 25;
+                        userPreferences.defaultAllowanceAmount = 60;
+                        userPreferences.minimumSavings = 25;
+                        set(prefsRef, userPreferences);
+                    }
+                    updateUIForPreferences();
+                }
+            });
+
+            const balancesRef = ref(database, `users/${username}/balances`);
+            onValue(balancesRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    balances = snapshot.val();
+                    updateUI();
+                } else {
+                    // Initialize with default values
+                    set(balancesRef, balances);
+                }
+            });
+
+            const historyRef = ref(database, `users/${username}/history`);
+            onValue(historyRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const historyData = snapshot.val();
+                    history = Object.values(historyData).reverse();
+                    historyKeys = Object.keys(historyData).reverse();
+                    updateActivityList();
+                    updateCharts();
+                } else {
+                    history = [];
+                    historyKeys = [];
+                    updateActivityList();
+                    updateCharts();
+                }
+            });
+
+            const goalsRef = ref(database, `users/${username}/goals`);
+            onValue(goalsRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    goals = Object.values(snapshot.val());
+                    updateGoalsList();
+                } else {
+                    goals = [];
+                    updateGoalsList();
+                }
+                
+                // Initialize AI and check for warnings after data is loaded
+                initializeGroqAI();
+                setTimeout(checkAIWarnings, 3000);
+            });
+        }
+
+        // Update UI
+        function updateUI() {
+            const total = balances.hangout + balances.savings + balances.playstation;
+            document.getElementById('totalBalance').textContent = `${total} SAR`;
+            document.getElementById('hangoutBalance').textContent = `${balances.hangout} SAR`;
+            document.getElementById('savingsBalance').textContent = `${balances.savings} SAR`;
+            document.getElementById('playstationBalance').textContent = `${balances.playstation} SAR`;
+
+            // Check Hangout limit
+            const hangoutLimit = document.getElementById('hangoutLimit');
+            if (balances.hangout > userPreferences.hangoutLimit) {
+                hangoutLimit.innerHTML = `<span class="limit-warning">⚠️ Over limit! ${balances.hangout - userPreferences.hangoutLimit} SAR should move to Savings</span>`;
+            } else {
+                hangoutLimit.textContent = `Limit: ${userPreferences.hangoutLimit} SAR (${userPreferences.hangoutLimit - balances.hangout} SAR remaining)`;
+            }
+
+            // Check Savings minimum for Asser
+            const savingsLimit = document.getElementById('savingsLimit');
+            const minimumSavings = userPreferences.minimumSavings || 0;
+            if (minimumSavings > 0) {
+                if (balances.savings < minimumSavings) {
+                    savingsLimit.innerHTML = `<span class="limit-warning">⚠️ Below minimum! ${minimumSavings - balances.savings} SAR below required ${minimumSavings} SAR</span>`;
+                } else {
+                    savingsLimit.textContent = `Min: ${minimumSavings} SAR (${balances.savings - minimumSavings} SAR available)`;
+                }
+            } else {
+                savingsLimit.textContent = 'Flexible savings';
+            }
+
+            // Update allowance countdown for Asser
+            const countdownElement = document.getElementById('allowanceCountdown');
+            if (currentUser && currentUser.username.toLowerCase() === 'asser' && userPreferences.allowanceSchedule) {
+                const allowanceInfo = getDaysUntilNextAllowance();
+                if (allowanceInfo && allowanceInfo.daysRemaining >= 0) {
+                    countdownElement.style.display = 'flex';
+                    document.getElementById('daysRemaining').textContent = allowanceInfo.daysRemaining;
+                    
+                    // Show reminder
+                    showAllowanceReminder();
+                } else {
+                    countdownElement.style.display = 'none';
+                }
+            } else {
+                countdownElement.style.display = 'none';
+            }
+
+            // Update edit modal with current values
+            document.getElementById('editHangout').placeholder = balances.hangout;
+            document.getElementById('editSavings').placeholder = balances.savings;
+            document.getElementById('editPlaystation').placeholder = balances.playstation;
+        }
+
+        // Update activity list
+        function updateActivityList() {
+            const activityList = document.getElementById('activityList');
+            if (history.length === 0) {
+                activityList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No activity yet</div>';
+                return;
+            }
+
+            activityList.innerHTML = history.slice(0, 10).map((item, index) => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-type">${item.type}</div>
+                        <div class="history-date">${new Date(item.date).toLocaleDateString()}</div>
+                        ${item.notes ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.notes}</div>` : ''}
+                    </div>
+                    <div class="history-amount ${item.amount >= 0 ? 'positive' : 'negative'}">
+                        ${item.amount >= 0 ? '+' : ''}${item.amount} SAR
+                    </div>
+                    <div class="history-actions">
+                        <button class="history-action-btn edit" onclick="openEditTransaction(${index})">✏️</button>
+                        <button class="history-action-btn delete" onclick="openDeleteModal(${index})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update goals list
+        function updateGoalsList() {
+            const goalsList = document.getElementById('goalsList');
+            if (goals.length === 0) {
+                goalsList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No goals yet</div>';
+                return;
+            }
+
+            const totalSavings = balances.savings;
+            goalsList.innerHTML = goals.map(goal => {
+                const progress = Math.min((totalSavings / goal.amount) * 100, 100);
+                const remaining = Math.max(goal.amount - totalSavings, 0);
+                return `
+                    <div class="goal-card">
+                        <div class="goal-header">
+                            <div class="goal-name">${goal.name}</div>
+                            <div class="goal-amount">${goal.amount} SAR</div>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="goal-progress-bar" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="goal-status">
+                            ${progress >= 100 ? '🎉 Goal reached!' : `${remaining} SAR to go`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update charts
+        function updateCharts() {
+            const spendingByCategory = {
+                hangout: 0,
+                savings: 0,
+                playstation: 0
+            };
+
+            const allowanceOverTime = [];
+            const totalAllowance = [];
+            let cumulativeAllowance = 0;
+
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    spendingByCategory[item.category] += Math.abs(item.amount);
+                }
+                if (item.type === 'Allowance') {
+                    cumulativeAllowance += item.amount;
+                    allowanceOverTime.push({
+                        date: new Date(item.date).toLocaleDateString(),
+                        amount: item.amount,
+                        cumulative: cumulativeAllowance
+                    });
+                }
+            });
+
+            // Spending Chart - Enhanced
+            const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+            if (spendingChart) {
+                spendingChart.destroy();
+            }
+            
+            const hasSpending = spendingByCategory.hangout > 0 || spendingByCategory.savings > 0 || spendingByCategory.playstation > 0;
+            const spendingData = hasSpending ? 
+                [spendingByCategory.hangout, spendingByCategory.savings, spendingByCategory.playstation] : 
+                [1, 1, 1]; // Placeholder if no spending
+            const spendingLabels = hasSpending ? 
+                ['Hangout', 'Savings', 'PlayStation'] : 
+                ['No spending yet', 'No spending yet', 'No spending yet'];
+
+            spendingChart = new Chart(spendingCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: spendingLabels,
+                    datasets: [{
+                        data: spendingData,
+                        backgroundColor: [
+                            'rgba(102, 126, 234, 0.9)',
+                            'rgba(46, 213, 115, 0.9)',
+                            'rgba(255, 107, 107, 0.9)'
+                        ],
+                        borderColor: [
+                            'rgba(102, 126, 234, 1)',
+                            'rgba(46, 213, 115, 1)',
+                            'rgba(255, 107, 107, 1)'
+                        ],
+                        borderWidth: 3,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'white',
+                                font: { size: 13, weight: '600' },
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} SAR (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Allowance Chart - Enhanced
+            const allowanceCtx = document.getElementById('allowanceChart').getContext('2d');
+            if (allowanceChart) {
+                allowanceChart.destroy();
+            }
+
+            const recentAllowance = allowanceOverTime.slice(-8);
+            const allowanceLabels = recentAllowance.map(a => a.date);
+            const allowanceAmounts = recentAllowance.map(a => a.amount);
+            const cumulativeAmounts = recentAllowance.map(a => a.cumulative);
+
+            allowanceChart = new Chart(allowanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: allowanceLabels.length > 0 ? allowanceLabels : ['No data yet'],
+                    datasets: [
+                        {
+                            label: 'Allowance',
+                            data: allowanceAmounts.length > 0 ? allowanceAmounts : [0],
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false
+                        },
+                        {
+                            label: 'Total Saved',
+                            data: cumulativeAmounts.length > 0 ? cumulativeAmounts : [0],
+                            backgroundColor: 'rgba(46, 213, 115, 0.6)',
+                            borderColor: 'rgba(46, 213, 115, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: 'white',
+                                font: { size: 12, weight: '600' },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: { 
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            ticks: { 
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: { 
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Balance Trend Chart
+            const balanceCtx = document.getElementById('balanceTrendChart').getContext('2d');
+            if (balanceChart) {
+                balanceChart.destroy();
+            }
+
+            // Get balance history from transactions
+            const balanceHistory = [];
+            let runningBalance = 0;
+            const reversedHistory = [...history].reverse(); // Get chronological order
+
+            reversedHistory.forEach(item => {
+                if (item.category) {
+                    runningBalance += item.amount;
+                } else if (item.type === 'Allowance') {
+                    runningBalance += item.amount;
+                }
+                balanceHistory.push({
+                    date: new Date(item.date).toLocaleDateString(),
+                    balance: runningBalance
+                });
+            });
+
+            // Add current balance
+            balanceHistory.push({
+                date: 'Today',
+                balance: balances.hangout + balances.savings + balances.playstation
+            });
+
+            balanceChart = new Chart(balanceCtx, {
+                type: 'line',
+                data: {
+                    labels: balanceHistory.slice(-10).map(b => b.date),
+                    datasets: [{
+                        label: 'Total Balance',
+                        data: balanceHistory.slice(-10).map(b => b.balance),
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Balance: ${context.parsed.y} SAR`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: { 
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            ticks: { 
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: { 
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart tab switching (removed - now showing all charts)
+        window.switchChartTab = function(tab) {
+            // All charts are now shown by default
+        };
+
+        // Main tab switching
+        window.switchTab = function(tab) {
+            // Update bottom navigation
+            document.querySelectorAll('.bottom-nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(`nav-${tab}`).classList.add('active');
+
+            document.getElementById('activitySection').style.display = tab === 'activity' ? 'block' : 'none';
+            document.getElementById('chartsSection').style.display = tab === 'charts' ? 'block' : 'none';
+            document.getElementById('aiSection').style.display = tab === 'ai' ? 'block' : 'none';
+        };
+
+        // Add to history
+        function addToHistory(type, amount, category = null, notes = null) {
+            if (!currentUser) return;
+            const historyRef = ref(database, `users/${currentUser.username}/history`);
+            const newEntry = {
+                type,
+                amount,
+                category,
+                notes,
+                date: new Date().toISOString()
+            };
+            push(historyRef, newEntry);
+        }
+
+        // Check and enforce Hangout limit
+        function checkHangoutLimit() {
+            if (!currentUser) return;
+            if (balances.hangout > userPreferences.hangoutLimit) {
+                const excess = balances.hangout - userPreferences.hangoutLimit;
+                balances.hangout = userPreferences.hangoutLimit;
+                balances.savings += excess;
+                set(ref(database, `users/${currentUser.username}/balances`), balances);
+                addToHistory('Auto Transfer', excess, 'hangout', `Moved ${excess} SAR from Hangout to Savings (limit exceeded)`);
+                showNotification(`Moved ${excess} SAR to Savings (Hangout limit exceeded)`);
+            }
+        }
+
+        // Modal functions
+        window.openAllowanceModal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            document.getElementById('allowanceModal').classList.add('active');
+            
+            // Set default amount based on user preferences
+            const defaultAmount = userPreferences.defaultAllowanceAmount || 60;
+            document.getElementById('allowanceAmount').value = defaultAmount;
+            
+            // Update button styles
+            document.querySelectorAll('.amount-option-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.getElementById(`amount${defaultAmount}`).classList.add('selected');
+            
+            autoCalculateSplit(); // Auto-calculate when modal opens
+        };
+
+        window.openAddMoneyModal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            document.getElementById('addMoneyModal').classList.add('active');
+        };
+
+        window.openTransferModal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            document.getElementById('transferModal').classList.add('active');
+        };
+
+        window.openPurchaseModal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            document.getElementById('purchaseModal').classList.add('active');
+        };
+
+        window.openEditModal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            document.getElementById('editModal').classList.add('active');
+        };
+
+        window.openGoalsModal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            document.getElementById('goalsModal').classList.add('active');
+        };
+
+        window.openSettingsModal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            document.getElementById('settingsModal').classList.add('active');
+        };
+
+        window.saveSettings = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            closeModal('settingsModal');
+            showNotification('Settings saved successfully!');
+        };
+
+        // Auth modal functions
+        window.openLoginModal = function() {
+            document.getElementById('loginModal').classList.add('active');
+        };
+
+        window.openSignupModal = function() {
+            document.getElementById('signupModal').classList.add('active');
+        };
+
+        // Login function
+        window.login = function() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                showNotification('Please fill in all fields', true);
+                return;
+            }
+
+            // Check if user exists in database
+            const userRef = ref(database, `users_auth/${username}`);
+            get(userRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    if (userData.password === password) {
+                        // Login successful
+                        currentUser = { username: username };
+                        localStorage.setItem('moneyManagerUsername', username);
+                        document.getElementById('userEmail').textContent = username;
+                        document.getElementById('authSection').classList.remove('active');
+                        document.getElementById('appContent').classList.add('active');
+                        closeModal('loginModal');
+                        
+                        // Clear previous user data
+                        balances = {
+                            hangout: 0,
+                            savings: 0,
+                            playstation: 0
+                        };
+                        history = [];
+                        historyKeys = [];
+                        goals = [];
+                        
+                        // Special handling for Asser
+                        if (username.toLowerCase() === 'asser') {
+                            // Set Asser's default preferences immediately
+                            userPreferences = {
+                                hangoutLimit: 35, // Updated to match default hangout amount
+                                enablePlaystation: false,
+                                useFixedAmounts: true,
+                                fixedHangoutAmount: 35,
+                                fixedSavingsAmount: 25,
+                                defaultAllowanceAmount: 60, // Default allowance 60 SAR
+                                weeklyHangoutBudget: 4,
+                                hangoutBudgetPerDay: 15,
+                                minimumSavings: 25,
+                                allowanceSchedule: {
+                                    startDate: null, // Will be set on first allowance
+                                    frequency: 4, // Every 4 weeks
+                                    lastAllowanceDate: null
+                                }
+                            };
+                        } else {
+                            // Reset to default for other users
+                            userPreferences = {
+                                hangoutLimit: 140,
+                                enablePlaystation: true,
+                                hangoutPercent: 50,
+                                savingsPercent: 37.5,
+                                playstationPercent: 12.5,
+                                minimumSavings: 0,
+                                allowanceSchedule: null
+                            };
+                        }
+                        
+                        loadUserData();
+                        showNotification('Login successful!');
+                        document.getElementById('loginUsername').value = '';
+                        document.getElementById('loginPassword').value = '';
+                    } else {
+                        showNotification('Incorrect password', true);
+                    }
+                } else {
+                    showNotification('User not found', true);
+                }
+            }).catch((error) => {
+                showNotification('Login failed: ' + error.message, true);
+            });
+        };
+
+        // Signup function
+        window.signup = function() {
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+
+            if (!username || !password || !confirmPassword) {
+                showNotification('Please fill in all fields', true);
+                return;
+            }
+
+            if (username.length < 3) {
+                showNotification('Username must be at least 3 characters', true);
+                return;
+            }
+
+            if (password.length < 4) {
+                showNotification('Password must be at least 4 characters', true);
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', true);
+                return;
+            }
+
+            // Check if username already exists
+            const userRef = ref(database, `users_auth/${username}`);
+            get(userRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    showNotification('Username already taken', true);
+                } else {
+                    // Create new user
+                    set(userRef, {
+                        username: username,
+                        password: password,
+                        createdAt: new Date().toISOString()
+                    }).then(() => {
+                        closeModal('signupModal');
+                        showNotification('Account created successfully!');
+                        document.getElementById('signupUsername').value = '';
+                        document.getElementById('signupPassword').value = '';
+                        document.getElementById('signupConfirmPassword').value = '';
+                        
+                        // Auto-login and show setup
+                        currentUser = { username: username };
+                        localStorage.setItem('moneyManagerUsername', username);
+                        document.getElementById('userEmail').textContent = username;
+                        document.getElementById('authSection').classList.remove('active');
+                        document.getElementById('appContent').classList.add('active');
+                        
+                        // Clear previous user data
+                        balances = {
+                            hangout: 0,
+                            savings: 0,
+                            playstation: 0
+                        };
+                        history = [];
+                        historyKeys = [];
+                        goals = [];
+                        
+                        // Special setup for Asser
+                        if (username.toLowerCase() === 'asser') {
+                            // Set Asser's default preferences immediately
+                            userPreferences = {
+                                hangoutLimit: 35, // Updated to match default hangout amount
+                                enablePlaystation: false,
+                                useFixedAmounts: true,
+                                fixedHangoutAmount: 35,
+                                fixedSavingsAmount: 25,
+                                defaultAllowanceAmount: 60, // Default allowance 60 SAR
+                                weeklyHangoutBudget: 4,
+                                hangoutBudgetPerDay: 15,
+                                minimumSavings: 25,
+                                allowanceSchedule: {
+                                    startDate: null, // Will be set on first allowance
+                                    frequency: 4, // Every 4 weeks
+                                    lastAllowanceDate: null
+                                }
+                            };
+                            // Save Asser's preferences to database
+                            const prefsRef = ref(database, `users/Asser/preferences`);
+                            set(prefsRef, userPreferences);
+                            loadUserData();
+                            showNotification('Welcome Asser! Your account is configured for smart weekly budgeting.');
+                        } else {
+                            // Reset to default for other users
+                            userPreferences = {
+                                hangoutLimit: 140,
+                                enablePlaystation: true,
+                                hangoutPercent: 50,
+                                savingsPercent: 37.5,
+                                playstationPercent: 12.5,
+                                minimumSavings: 0,
+                                allowanceSchedule: null
+                            };
+                            // Show setup modal for other users
+                            openSetupModal();
+                        }
+                    }).catch((error) => {
+                        showNotification('Signup failed: ' + error.message, true);
+                    });
+                }
+            }).catch((error) => {
+                showNotification('Signup failed: ' + error.message, true);
+            });
+        };
+
+        // Logout function
+        window.logout = function() {
+            localStorage.removeItem('moneyManagerUsername');
+            currentUser = null;
+            userPreferences = {
+                hangoutLimit: 140,
+                enablePlaystation: true,
+                hangoutPercent: 50,
+                savingsPercent: 37.5,
+                playstationPercent: 12.5,
+                minimumSavings: 0,
+                allowanceSchedule: null
+            };
+            balances = {
+                hangout: 0,
+                savings: 0,
+                playstation: 0
+            };
+            history = [];
+            historyKeys = [];
+            goals = [];
+            chatHistory = [];
+
+            // Reset AI chat panel back to the default welcome message
+            const chatMessagesEl = document.getElementById('aiChatMessages');
+            if (chatMessagesEl) {
+                chatMessagesEl.innerHTML = `
+                    <div class="ai-message ai-assistant">
+                        <div class="ai-message-content">
+                            <p>👋 Hi! I'm your AI financial assistant. I can help you with:</p>
+                            <ul>
+                                <li>💡 Purchase advice ("Can I buy X with my savings?")</li>
+                                <li>💰 Transfer suggestions ("Should I move PlayStation money to savings?")</li>
+                                <li>📊 Spending analysis ("How am I doing this month?")</li>
+                                <li>⚠️ Budget warnings and tips</li>
+                            </ul>
+                            <p>Ask me anything about your money!</p>
+                        </div>
+                    </div>`;
+            }
+            
+            // Clear UI
+            document.getElementById('totalBalance').textContent = '0 SAR';
+            document.getElementById('hangoutBalance').textContent = '0 SAR';
+            document.getElementById('savingsBalance').textContent = '0 SAR';
+            document.getElementById('playstationBalance').textContent = '0 SAR';
+            document.getElementById('allowanceCountdown').style.display = 'none';
+            
+            document.getElementById('authSection').classList.add('active');
+            document.getElementById('appContent').classList.remove('active');
+            showNotification('Logged out successfully');
+        };
+
+        // Setup modal functions
+        window.openSetupModal = function() {
+            document.getElementById('setupModal').classList.add('active');
+        };
+
+        window.toggleSetupAllowanceType = function() {
+            const type = document.getElementById('setupAllowanceType').value;
+            if (type === 'fixed') {
+                document.getElementById('setupPercentageSettings').style.display = 'none';
+                document.getElementById('setupFixedAmountSettings').style.display = 'block';
+            } else {
+                document.getElementById('setupPercentageSettings').style.display = 'block';
+                document.getElementById('setupFixedAmountSettings').style.display = 'none';
+            }
+        };
+
+        window.completeSetup = function() {
+            const hangoutLimit = parseInt(document.getElementById('setupHangoutLimit').value) || 140;
+            const enablePlaystation = document.getElementById('setupEnablePlaystation').value === 'true';
+            const allowanceType = document.getElementById('setupAllowanceType').value;
+            
+            let newPreferences = {
+                hangoutLimit,
+                enablePlaystation,
+                weeklyHangoutBudget: 4,
+                hangoutBudgetPerDay: 15,
+                minimumSavings: 0 // Default to 0 for regular users
+            };
+
+            // Handle fixed amounts vs percentages
+            if (allowanceType === 'fixed') {
+                const fixedHangout = parseInt(document.getElementById('setupFixedHangout').value) || 35;
+                const fixedSavings = parseInt(document.getElementById('setupFixedSavings').value) || 25;
+                
+                newPreferences.useFixedAmounts = true;
+                newPreferences.fixedHangoutAmount = fixedHangout;
+                newPreferences.fixedSavingsAmount = fixedSavings;
+            } else {
+                const hangoutPercent = parseFloat(document.getElementById('setupHangoutPercent').value) || 50;
+                const savingsPercent = parseFloat(document.getElementById('setupSavingsPercent').value) || 37.5;
+                const playstationPercent = parseFloat(document.getElementById('setupPlaystationPercent').value) || 12.5;
+
+                // Validate percentages
+                if (Math.abs(hangoutPercent + savingsPercent + playstationPercent - 100) > 0.1) {
+                    showNotification('Percentages must add up to 100%', true);
+                    return;
+                }
+
+                newPreferences.useFixedAmounts = false;
+                newPreferences.hangoutPercent = hangoutPercent;
+                newPreferences.savingsPercent = savingsPercent;
+                newPreferences.playstationPercent = playstationPercent;
+            }
+
+            userPreferences = newPreferences;
+
+            // Save preferences to database
+            const prefsRef = ref(database, `users/${currentUser.username}/preferences`);
+            set(prefsRef, userPreferences).then(() => {
+                closeModal('setupModal');
+                showNotification('Settings saved! Setting up your account...');
+                loadUserData();
+                updateUIForPreferences();
+            }).catch((error) => {
+                showNotification('Failed to save settings: ' + error.message, true);
+            });
+        };
+
+        // Settings modal functions
+        window.openSettingsModal = function() {
+            // Load current preferences
+            document.getElementById('settingsHangoutLimit').value = userPreferences.hangoutLimit;
+            document.getElementById('settingsEnablePlaystation').value = userPreferences.enablePlaystation.toString();
+            
+            // Show appropriate settings based on fixed amounts vs percentages
+            if (userPreferences.useFixedAmounts) {
+                document.getElementById('percentageSettings').style.display = 'none';
+                document.getElementById('fixedAmountSettings').style.display = 'block';
+                document.getElementById('settingsFixedHangout').value = userPreferences.fixedHangoutAmount;
+                document.getElementById('settingsFixedSavings').value = userPreferences.fixedSavingsAmount;
+            } else {
+                document.getElementById('percentageSettings').style.display = 'block';
+                document.getElementById('fixedAmountSettings').style.display = 'none';
+                document.getElementById('settingsHangoutPercent').value = userPreferences.hangoutPercent;
+                document.getElementById('settingsSavingsPercent').value = userPreferences.savingsPercent;
+                document.getElementById('settingsPlaystationPercent').value = userPreferences.playstationPercent;
+            }
+            
+            document.getElementById('settingsModal').classList.add('active');
+        };
+
+        window.saveSettings = function() {
+            const hangoutLimit = parseInt(document.getElementById('settingsHangoutLimit').value) || 140;
+            const enablePlaystation = document.getElementById('settingsEnablePlaystation').value === 'true';
+            
+            let newPreferences = {
+                hangoutLimit,
+                enablePlaystation,
+                weeklyHangoutBudget: 4,
+                hangoutBudgetPerDay: 15,
+                minimumSavings: userPreferences.minimumSavings || 0 // Preserve existing minimumSavings
+            };
+
+            // Handle fixed amounts vs percentages
+            if (userPreferences.useFixedAmounts) {
+                const fixedHangout = parseInt(document.getElementById('settingsFixedHangout').value) || 35;
+                const fixedSavings = parseInt(document.getElementById('settingsFixedSavings').value) || 25;
+                
+                newPreferences.useFixedAmounts = true;
+                newPreferences.fixedHangoutAmount = fixedHangout;
+                newPreferences.fixedSavingsAmount = fixedSavings;
+            } else {
+                const hangoutPercent = parseFloat(document.getElementById('settingsHangoutPercent').value) || 50;
+                const savingsPercent = parseFloat(document.getElementById('settingsSavingsPercent').value) || 37.5;
+                const playstationPercent = parseFloat(document.getElementById('settingsPlaystationPercent').value) || 12.5;
+
+                // Validate percentages
+                if (Math.abs(hangoutPercent + savingsPercent + playstationPercent - 100) > 0.1) {
+                    showNotification('Percentages must add up to 100%', true);
+                    return;
+                }
+
+                newPreferences.useFixedAmounts = false;
+                newPreferences.hangoutPercent = hangoutPercent;
+                newPreferences.savingsPercent = savingsPercent;
+                newPreferences.playstationPercent = playstationPercent;
+            }
+
+            userPreferences = newPreferences;
+
+            // Save preferences to database
+            const prefsRef = ref(database, `users/${currentUser.username}/preferences`);
+            set(prefsRef, userPreferences).then(() => {
+                closeModal('settingsModal');
+                showNotification('Settings updated!');
+                updateUIForPreferences();
+            }).catch((error) => {
+                showNotification('Failed to save settings: ' + error.message, true);
+            });
+        };
+
+        // Update UI based on user preferences
+        function updateUIForPreferences() {
+            // Show/hide PlayStation card based on preference
+            const psCard = document.querySelector('.balance-card.playstation');
+            if (psCard) {
+                psCard.style.display = userPreferences.enablePlaystation ? 'block' : 'none';
+            }
+
+            // Show/hide PlayStation slider based on preference
+            const psSliderContainer = document.getElementById('playstationSliderContainer');
+            if (psSliderContainer) {
+                psSliderContainer.style.display = userPreferences.enablePlaystation ? 'block' : 'none';
+            }
+
+            // Update percentage labels
+            if (userPreferences.useFixedAmounts) {
+                document.getElementById('hangoutPercentLabel').textContent = `${userPreferences.fixedHangoutAmount} SAR`;
+                document.getElementById('savingsPercentLabel').textContent = `${userPreferences.fixedSavingsAmount} SAR`;
+                document.getElementById('playstationPercentLabel').textContent = 'Remaining';
+            } else {
+                document.getElementById('hangoutPercentLabel').textContent = `${userPreferences.hangoutPercent}%`;
+                document.getElementById('savingsPercentLabel').textContent = `${userPreferences.savingsPercent}%`;
+                document.getElementById('playstationPercentLabel').textContent = `${userPreferences.playstationPercent}%`;
+            }
+
+            // Update limit display
+            const limitElement = document.getElementById('hangoutLimit');
+            if (limitElement) {
+                limitElement.textContent = `Limit: ${userPreferences.hangoutLimit} SAR`;
+            }
+
+            // Update PlayStation options in dropdowns
+            const psOptions = document.querySelectorAll('option[value="playstation"]');
+            psOptions.forEach(option => {
+                option.style.display = userPreferences.enablePlaystation ? 'block' : 'none';
+            });
+        }
+
+
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        };
+
+        // Open edit transaction modal
+        window.openEditTransaction = function(index) {
+            const item = history[index];
+            const key = historyKeys[index];
+            
+            document.getElementById('editTransactionId').value = key;
+            document.getElementById('editTransactionType').value = item.type;
+            document.getElementById('editTransactionAmount').value = Math.abs(item.amount);
+            document.getElementById('editTransactionNotes').value = item.notes || '';
+            
+            // Show/hide category based on transaction type
+            const categoryGroup = document.getElementById('editTransactionCategoryGroup');
+            if (item.type === 'Purchase' || item.type === 'Add Money' || item.type === 'Transfer') {
+                categoryGroup.style.display = 'block';
+                document.getElementById('editTransactionCategory').value = item.category || 'hangout';
+            } else {
+                categoryGroup.style.display = 'none';
+            }
+            
+            document.getElementById('editTransactionModal').classList.add('active');
+        };
+
+        // Save transaction edit
+        window.saveTransactionEdit = function() {
+            const key = document.getElementById('editTransactionId').value;
+            const amount = parseInt(document.getElementById('editTransactionAmount').value);
+            const category = document.getElementById('editTransactionCategory').value;
+            const notes = document.getElementById('editTransactionNotes').value;
+            
+            if (isNaN(amount) || amount < 0) {
+                showNotification('Please enter a valid amount', true);
+                return;
+            }
+            
+            // Get original transaction
+            const originalIndex = historyKeys.indexOf(key);
+            const originalItem = history[originalIndex];
+            
+            // Calculate the difference and update balances
+            const originalAmount = Math.abs(originalItem.amount);
+            const amountDiff = amount - originalAmount;
+            
+            // Reverse the original transaction effect
+            if (originalItem.category) {
+                balances[originalItem.category] -= originalItem.amount;
+            }
+            
+            // Apply the new transaction
+            const newAmount = originalItem.amount >= 0 ? amount : -amount;
+            if (category) {
+                balances[category] += newAmount;
+            }
+            
+            // Update the transaction in Firebase
+            const transactionRef = ref(database, `users/${currentUser.username}/history/${key}`);
+            update(transactionRef, {
+                amount: newAmount,
+                category: category,
+                notes: notes
+            });
+            
+            // Update balances
+            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            checkHangoutLimit();
+            
+            closeModal('editTransactionModal');
+            showNotification('Transaction updated successfully!');
+        };
+
+        // Open delete modal
+        window.openDeleteModal = function(index) {
+            const key = historyKeys[index];
+            document.getElementById('deleteTransactionId').value = key;
+            document.getElementById('deleteModal').classList.add('active');
+        };
+
+        // Confirm delete
+        window.confirmDelete = function() {
+            const key = document.getElementById('deleteTransactionId').value;
+            
+            // Get the transaction to reverse its effect on balances
+            const index = historyKeys.indexOf(key);
+            const item = history[index];
+            
+            // Reverse the transaction effect
+            if (item.category) {
+                balances[item.category] -= item.amount;
+            }
+            
+            // Delete from Firebase
+            const transactionRef = ref(database, `users/${currentUser.username}/history/${key}`);
+            set(transactionRef, null);
+            
+            // Update balances
+            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            checkHangoutLimit();
+            
+            closeModal('deleteModal');
+            showNotification('Transaction deleted');
+        };
+
+        // Select allowance amount
+        window.selectAllowanceAmount = function(amount) {
+            document.getElementById('allowanceAmount').value = amount;
+            
+            // Update button styles
+            document.querySelectorAll('.amount-option-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.getElementById(`amount${amount}`).classList.add('selected');
+            
+            // Auto calculate split
+            autoCalculateSplit();
+        };
+
+        // Auto calculate allowance split based on total amount
+        window.autoCalculateSplit = function() {
+            const inputElement = document.getElementById('allowanceAmount');
+            const total = parseInt(inputElement.value) || 60;
+            
+            // Ensure we have a valid total
+            if (isNaN(total) || total <= 0) {
+                return;
+            }
+            
+            let hangout, savings, playstation;
+            
+            // Use fixed amounts for Asser, percentages for others
+            if (userPreferences.useFixedAmounts) {
+                hangout = userPreferences.fixedHangoutAmount || 35;
+                savings = userPreferences.fixedSavingsAmount || 25;
+                if (userPreferences.enablePlaystation) {
+                    playstation = total - hangout - savings;
+                } else {
+                    // If PlayStation is disabled, remaining goes to savings (after fixed amounts)
+                    playstation = 0;
+                    savings = userPreferences.fixedSavingsAmount + (total - hangout - userPreferences.fixedSavingsAmount);
+                }
+            } else {
+                // Calculate splits based on user preferences
+                hangout = Math.round(total * (userPreferences.hangoutPercent / 100));
+                savings = Math.round(total * (userPreferences.savingsPercent / 100));
+                
+                if (userPreferences.enablePlaystation) {
+                    playstation = Math.round(total * (userPreferences.playstationPercent / 100));
+                } else {
+                    // If PlayStation is disabled, remaining goes to savings
+                    playstation = 0;
+                    savings = total - hangout;
+                }
+            }
+            
+            // Update sliders
+            document.getElementById('hangoutSlider').value = hangout;
+            document.getElementById('hangoutSlider').max = total;
+            document.getElementById('savingsSlider').value = savings;
+            document.getElementById('savingsSlider').max = total;
+            document.getElementById('playstationSlider').value = playstation;
+            document.getElementById('playstationSlider').max = total;
+            
+            // Update display
+            document.getElementById('hangoutSplit').textContent = `${hangout} SAR`;
+            document.getElementById('savingsSplit').textContent = `${savings} SAR`;
+            document.getElementById('playstationSplit').textContent = `${playstation} SAR`;
+        };
+
+        // Update allowance split display
+        window.updateAllowanceSplit = function() {
+            const total = parseInt(document.getElementById('allowanceAmount').value) || 120;
+            const hangout = parseInt(document.getElementById('hangoutSlider').value);
+            const savings = parseInt(document.getElementById('savingsSlider').value);
+            const playstation = parseInt(document.getElementById('playstationSlider').value);
+
+            document.getElementById('hangoutSplit').textContent = `${hangout} SAR`;
+            document.getElementById('savingsSplit').textContent = `${savings} SAR`;
+            document.getElementById('playstationSplit').textContent = `${playstation} SAR`;
+        };
+
+        // Add allowance
+        window.addAllowance = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const total = parseInt(document.getElementById('allowanceAmount').value);
+            const hangout = parseInt(document.getElementById('hangoutSlider').value);
+            const savings = parseInt(document.getElementById('savingsSlider').value);
+            const playstation = parseInt(document.getElementById('playstationSlider').value);
+
+            if (isNaN(total) || total <= 0) {
+                showNotification('Please enter a valid amount', true);
+                return;
+            }
+
+            // Use the actual slider values, but skip PlayStation if disabled
+            balances.hangout += hangout;
+            balances.savings += savings;
+            if (userPreferences.enablePlaystation) {
+                balances.playstation += playstation;
+            } else {
+                // If PlayStation is disabled, add that amount to savings instead
+                balances.savings += playstation;
+            }
+
+            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            addToHistory('Allowance', total, null, `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`);
+            
+            // Update allowance schedule for Asser
+            if (currentUser.username.toLowerCase() === 'asser' && userPreferences.allowanceSchedule) {
+                // If this is the first allowance, set the start date
+                if (!userPreferences.allowanceSchedule.startDate) {
+                    userPreferences.allowanceSchedule.startDate = new Date().toISOString();
+                }
+                // Always update the last allowance date
+                userPreferences.allowanceSchedule.lastAllowanceDate = new Date().toISOString();
+                const prefsRef = ref(database, `users/Asser/preferences`);
+                set(prefsRef, userPreferences);
+            }
+            
+            checkHangoutLimit();
+            closeModal('allowanceModal');
+            showNotification('Allowance added successfully!');
+        };
+
+        // Add money
+        window.addMoney = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const bucket = document.getElementById('addMoneyBucket').value;
+            const amount = parseInt(document.getElementById('addMoneyAmount').value);
+
+            if (isNaN(amount) || amount <= 0) {
+                showNotification('Please enter a valid amount', true);
+                return;
+            }
+
+            balances[bucket] += amount;
+            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            addToHistory('Add Money', amount, bucket);
+            checkHangoutLimit();
+            closeModal('addMoneyModal');
+            showNotification(`Added ${amount} SAR to ${bucket}`);
+        };
+
+        // Transfer money
+        window.transferMoney = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const from = document.getElementById('transferFrom').value;
+            const to = document.getElementById('transferTo').value;
+            const amount = parseInt(document.getElementById('transferAmount').value);
+
+            if (isNaN(amount) || amount <= 0) {
+                showNotification('Please enter a valid amount', true);
+                return;
+            }
+
+            if (from === to) {
+                showNotification('Cannot transfer to same bucket', true);
+                return;
+            }
+
+            if (balances[from] < amount) {
+                showNotification(`Insufficient funds in ${from}`, true);
+                return;
+            }
+
+            // Minimum savings check for Asser when transferring from Savings
+            if (currentUser.username.toLowerCase() === 'asser' && from === 'savings') {
+                const minimumSavings = userPreferences.minimumSavings || 50;
+                const remainingAfterTransfer = balances.savings - amount;
+                
+                if (remainingAfterTransfer < minimumSavings) {
+                    const allowedAmount = balances.savings - minimumSavings;
+                    if (allowedAmount <= 0) {
+                        showNotification(`⚠️ Cannot transfer from Savings! You must keep at least ${minimumSavings} SAR in Savings. Your current balance is ${balances.savings} SAR.`, true);
+                        return;
+                    } else {
+                        const confirmation = confirm(`⚠️ Minimum Savings Warning: This transfer will bring your Savings below ${minimumSavings} SAR.\n\n• Current Savings: ${balances.savings} SAR\n• Transfer amount: ${amount} SAR\n• Remaining: ${remainingAfterTransfer} SAR\n• Minimum required: ${minimumSavings} SAR\n\nYou can only transfer up to ${allowedAmount} SAR from Savings. Continue anyway?`);
+                        if (!confirmation) {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            balances[from] -= amount;
+            balances[to] += amount;
+            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            addToHistory('Transfer', -amount, from, `Transferred to ${to}`);
+            checkHangoutLimit();
+            closeModal('transferModal');
+            showNotification(`Transferred ${amount} SAR from ${from} to ${to}`);
+        };
+
+        // Add purchase
+        window.addPurchase = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const name = document.getElementById('purchaseName').value;
+            const cost = parseInt(document.getElementById('purchaseCost').value);
+            const category = document.getElementById('purchaseCategory').value;
+
+            if (!name || isNaN(cost) || cost <= 0) {
+                showNotification('Please fill in all fields', true);
+                return;
+            }
+
+            if (balances[category] < cost) {
+                showNotification(`Insufficient funds in ${category}`, true);
+                return;
+            }
+
+            // Minimum savings check for Asser
+            if (currentUser.username.toLowerCase() === 'asser' && category === 'savings') {
+                const minimumSavings = userPreferences.minimumSavings || 50;
+                const remainingAfterPurchase = balances.savings - cost;
+                
+                if (remainingAfterPurchase < minimumSavings) {
+                    const allowedAmount = balances.savings - minimumSavings;
+                    if (allowedAmount <= 0) {
+                        showNotification(`⚠️ Cannot spend from Savings! You must keep at least ${minimumSavings} SAR in Savings. Your current balance is ${balances.savings} SAR.`, true);
+                        return;
+                    } else {
+                        const confirmation = confirm(`⚠️ Minimum Savings Warning: This purchase will bring your Savings below ${minimumSavings} SAR.\n\n• Current Savings: ${balances.savings} SAR\n• Purchase cost: ${cost} SAR\n• Remaining: ${remainingAfterPurchase} SAR\n• Minimum required: ${minimumSavings} SAR\n\nYou can only spend up to ${allowedAmount} SAR from Savings. Continue anyway?`);
+                        if (!confirmation) {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Smart warning for Asser's hangout purchases with monthly budgeting
+            if (currentUser.username.toLowerCase() === 'asser' && category === 'hangout') {
+                const monthlyAnalysis = analyzeMonthlySpending();
+                
+                if (monthlyAnalysis.warningLevel === 'critical') {
+                    const confirmation = confirm(`⚠️ CRITICAL WARNING: ${monthlyAnalysis.message}\n\n${monthlyAnalysis.suggestion}\n\nContinue anyway? You still have enough money, but this will make it very hard to last the month.`);
+                    if (!confirmation) {
+                        return;
+                    }
+                } else if (monthlyAnalysis.warningLevel === 'high') {
+                    const confirmation = confirm(`⚠️ Spending Warning: ${monthlyAnalysis.message}\n\n${monthlyAnalysis.suggestion}\n\nContinue anyway?`);
+                    if (!confirmation) {
+                        return;
+                    }
+                } else if (monthlyAnalysis.warningLevel === 'medium') {
+                    const confirmation = confirm(`💡 Budget Tip: ${monthlyAnalysis.message}\n\n${monthlyAnalysis.suggestion}\n\nContinue?`);
+                    if (!confirmation) {
+                        return;
+                    }
+                }
+            }
+
+            balances[category] -= cost;
+            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            addToHistory('Purchase', -cost, category, name);
+            closeModal('purchaseModal');
+            showNotification(`Purchase "${name}" recorded`);
+        };
+
+        // Edit money
+        window.editMoney = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const hangout = parseInt(document.getElementById('editHangout').value);
+            const savings = parseInt(document.getElementById('editSavings').value);
+            const playstation = parseInt(document.getElementById('editPlaystation').value);
+
+            if (isNaN(hangout) || isNaN(savings) || isNaN(playstation) ||
+                hangout < 0 || savings < 0 || playstation < 0) {
+                showNotification('Please enter valid amounts', true);
+                return;
+            }
+
+            const oldHangout = balances.hangout;
+            const oldSavings = balances.savings;
+            const oldPlaystation = balances.playstation;
+
+            balances.hangout = hangout;
+            balances.savings = savings;
+            balances.playstation = playstation;
+
+            set(ref(database, `users/${currentUser.username}/balances`), balances);
+            addToHistory('Manual Edit', 0, null, `Changed balances: ${oldHangout}→${hangout}, ${oldSavings}→${savings}, ${oldPlaystation}→${playstation}`);
+            checkHangoutLimit();
+            closeModal('editModal');
+            showNotification('Balances updated');
+        };
+
+        // Add goal
+        window.addGoal = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const name = document.getElementById('goalName').value;
+            const amount = parseInt(document.getElementById('goalAmount').value);
+
+            if (!name || isNaN(amount) || amount <= 0) {
+                showNotification('Please fill in all fields', true);
+                return;
+            }
+
+            const goalsRef = ref(database, `users/${currentUser.username}/goals`);
+            push(goalsRef, { name, amount });
+            
+            document.getElementById('goalName').value = '';
+            document.getElementById('goalAmount').value = '';
+            showNotification('Goal added!');
+        };
+
+
+
+
+
+        // Calculate how much has been spent on hangouts this week
+        function getWeeklySpending() {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            
+            let weeklySpending = 0;
+            history.forEach(item => {
+                if (item.type === 'Purchase' && item.category === 'hangout') {
+                    const itemDate = new Date(item.date);
+                    if (itemDate > oneWeekAgo) {
+                        weeklySpending += Math.abs(item.amount);
+                    }
+                }
+            });
+            
+            return weeklySpending;
+        }
+
+        // Analyze monthly spending for Asser
+        function analyzeMonthlySpending() {
+            const now = new Date();
+            const currentDay = now.getDate();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const daysPassed = currentDay;
+            const daysRemaining = daysInMonth - currentDay;
+            
+            // Calculate spending rate
+            const thisMonthSpending = getMonthlySpending();
+            const dailyAverage = thisMonthSpending / daysPassed;
+            const projectedMonthlySpending = dailyAverage * daysInMonth;
+            
+            // Calculate if he can sustain this rate
+            const currentBalance = balances.hangout;
+            const sustainableDailyRate = currentBalance / daysRemaining;
+            
+            // Get recent spending pattern (last 5 purchases)
+            const recentPurchases = history
+                .filter(item => item.type === 'Purchase' && item.category === 'hangout')
+                .slice(-5);
+            
+            const averageRecentPurchase = recentPurchases.length > 0 
+                ? recentPurchases.reduce((sum, item) => sum + Math.abs(item.amount), 0) / recentPurchases.length 
+                : 0;
+            
+            // Calculate what the next purchase would do
+            const nextPurchaseAmount = 5; // Assume 5 SAR as example purchase
+            const projectedDailyRateAfterPurchase = (thisMonthSpending + nextPurchaseAmount) / daysPassed;
+            
+            // Determine warning level
+            let warningLevel = 'none';
+            let message = '';
+            let suggestion = '';
+            
+            // Critical: Spending way too fast
+            if (projectedDailyRateAfterPurchase > sustainableDailyRate * 2) {
+                warningLevel = 'critical';
+                message = `You're spending ${(projectedDailyRateAfterPurchase).toFixed(1)} SAR/day but only have enough for ${sustainableDailyRate.toFixed(1)} SAR/day to last the month.`;
+                suggestion = `At this rate, you'll run out ${Math.ceil(daysInMonth - (currentBalance / projectedDailyRateAfterPurchase))} days before month end. Try to spend less than ${Math.floor(sustainableDailyRate)} SAR per day.`;
+            }
+            // High: Spending too fast
+            else if (projectedDailyRateAfterPurchase > sustainableDailyRate * 1.5) {
+                warningLevel = 'high';
+                message = `You're spending ${(projectedDailyRateAfterPurchase).toFixed(1)} SAR/day, which is faster than your sustainable rate of ${sustainableDailyRate.toFixed(1)} SAR/day.`;
+                suggestion = `You have ${daysRemaining} days left. Try to stick to ${Math.floor(sustainableDailyRate)} SAR per day to make it through the month.`;
+            }
+            // Medium: Recent purchases are large
+            else if (averageRecentPurchase > sustainableDailyRate * 1.3) {
+                warningLevel = 'medium';
+                message = `Your recent purchases average ${averageRecentPurchase.toFixed(1)} SAR, which is higher than ideal.`;
+                suggestion = `You have ${currentBalance} SAR for ${daysRemaining} days. Try to keep purchases under ${Math.floor(sustainableDailyRate)} SAR each.`;
+            }
+            // Low: Just a friendly reminder
+            else if (daysRemaining < 10 && currentBalance < sustainableDailyRate * 5) {
+                warningLevel = 'low';
+                message = `You have ${daysRemaining} days left with ${currentBalance} SAR in Hangout.`;
+                suggestion = `You should be okay if you spend about ${Math.floor(sustainableDailyRate)} SAR per day for the rest of the month.`;
+            }
+            
+            return {
+                warningLevel,
+                message,
+                suggestion,
+                dailyAverage,
+                sustainableDailyRate,
+                daysRemaining,
+                currentBalance
+            };
+        }
+
+        // Calculate monthly spending
+        function getMonthlySpending() {
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            let monthlySpending = 0;
+            history.forEach(item => {
+                if (item.type === 'Purchase' && item.category === 'hangout') {
+                    const itemDate = new Date(item.date);
+                    if (itemDate >= firstDayOfMonth) {
+                        monthlySpending += Math.abs(item.amount);
+                    }
+                }
+            });
+            
+            return monthlySpending;
+        }
+
+        // Calculate days until next allowance for Asser
+        function getDaysUntilNextAllowance() {
+            if (!userPreferences.allowanceSchedule) {
+                return null;
+            }
+
+            const schedule = userPreferences.allowanceSchedule;
+            const now = new Date();
+            const frequency = schedule.frequency || 4; // Default to 4 weeks
+            
+            // If this is the first allowance, use today as start date
+            let startDate = schedule.startDate ? 
+                new Date(schedule.startDate) : 
+                null;
+            
+            let lastAllowanceDate = schedule.lastAllowanceDate ? 
+                new Date(schedule.lastAllowanceDate) : 
+                null;
+            
+            // If no allowance has been given yet, return null
+            if (!startDate && !lastAllowanceDate) {
+                return null;
+            }
+            
+            // Use the most recent date as reference
+            let referenceDate = lastAllowanceDate || startDate;
+            
+            // Calculate next allowance date (every 4 weeks)
+            let nextAllowanceDate = new Date(referenceDate);
+            nextAllowanceDate.setDate(nextAllowanceDate.getDate() + (frequency * 7));
+            
+            // If the calculated next date is in the past, keep adding 4 weeks until future
+            while (nextAllowanceDate <= now) {
+                nextAllowanceDate.setDate(nextAllowanceDate.getDate() + (frequency * 7));
+            }
+            
+            // Calculate days remaining
+            const daysRemaining = Math.ceil((nextAllowanceDate - now) / (1000 * 60 * 60 * 24));
+            
+            return {
+                daysRemaining,
+                nextAllowanceDate,
+                lastAllowanceDate,
+                referenceDate
+            };
+        }
+
+        // Show allowance reminder
+        function showAllowanceReminder() {
+            if (!userPreferences.allowanceSchedule || currentUser.username.toLowerCase() !== 'asser') {
+                return;
+            }
+
+            const allowanceInfo = getDaysUntilNextAllowance();
+            if (!allowanceInfo) return;
+
+            const { daysRemaining, nextAllowanceDate } = allowanceInfo;
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            const nextDate = nextAllowanceDate.toLocaleDateString('en-US', options);
+
+            // Show notification if within 3 days of allowance
+            if (daysRemaining <= 3 && daysRemaining >= 0) {
+                const message = daysRemaining === 0 ? 
+                    `🎉 Today is allowance day! Your next 4-week allowance starts today!` :
+                    `⏰ Allowance in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}! ${nextDate}`;
+                showNotification(message);
+            }
+        }
+
+        // Notification
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = isError ? 'notification error show' : 'notification show';
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize app
+        init();
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1168,6 +1168,52 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        /* Offline indicator: a small cross badge that appears in the header
+           whenever the app has no connection, and disappears once we're back
+           online (see setupConnectivityMonitor in the script). */
+        .offline-badge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 71, 87, 0.18);
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            color: #ff6b6b;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .offline-badge.show {
+            display: flex;
+        }
+
+        .offline-badge .cross {
+            font-size: 13px;
+        }
+
+        /* Small cross that overlays the AI tab icon while offline, so it's
+           obvious at a glance that AI chat is unavailable right now. */
+        .offline-cross {
+            display: none;
+            position: absolute;
+            top: -2px;
+            right: -6px;
+            font-size: 11px;
+            font-weight: 900;
+            color: #ff4757;
+            background: #1a1a2e;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            line-height: 15px;
+            text-align: center;
+        }
+
+        .offline-cross.show {
+            display: block;
+        }
+
         .logout-btn {
             background: rgba(255, 107, 107, 0.2);
             border: 1px solid rgba(255, 107, 107, 0.4);
@@ -1444,7 +1490,10 @@
         <!-- App Content -->
         <div class="app-content" id="appContent">
             <div class="user-info">
-                <div class="user-email" id="userEmail">user@email.com</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="user-email" id="userEmail">user@email.com</div>
+                    <div class="offline-badge" id="offlineBadge"><span class="cross">✕</span> Offline</div>
+                </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="logout-btn" onclick="openSettingsModal()" style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.4); color: #667eea; position: relative;">⚙️ Settings<span id="settingsUpdateDot" style="display:none; position:absolute; top:-4px; right:-4px; width:11px; height:11px; background:#ff4757; border-radius:50%; box-shadow:0 0 8px rgba(255,71,87,0.9); border:2px solid #0f0c29;"></span></button>
                     <button class="logout-btn" onclick="logout()">Logout</button>
@@ -1467,9 +1516,10 @@
                         <span class="bottom-nav-icon">📈</span>
                         <span class="bottom-nav-label">Charts</span>
                     </div>
-                    <div class="bottom-nav-item" onclick="switchTab('ai')" id="nav-ai">
+                    <div class="bottom-nav-item" onclick="switchTab('ai')" id="nav-ai" style="position: relative;">
                         <span class="bottom-nav-icon">🤖</span>
                         <span class="bottom-nav-label">AI</span>
+                        <span class="offline-cross" id="aiOfflineCross">✕</span>
                     </div>
                 </div>
             </div>
@@ -2142,6 +2192,100 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
+        // ===== Offline mode =====
+        // Money Manager keeps working with no wifi: purchases and edits are
+        // applied to the UI immediately and Firebase itself queues writes
+        // made mid-session and syncs them the moment we're back online. What
+        // this adds on top:
+        //   1. A clear "✕ Offline" indicator (header badge + AI tab cross)
+        //      instead of silently failing.
+        //   2. AI chat politely says it's unavailable offline instead of
+        //      throwing a network error, and reconnects itself automatically.
+        //   3. Balances/history/goals/preferences are mirrored to
+        //      localStorage so if the app is closed and reopened with no
+        //      connection, it still shows your last-known data instead of a
+        //      blank screen.
+        function updateConnectivityUI() {
+            const badge = document.getElementById('offlineBadge');
+            const cross = document.getElementById('aiOfflineCross');
+            if (badge) badge.classList.toggle('show', !isOnline);
+            if (cross) cross.classList.toggle('show', !isOnline);
+
+            const aiInput = document.getElementById('aiChatInput');
+            if (aiInput) {
+                aiInput.placeholder = isOnline
+                    ? 'Ask me anything about your money...'
+                    : "You're offline — AI chat will be back once you're connected";
+            }
+        }
+
+        function setupConnectivityMonitor() {
+            let wasOnline = isOnline;
+
+            function handleChange(nowOnline) {
+                const cameBackOnline = nowOnline && !wasOnline;
+                isOnline = nowOnline;
+                wasOnline = nowOnline;
+                updateConnectivityUI();
+
+                if (cameBackOnline) {
+                    // "AI comes back" — re-establish the Groq connection and let
+                    // the user know their data is syncing up to Firebase.
+                    workingGroqModel = null;
+                    initializeGroqAI();
+                    showNotification('✅ Back online — syncing your data...');
+                } else if (!nowOnline) {
+                    showNotification('✕ You\'re offline. The app still works — AI chat is paused until you\'re back online.', true);
+                }
+            }
+
+            // Firebase's own connection signal — the authoritative source, since
+            // it reflects whether the database socket is actually up (wifi can
+            // report "connected" while the connection to Firebase is still down).
+            const connectedRef = ref(database, '.info/connected');
+            onValue(connectedRef, (snap) => {
+                handleChange(snap.val() === true);
+            });
+
+            // Browser-level events as a fast, secondary signal (useful the
+            // instant a device loses/regains wifi, before Firebase notices).
+            window.addEventListener('online', () => handleChange(true));
+            window.addEventListener('offline', () => handleChange(false));
+
+            updateConnectivityUI();
+        }
+
+        // Cache the given user's data to localStorage so the app can still show
+        // something useful if it's reopened later with no connection at all.
+        function cacheUserDataLocally(username) {
+            try {
+                localStorage.setItem(`mm_cache_${username}`, JSON.stringify({
+                    balances, history, historyKeys, goals, goalKeys, userPreferences,
+                    cachedAt: Date.now()
+                }));
+            } catch (e) {
+                console.log('Local cache write failed:', e);
+            }
+        }
+
+        // Paint the last cached snapshot immediately on load, before Firebase's
+        // listeners have a chance to resolve. If we're online, the real
+        // listeners will overwrite this with fresh data within moments; if
+        // we're offline, this is the only data we're going to get.
+        function loadCachedUserDataLocally(username) {
+            try {
+                const raw = localStorage.getItem(`mm_cache_${username}`);
+                if (!raw) return;
+                const cached = JSON.parse(raw);
+                if (cached.balances) { balances = cached.balances; updateUI(); }
+                if (cached.history) { history = cached.history; historyKeys = cached.historyKeys || []; updateTransactionsList(); updateCharts(); }
+                if (cached.goals) { goals = cached.goals; goalKeys = cached.goalKeys || []; updateGoalsList(); }
+                if (cached.userPreferences) { userPreferences = cached.userPreferences; updateUIForPreferences(); }
+            } catch (e) {
+                console.log('Local cache read failed:', e);
+            }
+        }
+
         // ===== App Update / Version Announcement System =====
         // This build starts at version 0.1. Only the "zezo" account can
         // broadcast a new update from Settings; every device (Safari tab or
@@ -2300,7 +2444,15 @@
 
         // Models to try, in order. Update this list if Groq renames/retires models —
         // check https://console.groq.com/docs/models
+        //
+        // "groq/compound" goes first because it has built-in tools (including
+        // live web search) that it uses automatically when a question needs
+        // current, real-world info — like "how much does FC 27 cost" — instead
+        // of guessing from stale training data. If it's ever unavailable, we
+        // fall through to the plain chat models below (which still work, they
+        // just won't have live web info).
         const GROQ_MODELS_TO_TRY = [
+            "groq/compound",
             "openai/gpt-oss-120b",
             "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant"
@@ -2492,6 +2644,8 @@ Guidelines:
 - If spending increased significantly, briefly explain what might have caused it
 - If spending decreased, congratulate them
 - Default to short answers. Only expand when the topic genuinely requires it.
+- If you have access to live web search, use it for anything you need current real-world info for — prices of games/products, whether something is on sale, release dates, exchange rates, and similar. Don't guess a specific number from memory when a quick search would get the real one.
+- If you're ever genuinely unsure about a specific current fact (like an exact price) and can't look it up, say so plainly instead of making up a number — a rough, clearly-labeled estimate is fine, a confident wrong answer is not.
 
 Use the conversation history provided to you to remember what's already been said — don't ask the user to repeat information they already gave you earlier in the chat.`;
 
@@ -2673,7 +2827,12 @@ Use the conversation history provided to you to remember what's already been sai
             // Add user message to chat
             addChatMessage(message, 'user');
             input.value = '';
-            
+
+            if (!isOnline) {
+                addChatMessage("✕ I'm offline right now, so I can't chat — but the app is still working fine and everything you do is being saved. I'll be back as soon as you're back online!", 'assistant');
+                return;
+            }
+
             // Show typing indicator
             const typingIndicator = addTypingIndicator();
             
@@ -2975,6 +3134,12 @@ Use the conversation history provided to you to remember what's already been sai
             }
         }
 
+        // Connectivity state. Updated by setupConnectivityMonitor() below, which
+        // listens to both the browser's online/offline events and Firebase's own
+        // ".info/connected" signal (the more reliable of the two, since wifi can
+        // show "connected" while the actual database socket is still down).
+        let isOnline = navigator.onLine;
+
         // Data structure
         let currentUser = null;
         let userPreferences = {
@@ -3058,6 +3223,8 @@ Use the conversation history provided to you to remember what's already been sai
 
         // Initialize
         function init() {
+            setupConnectivityMonitor();
+
             // Check if user is logged in from localStorage
             const savedUsername = localStorage.getItem('moneyManagerUsername');
             if (savedUsername) {
@@ -3096,7 +3263,12 @@ Use the conversation history provided to you to remember what's already been sai
             historyKeys = [];
             goals = [];
             goalKeys = [];
-            
+
+            // Paint last-known data right away in case we're offline — Firebase's
+            // listeners below will override this with fresh data as soon as a
+            // connection is available.
+            loadCachedUserDataLocally(username);
+
             // Load user preferences
             const prefsRef = ref(database, `users/${username}/preferences`);
             get(prefsRef).then((snapshot) => {
@@ -3180,6 +3352,7 @@ Use the conversation history provided to you to remember what's already been sai
                 if (snapshot.exists()) {
                     balances = snapshot.val();
                     updateUI();
+                    cacheUserDataLocally(username);
                 } else {
                     // Initialize with default values
                     set(balancesRef, balances);
@@ -3200,6 +3373,7 @@ Use the conversation history provided to you to remember what's already been sai
                     updateTransactionsList();
                     updateCharts();
                 }
+                cacheUserDataLocally(username);
             });
 
             const goalsRef = ref(database, `users/${username}/goals`);
@@ -3214,6 +3388,7 @@ Use the conversation history provided to you to remember what's already been sai
                     goalKeys = [];
                     updateGoalsList();
                 }
+                cacheUserDataLocally(username);
                 
                 // Initialize AI and check for warnings after data is loaded
                 initializeGroqAI();
@@ -3665,7 +3840,7 @@ Use the conversation history provided to you to remember what's already been sai
                 case 'Auto Transfer': return '🔁';
                 case 'Manual Edit': return '✏️';
                 case 'Purchase':
-                    if (category === 'hangout') return '🎉';
+                    if (category === 'hangout') return '🛍️';
                     if (category === 'savings') return '💰';
                     if (category === 'playstation') return '🎮';
                     return '🛍️';
@@ -3683,7 +3858,22 @@ Use the conversation history provided to you to remember what's already been sai
                 if (!workingGroqModel) {
                     return null; // AI unavailable, caller will keep the fallback emoji
                 }
-                const prompt = `Purchase: "${name}"\n\nReply with ONLY a single emoji character that best visually represents this specific purchase. No words, no explanation, no quotes — just the one emoji.`;
+                const prompt = `Pick ONE emoji that best represents this specific purchase.
+
+Purchase: "${name}"
+Spending category it was bought from: ${category || 'general'}
+
+Think about what the item actually IS — a specific video game or gaming platform, a food/snack, clothing, an electronics accessory, an experience, etc. — and pick the single most visually accurate emoji for that specific thing. Do not default to a generic or category emoji (like a party/confetti emoji) unless the purchase is genuinely about a party or celebration.
+
+Examples of good matches:
+- "FC 27" or any FIFA/football video game → 🎮 (it's a game, not a literal soccer ball or box)
+- "Xbox/PlayStation game credit" → 🎮
+- "Cheetos" or cheese-flavored chips → 🧀 or 🍟 (a food emoji, not confetti/party)
+- "New shoes" → 👟
+- "Movie tickets" → 🎬
+- "Haircut" → 💇
+
+Reply with ONLY the single emoji character. No words, no explanation, no quotes — just the one emoji.`;
                 const text = await callGroq(workingGroqModel, prompt);
                 // Pull out the first actual emoji character from the response, in case the
                 // model adds stray whitespace or punctuation around it.

@@ -3992,17 +3992,26 @@ Use the conversation history provided to you to remember what's already been sai
             }
         }
 
+        // Models to try for picking a purchase emoji — deliberately NOT
+        // groq/compound. That model is great for open-ended chat where it
+        // might need to search the web, but for a strict "reply with just
+        // one emoji" task its extra tool-use/reasoning text tends to get in
+        // the way, which is why purchases could get stuck on the fallback
+        // bag emoji even once back online. Plain instruction-following chat
+        // models are faster and far more reliable for this.
+        const EMOJI_MODELS_TO_TRY = [
+            "llama-3.3-70b-versatile",
+            "openai/gpt-oss-120b",
+            "llama-3.1-8b-instant"
+        ];
+
         // Ask Groq to pick a single emoji that represents a specific purchase.
-        // The AI picks whatever emoji it thinks fits best — not a hardcoded lookup table.
+        // The AI picks whatever emoji it thinks fits best — not a hardcoded
+        // lookup table. Tries each emoji-capable model in turn so a single
+        // model hiccup right after reconnecting doesn't leave the purchase
+        // stuck on its fallback emoji.
         async function getAIEmojiForPurchase(name, category) {
-            try {
-                if (!workingGroqModel) {
-                    await initializeGroqAI();
-                }
-                if (!workingGroqModel) {
-                    return null; // AI unavailable, caller will keep the fallback emoji
-                }
-                const prompt = `Pick ONE emoji that best represents this specific purchase.
+            const prompt = `Pick ONE emoji that best represents this specific purchase.
 
 Purchase: "${name}"
 Spending category it was bought from: ${category || 'general'}
@@ -4018,15 +4027,21 @@ Examples of good matches:
 - "Haircut" → 💇
 
 Reply with ONLY the single emoji character. No words, no explanation, no quotes — just the one emoji.`;
-                const text = await callGroq(workingGroqModel, prompt);
-                // Pull out the first actual emoji character from the response, in case the
-                // model adds stray whitespace or punctuation around it.
-                const match = text.trim().match(/\p{Extended_Pictographic}(\u200d\p{Extended_Pictographic})*/u);
-                return match ? match[0] : null;
-            } catch (e) {
-                console.log('AI emoji lookup failed:', e.message);
-                return null;
+
+            for (const modelName of EMOJI_MODELS_TO_TRY) {
+                try {
+                    const text = await callGroq(modelName, prompt);
+                    // Pull out the first actual emoji character from the response,
+                    // in case the model adds stray whitespace or punctuation
+                    // around it.
+                    const match = text.trim().match(/\p{Extended_Pictographic}(\u200d\p{Extended_Pictographic})*/u);
+                    if (match) return match[0];
+                    console.log(`Emoji model ${modelName} responded without a usable emoji, trying next model...`);
+                } catch (e) {
+                    console.log(`Emoji model ${modelName} failed: ${e.message}`);
+                }
             }
+            return null; // every model failed — caller keeps the fallback emoji
         }
 
         // Add to history. Shows the new entry on screen immediately (works

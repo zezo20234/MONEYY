@@ -3697,7 +3697,7 @@ Use the conversation history provided to you to remember what's already been sai
 
         // Add to history. Returns the Firebase ref for the new entry so callers
         // (e.g. addPurchase) can update it later once the AI emoji comes back.
-        function addToHistory(type, amount, category = null, notes = null, emoji = null) {
+        function addToHistory(type, amount, category = null, notes = null, emoji = null, extra = null) {
             if (!currentUser) return null;
             const historyRef = ref(database, `users/${currentUser.username}/history`);
             const newEntry = {
@@ -3706,7 +3706,8 @@ Use the conversation history provided to you to remember what's already been sai
                 category,
                 notes,
                 emoji: emoji || fallbackEmoji(type, category),
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                ...(extra || {})
             };
             return push(historyRef, newEntry);
         }
@@ -4472,6 +4473,80 @@ Use the conversation history provided to you to remember what's already been sai
             confirmDelete();
         };
 
+        // Undo whatever a given history entry actually did to `balances`,
+        // based on its type. Different transaction types affect balances
+        // differently, so a single generic "subtract the amount" rule isn't
+        // enough (that was the bug behind Allowance deletes doing nothing).
+        function reverseTransactionEffect(item) {
+            if (!item) return;
+            switch (item.type) {
+                case 'Allowance': {
+                    // Prefer the structured split fields recorded since this fix.
+                    // Fall back to parsing the older "Split: h/s/p" notes text for
+                    // entries created before this fix existed.
+                    let h = item.splitHangout;
+                    let s = item.splitSavings;
+                    let p = item.splitPlaystation;
+                    if (h === undefined || s === undefined) {
+                        const parsed = parseAllowanceSplitNotes(item.notes);
+                        h = parsed.hangout;
+                        s = parsed.savings;
+                        p = parsed.playstation;
+                    }
+                    balances.hangout -= (h || 0);
+                    balances.savings -= (s || 0);
+                    balances.playstation -= (p || 0);
+                    break;
+                }
+                case 'Transfer': {
+                    // category = source bucket, amount = -amount (it left `from`).
+                    // notes look like "Transferred to <to>".
+                    const amount = Math.abs(item.amount);
+                    if (item.category && balances[item.category] !== undefined) {
+                        balances[item.category] += amount; // put it back in the source
+                    }
+                    const toMatch = item.notes && item.notes.match(/Transferred to (\w+)/);
+                    const to = toMatch ? toMatch[1] : null;
+                    if (to && balances[to] !== undefined) {
+                        balances[to] -= amount; // take it back out of the destination
+                    }
+                    break;
+                }
+                case 'Auto Transfer': {
+                    // category = 'hangout' (source), amount = excess moved to savings
+                    // when the Hangout limit was exceeded.
+                    const amount = item.amount;
+                    balances.hangout += amount;
+                    balances.savings -= amount;
+                    break;
+                }
+                case 'Manual Edit':
+                    // This only records an absolute overwrite (old → new values in
+                    // the notes), not a delta, so there's nothing safe to reverse.
+                    break;
+                default:
+                    // Purchase, Add Money, and anything else with a single
+                    // category + signed amount.
+                    if (item.category && balances[item.category] !== undefined) {
+                        balances[item.category] -= item.amount;
+                    }
+            }
+        }
+
+        // Parses legacy "Split: 35/25" or "Split: 50/37.5/12.5" notes text from
+        // Allowance entries created before structured split fields existed.
+        function parseAllowanceSplitNotes(notes) {
+            const result = { hangout: 0, savings: 0, playstation: 0 };
+            if (!notes) return result;
+            const match = notes.match(/Split:\s*([\d.]+)\/([\d.]+)(?:\/([\d.]+))?/);
+            if (match) {
+                result.hangout = parseFloat(match[1]) || 0;
+                result.savings = parseFloat(match[2]) || 0;
+                result.playstation = parseFloat(match[3]) || 0;
+            }
+            return result;
+        }
+
         // Confirm delete
         window.confirmDelete = function() {
             const key = document.getElementById('deleteTransactionId').value;
@@ -4480,10 +4555,7 @@ Use the conversation history provided to you to remember what's already been sai
             const index = historyKeys.indexOf(key);
             const item = history[index];
             
-            // Reverse the transaction effect
-            if (item.category) {
-                balances[item.category] -= item.amount;
-            }
+            reverseTransactionEffect(item);
             
             // Delete from Firebase
             const transactionRef = ref(database, `users/${currentUser.username}/history/${key}`);
@@ -4595,15 +4667,24 @@ Use the conversation history provided to you to remember what's already been sai
             // Use the actual slider values, but skip PlayStation if disabled
             balances.hangout += hangout;
             balances.savings += savings;
+            let appliedPlaystation = 0;
             if (userPreferences.enablePlaystation) {
                 balances.playstation += playstation;
+                appliedPlaystation = playstation;
             } else {
                 // If PlayStation is disabled, add that amount to savings instead
                 balances.savings += playstation;
             }
+            const appliedSavings = savings + (userPreferences.enablePlaystation ? 0 : playstation);
 
             set(ref(database, `users/${currentUser.username}/balances`), balances);
-            addToHistory('Allowance', total, null, `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`);
+            // Record exactly what landed in each bucket (splitHangout/splitSavings/
+            // splitPlaystation) so deleting this entry later can reverse it precisely.
+            addToHistory('Allowance', total, null, `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`, null, {
+                splitHangout: hangout,
+                splitSavings: appliedSavings,
+                splitPlaystation: appliedPlaystation
+            });
             
             // Update allowance schedule for Asser
             if (currentUser.username.toLowerCase() === 'asser' && userPreferences.allowanceSchedule) {

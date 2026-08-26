@@ -11,7 +11,6 @@
     <link rel="apple-touch-icon" href="./icon-192.png">
     <link rel="icon" type="image/png" href="./icon-192.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <!-- Groq AI is called directly via REST fetch (OpenAI-compatible chat completions API) -->
     <!-- (see generateAIResponse below) -->
     <style>
@@ -1533,6 +1532,35 @@
             font-weight: 700;
         }
 
+        .mission-prestige-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            margin-left: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 105, 180, 0.18) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .mission-rebirth-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 105, 180, 0.2) 100%);
+            color: #ffd700;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            animation: rankGlow 1.8s ease-in-out infinite;
+        }
+
         .mission-rank-progress-track {
             width: 100%;
             height: 8px;
@@ -1657,32 +1685,44 @@
             border: 1px solid rgba(102, 126, 234, 0.3);
         }
 
-        .mission-drag-handle {
-            width: 32px;
-            height: 44px;
+        .mission-reorder-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
             flex-shrink: 0;
+        }
+
+        .mission-reorder-btn {
+            width: 28px;
+            height: 22px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.75);
+            font-size: 11px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
-            color: rgba(255,255,255,0.4);
-            cursor: grab;
-            touch-action: none;
-            border-radius: 8px;
         }
 
-        .mission-drag-handle:active {
-            cursor: grabbing;
-            color: rgba(255,255,255,0.8);
-            background: rgba(255,255,255,0.06);
+        .mission-reorder-btn:disabled {
+            opacity: 0.25;
+            cursor: default;
         }
 
-        .mission-card.sortable-ghost {
-            opacity: 0.4;
+        .repeat-btn-row {
+            display: flex;
+            gap: 8px;
         }
 
-        .mission-card.sortable-drag {
-            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+        .repeat-btn-row .everyday-btn {
+            flex: 1;
+        }
+
+        .anyday-btn {
+            background: rgba(118, 75, 162, 0.18) !important;
+            border-color: rgba(118, 75, 162, 0.4) !important;
         }
 
         .day-chips {
@@ -1937,10 +1977,12 @@
                 <div class="points-value" id="missionPointsValue">0</div>
                 <div class="points-label">Total Points • 10 pts per completed mission</div>
                 <div class="mission-rank-badge" id="missionRankBadge">🥉 Rookie</div>
+                <div class="mission-prestige-badge" id="missionPrestigeBadge" style="display:none;">✨ Prestige 0</div>
                 <div class="mission-rank-progress-track">
                     <div class="mission-rank-progress-fill" id="missionRankProgressFill" style="width: 0%;"></div>
                 </div>
                 <div class="mission-rank-progress-text" id="missionRankProgressText">0 / 100 pts to next rank</div>
+                <button class="mission-rebirth-btn" id="missionRebirthBtn" style="display:none;" onclick="openRebirthModal()">🔁 Rebirth</button>
             </div>
 
             <button class="notif-permission-btn" id="notifPermissionBtn" onclick="requestMissionNotifications()">
@@ -2035,8 +2077,11 @@
                 <input type="time" class="form-input" id="missionTime">
             </div>
             <div class="form-group">
-                <label class="form-label">Repeat</label>
-                <button type="button" class="everyday-btn" onclick="setMissionEveryDay()">Set to every day</button>
+                <label class="form-label">Repeat (optional — leave empty for any day)</label>
+                <div class="repeat-btn-row">
+                    <button type="button" class="everyday-btn" onclick="setMissionEveryDay()">Set to every day</button>
+                    <button type="button" class="everyday-btn anyday-btn" onclick="setMissionAnyDay()">Any day</button>
+                </div>
                 <div class="day-chips" id="missionDayChips">
                     <button type="button" class="day-chip" data-day="0" onclick="toggleMissionDay(0)">Sun</button>
                     <button type="button" class="day-chip" data-day="1" onclick="toggleMissionDay(1)">Mon</button>
@@ -2046,6 +2091,7 @@
                     <button type="button" class="day-chip" data-day="5" onclick="toggleMissionDay(5)">Fri</button>
                     <button type="button" class="day-chip" data-day="6" onclick="toggleMissionDay(6)">Sat</button>
                 </div>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top: 6px;">Pick specific days, or leave none selected to make it available every day.</small>
             </div>
             <div class="form-group" style="margin-bottom: 8px;">
                 <label class="form-label">Reward</label>
@@ -2266,6 +2312,26 @@
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('deleteModal')">Cancel</button>
                 <button class="modal-btn confirm" id="deleteConfirmBtn" onclick="handleDeleteClick()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rebirth (Prestige) Modal -->
+    <div class="modal" id="rebirthModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🔁 Rebirth</div>
+                <button class="close-btn" onclick="closeModal('rebirthModal')">&times;</button>
+            </div>
+            <p style="margin-bottom: 12px; color: rgba(255,255,255,0.8);" id="rebirthModalText">
+                You've reached the top rank! Rebirth to reset your points back to 0 and start climbing again — your Prestige level will go up and stay visible forever.
+            </p>
+            <p style="margin-bottom: 20px; color: rgba(255,255,255,0.55); font-size: 13px;" id="rebirthModalSubtext">
+                Current Prestige: 0
+            </p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('rebirthModal')">Not yet</button>
+                <button class="modal-btn confirm" onclick="confirmRebirth()" style="background: linear-gradient(135deg, #ffd700 0%, #ff69b4 100%); color: #1a1a2e;">Rebirth ✨</button>
             </div>
         </div>
     </div>
@@ -3685,6 +3751,7 @@ Use the conversation history provided to you to remember what's already been sai
         // ---- Missions (Zezo only) ----
         let missions = []; // [{ id, title, time: 'HH:MM'|null, days: [0-6], points, order, completedDates: [ 'YYYY-MM-DD', ... ] }]
         let missionPoints = 0;
+        let missionPrestige = 0; // number of times the top rank has been "rebirthed"
         let selectedMissionDays = []; // working state while the Add Mission modal is open
         let editingMissionId = null; // set while the Add Mission modal is editing an existing mission
         let missionCheckInterval = null;
@@ -3786,6 +3853,7 @@ Use the conversation history provided to you to remember what's already been sai
             // Reset missions state before loading the new user's data
             missions = [];
             missionPoints = 0;
+            missionPrestige = 0;
             renderMissions();
             renderMissionPoints();
 
@@ -3955,6 +4023,12 @@ Use the conversation history provided to you to remember what's already been sai
                 const pointsRef = ref(database, `users/${username}/points`);
                 onValue(pointsRef, (snapshot) => {
                     missionPoints = snapshot.exists() ? (snapshot.val() || 0) : 0;
+                    renderMissionPoints();
+                });
+
+                const prestigeRef = ref(database, `users/${username}/missionPrestige`);
+                onValue(prestigeRef, (snapshot) => {
+                    missionPrestige = snapshot.exists() ? (snapshot.val() || 0) : 0;
                     renderMissionPoints();
                 });
 
@@ -4430,7 +4504,9 @@ Use the conversation history provided to you to remember what's already been sai
 
         function isMissionScheduledToday(mission) {
             const todayIndex = new Date().getDay(); // 0 = Sunday ... 6 = Saturday
-            return Array.isArray(mission.days) && mission.days.includes(todayIndex);
+            // No days chosen (optional) means the mission is available every day
+            if (!Array.isArray(mission.days) || mission.days.length === 0) return true;
+            return mission.days.includes(todayIndex);
         }
 
         function isMissionDoneToday(mission) {
@@ -4446,7 +4522,7 @@ Use the conversation history provided to you to remember what's already been sai
             } else if (mission.days && mission.days.length > 0) {
                 daysText = mission.days.slice().sort().map(d => DAY_LABELS[d]).join(', ');
             } else {
-                daysText = 'No days set';
+                daysText = 'Any day';
             }
             const timeText = mission.time ? ` • ⏰ ${formatTime12h(mission.time)}` : ' • Any time';
             return daysText + timeText;
@@ -4479,6 +4555,16 @@ Use the conversation history provided to you to remember what's already been sai
             const badge = document.getElementById('missionRankBadge');
             if (badge) badge.textContent = `${current.icon} ${current.name}`;
 
+            const prestigeBadge = document.getElementById('missionPrestigeBadge');
+            if (prestigeBadge) {
+                if (missionPrestige > 0) {
+                    prestigeBadge.textContent = `✨ Prestige ${missionPrestige}`;
+                    prestigeBadge.style.display = 'inline-flex';
+                } else {
+                    prestigeBadge.style.display = 'none';
+                }
+            }
+
             const fill = document.getElementById('missionRankProgressFill');
             const text = document.getElementById('missionRankProgressText');
             if (fill && text) {
@@ -4493,7 +4579,37 @@ Use the conversation history provided to you to remember what's already been sai
                     text.textContent = `${missionPoints} pts • Max rank reached! 👑`;
                 }
             }
+
+            // Rebirth is only available once the top rank has been reached
+            const rebirthBtn = document.getElementById('missionRebirthBtn');
+            if (rebirthBtn) rebirthBtn.style.display = next ? 'none' : 'block';
         }
+
+        window.openRebirthModal = function() {
+            const { next } = getMissionRankInfo(missionPoints);
+            if (next) return; // guard: only allowed at max rank
+            const subtext = document.getElementById('rebirthModalSubtext');
+            if (subtext) {
+                subtext.textContent = `Current Prestige: ${missionPrestige} → ${missionPrestige + 1} after rebirth`;
+            }
+            document.getElementById('rebirthModal').classList.add('active');
+        };
+
+        window.confirmRebirth = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
+            const { next } = getMissionRankInfo(missionPoints);
+            if (next) { closeModal('rebirthModal'); return; }
+
+            const newPrestige = (missionPrestige || 0) + 1;
+            const pointsRef = ref(database, `users/${currentUser.username}/points`);
+            const prestigeRef = ref(database, `users/${currentUser.username}/missionPrestige`);
+            Promise.all([set(pointsRef, 0), set(prestigeRef, newPrestige)]).then(() => {
+                closeModal('rebirthModal');
+                showNotification(`✨ Rebirth complete! You're now Prestige ${newPrestige}`);
+            }).catch(err => {
+                showNotification('Rebirth failed: ' + err.message, true);
+            });
+        };
 
         function renderMissions() {
             const list = document.getElementById('missionsList');
@@ -4511,17 +4627,22 @@ Use the conversation history provided to you to remember what's already been sai
                 return ao - bo;
             });
 
-            list.innerHTML = sorted.map((mission) => {
+            list.innerHTML = sorted.map((mission, index) => {
                 const scheduledToday = isMissionScheduledToday(mission);
                 const done = isMissionDoneToday(mission);
                 const canComplete = scheduledToday && !done;
                 let btnLabel = '✓ Mark Done';
                 if (done) btnLabel = '✅ Done today';
                 else if (!scheduledToday) btnLabel = 'Not scheduled today';
+                const isFirst = index === 0;
+                const isLast = index === sorted.length - 1;
                 return `
-                    <div class="mission-card ${done ? 'done' : ''}" data-mission-id="${mission.id}">
+                    <div class="mission-card ${done ? 'done' : ''}">
                         <div class="mission-card-top">
-                            <div class="mission-drag-handle" title="Drag to reorder">⠿</div>
+                            <div class="mission-reorder-col">
+                                <button class="mission-reorder-btn" ${isFirst ? 'disabled' : ''} onclick="moveMission('${mission.id}', 'up')" title="Move up">▲</button>
+                                <button class="mission-reorder-btn" ${isLast ? 'disabled' : ''} onclick="moveMission('${mission.id}', 'down')" title="Move down">▼</button>
+                            </div>
                             <div style="flex: 1;">
                                 <div class="mission-title">${escapeHtml(mission.title)}</div>
                                 <div class="mission-meta">${formatMissionSchedule(mission)}</div>
@@ -4536,44 +4657,29 @@ Use the conversation history provided to you to remember what's already been sai
                     </div>
                 `;
             }).join('');
-
-            initMissionDragAndDrop(list);
         }
 
-        // Drag-and-drop reordering via SortableJS — grab the handle, drop it
-        // wherever, and the new order is written straight back to Firebase.
-        let missionSortableInstance = null;
-        function initMissionDragAndDrop(list) {
-            if (typeof Sortable === 'undefined') return; // library failed to load (e.g. offline)
-            if (missionSortableInstance) {
-                missionSortableInstance.destroy();
-                missionSortableInstance = null;
-            }
-            missionSortableInstance = Sortable.create(list, {
-                handle: '.mission-drag-handle',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                onEnd: function() {
-                    const orderedIds = Array.from(list.children)
-                        .map(el => el.getAttribute('data-mission-id'))
-                        .filter(Boolean);
-                    persistMissionOrder(orderedIds);
-                }
-            });
-        }
-
-        function persistMissionOrder(orderedIds) {
+        // Swap this mission's order with its neighbor above/below in the current list
+        window.moveMission = function(id, direction) {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
-            const updates = {};
-            orderedIds.forEach((id, index) => {
-                updates[`${id}/order`] = index;
-                const m = missions.find(mm => mm.id === id);
-                if (m) m.order = index; // update local copy so a re-render before Firebase echoes back doesn't jump
+            const sorted = missions.slice().sort((a, b) => {
+                const ao = (a.order !== undefined && a.order !== null) ? a.order : 0;
+                const bo = (b.order !== undefined && b.order !== null) ? b.order : 0;
+                return ao - bo;
             });
-            const missionsRef = ref(database, `users/${currentUser.username}/missions`);
-            update(missionsRef, updates);
-        }
+            const index = sorted.findIndex(m => m.id === id);
+            if (index === -1) return;
+            const swapIndex = direction === 'up' ? index - 1 : index + 1;
+            if (swapIndex < 0 || swapIndex >= sorted.length) return;
+
+            const a = sorted[index];
+            const b = sorted[swapIndex];
+            const aOrder = (a.order !== undefined && a.order !== null) ? a.order : index;
+            const bOrder = (b.order !== undefined && b.order !== null) ? b.order : swapIndex;
+
+            set(ref(database, `users/${currentUser.username}/missions/${a.id}/order`), bOrder);
+            set(ref(database, `users/${currentUser.username}/missions/${b.id}/order`), aOrder);
+        };
 
         function escapeHtml(str) {
             const div = document.createElement('div');
@@ -4643,6 +4749,12 @@ Use the conversation history provided to you to remember what's already been sai
             document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.add('selected'));
         };
 
+        // Leave no specific days selected — mission is available any day
+        window.setMissionAnyDay = function() {
+            selectedMissionDays = [];
+            document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.remove('selected'));
+        };
+
         window.saveMission = function() {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
                 showNotification('Missions are only available for Zezo', true);
@@ -4653,10 +4765,7 @@ Use the conversation history provided to you to remember what's already been sai
                 showNotification('Please enter a mission title', true);
                 return;
             }
-            if (selectedMissionDays.length === 0) {
-                showNotification('Please choose at least one day', true);
-                return;
-            }
+            // Days are optional — an empty selection means the mission is available every day
             const noTime = document.getElementById('missionNoTimeCheck').checked;
             const timeVal = noTime ? null : (document.getElementById('missionTime').value || null);
 

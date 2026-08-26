@@ -1714,20 +1714,6 @@
             box-shadow: 0 12px 30px rgba(0,0,0,0.5);
         }
 
-        .repeat-btn-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .repeat-btn-row .everyday-btn {
-            flex: 1;
-        }
-
-        .anyday-btn {
-            background: rgba(118, 75, 162, 0.18) !important;
-            border-color: rgba(118, 75, 162, 0.4) !important;
-        }
-
         .day-chips {
             display: flex;
             flex-wrap: wrap;
@@ -2080,21 +2066,24 @@
                 <input type="time" class="form-input" id="missionTime">
             </div>
             <div class="form-group">
-                <label class="form-label">Repeat (optional — leave empty for any day)</label>
-                <div class="repeat-btn-row">
+                <label class="form-label">Repeat</label>
+                <div class="time-toggle-row">
+                    <input type="checkbox" id="missionSpecificDaysCheck" onchange="toggleMissionDaysInput()">
+                    <label for="missionSpecificDaysCheck" style="cursor:pointer;">Choose specific days (optional)</label>
+                </div>
+                <div id="missionDaysPickerWrap" style="display:none;">
                     <button type="button" class="everyday-btn" onclick="setMissionEveryDay()">Set to every day</button>
-                    <button type="button" class="everyday-btn anyday-btn" onclick="setMissionAnyDay()">Any day</button>
+                    <div class="day-chips" id="missionDayChips">
+                        <button type="button" class="day-chip" data-day="0" onclick="toggleMissionDay(0)">Sun</button>
+                        <button type="button" class="day-chip" data-day="1" onclick="toggleMissionDay(1)">Mon</button>
+                        <button type="button" class="day-chip" data-day="2" onclick="toggleMissionDay(2)">Tue</button>
+                        <button type="button" class="day-chip" data-day="3" onclick="toggleMissionDay(3)">Wed</button>
+                        <button type="button" class="day-chip" data-day="4" onclick="toggleMissionDay(4)">Thu</button>
+                        <button type="button" class="day-chip" data-day="5" onclick="toggleMissionDay(5)">Fri</button>
+                        <button type="button" class="day-chip" data-day="6" onclick="toggleMissionDay(6)">Sat</button>
+                    </div>
                 </div>
-                <div class="day-chips" id="missionDayChips">
-                    <button type="button" class="day-chip" data-day="0" onclick="toggleMissionDay(0)">Sun</button>
-                    <button type="button" class="day-chip" data-day="1" onclick="toggleMissionDay(1)">Mon</button>
-                    <button type="button" class="day-chip" data-day="2" onclick="toggleMissionDay(2)">Tue</button>
-                    <button type="button" class="day-chip" data-day="3" onclick="toggleMissionDay(3)">Wed</button>
-                    <button type="button" class="day-chip" data-day="4" onclick="toggleMissionDay(4)">Thu</button>
-                    <button type="button" class="day-chip" data-day="5" onclick="toggleMissionDay(5)">Fri</button>
-                    <button type="button" class="day-chip" data-day="6" onclick="toggleMissionDay(6)">Sat</button>
-                </div>
-                <small style="color: rgba(255,255,255,0.5); display:block; margin-top: 6px;">Pick specific days, or leave none selected to make it available every day.</small>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top: 6px;" id="missionRepeatHint">Leave unchecked and this mission is available any day.</small>
             </div>
             <div class="form-group" style="margin-bottom: 8px;">
                 <label class="form-label">Reward</label>
@@ -4721,6 +4710,7 @@ Use the conversation history provided to you to remember what's already been sai
                 document.getElementById('missionTime').disabled = !hasTime;
                 document.getElementById('missionNoTimeCheck').checked = !hasTime;
                 selectedMissionDays = Array.isArray(mission.days) ? mission.days.slice() : [];
+                document.getElementById('missionSpecificDaysCheck').checked = selectedMissionDays.length > 0;
             } else {
                 if (titleEl) titleEl.textContent = 'Add Mission';
                 if (saveBtn) saveBtn.textContent = 'Add Mission';
@@ -4729,12 +4719,15 @@ Use the conversation history provided to you to remember what's already been sai
                 document.getElementById('missionTime').disabled = false;
                 document.getElementById('missionNoTimeCheck').checked = false;
                 selectedMissionDays = [];
+                document.getElementById('missionSpecificDaysCheck').checked = false;
             }
 
             document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => {
                 const day = parseInt(chip.getAttribute('data-day'));
                 chip.classList.toggle('selected', selectedMissionDays.includes(day));
             });
+            document.getElementById('missionDaysPickerWrap').style.display =
+                document.getElementById('missionSpecificDaysCheck').checked ? 'block' : 'none';
 
             document.getElementById('addMissionModal').classList.add('active');
         };
@@ -4744,6 +4737,23 @@ Use the conversation history provided to you to remember what's already been sai
             const timeInput = document.getElementById('missionTime');
             timeInput.disabled = noTime;
             if (noTime) timeInput.value = '';
+        };
+
+        // Show/hide the day picker; unchecking clears any chosen days (mission becomes "any day")
+        window.toggleMissionDaysInput = function() {
+            const specific = document.getElementById('missionSpecificDaysCheck').checked;
+            const wrap = document.getElementById('missionDaysPickerWrap');
+            const hint = document.getElementById('missionRepeatHint');
+            wrap.style.display = specific ? 'block' : 'none';
+            if (!specific) {
+                selectedMissionDays = [];
+                document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.remove('selected'));
+            }
+            if (hint) {
+                hint.textContent = specific
+                    ? 'Only shows up on the days you pick below.'
+                    : 'Leave unchecked and this mission is available any day.';
+            }
         };
 
         window.toggleMissionDay = function(day) {
@@ -4760,12 +4770,6 @@ Use the conversation history provided to you to remember what's already been sai
         window.setMissionEveryDay = function() {
             selectedMissionDays = [0, 1, 2, 3, 4, 5, 6];
             document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.add('selected'));
-        };
-
-        // Leave no specific days selected — mission is available any day
-        window.setMissionAnyDay = function() {
-            selectedMissionDays = [];
-            document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.remove('selected'));
         };
 
         window.saveMission = function() {

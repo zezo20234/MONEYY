@@ -1519,6 +1519,41 @@
             margin-top: 4px;
         }
 
+        .mission-rank-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .mission-rank-progress-track {
+            width: 100%;
+            height: 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .mission-rank-progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.4s ease;
+        }
+
+        .mission-rank-progress-text {
+            font-size: 11px;
+            color: rgba(255,255,255,0.55);
+            margin-top: 6px;
+        }
+
         .notif-permission-btn {
             width: 100%;
             padding: 10px;
@@ -1612,6 +1647,39 @@
             background: rgba(255, 71, 87, 0.15);
             color: #ff6b6b;
             border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+
+        .mission-btn.edit {
+            flex: 0 0 44px;
+            background: rgba(102, 126, 234, 0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .mission-reorder-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .mission-reorder-btn {
+            width: 28px;
+            height: 22px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.75);
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mission-reorder-btn:disabled {
+            opacity: 0.25;
+            cursor: default;
         }
 
         .day-chips {
@@ -1865,6 +1933,11 @@
             <div class="points-card">
                 <div class="points-value" id="missionPointsValue">0</div>
                 <div class="points-label">Total Points • 10 pts per completed mission</div>
+                <div class="mission-rank-badge" id="missionRankBadge">🥉 Rookie</div>
+                <div class="mission-rank-progress-track">
+                    <div class="mission-rank-progress-fill" id="missionRankProgressFill" style="width: 0%;"></div>
+                </div>
+                <div class="mission-rank-progress-text" id="missionRankProgressText">0 / 100 pts to next rank</div>
             </div>
 
             <button class="notif-permission-btn" id="notifPermissionBtn" onclick="requestMissionNotifications()">
@@ -3607,11 +3680,21 @@ Use the conversation history provided to you to remember what's already been sai
         let goalKeys = []; // Store Firebase keys for editing/deleting goals
 
         // ---- Missions (Zezo only) ----
-        let missions = []; // [{ id, title, time: 'HH:MM'|null, days: [0-6], points, completedDates: [ 'YYYY-MM-DD', ... ] }]
+        let missions = []; // [{ id, title, time: 'HH:MM'|null, days: [0-6], points, order, completedDates: [ 'YYYY-MM-DD', ... ] }]
         let missionPoints = 0;
         let selectedMissionDays = []; // working state while the Add Mission modal is open
+        let editingMissionId = null; // set while the Add Mission modal is editing an existing mission
         let missionCheckInterval = null;
         const MISSION_POINTS_PER_TASK = 10;
+
+        // Mission rank tiers, unlocked by lifetime total points
+        const MISSION_RANK_TIERS = [
+            { name: 'Rookie',    icon: '🥉', threshold: 0 },
+            { name: 'Grinder',   icon: '🥈', threshold: 100 },
+            { name: 'Achiever',  icon: '🥇', threshold: 300 },
+            { name: 'Champion',  icon: '💎', threshold: 600 },
+            { name: 'Legend',    icon: '👑', threshold: 1000 }
+        ];
 
         // Allowance mode toggle (Zezo only): 'normal' or 'saving'
         let allowanceMode = 'normal';
@@ -4373,9 +4456,40 @@ Use the conversation history provided to you to remember what's already been sai
             return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
         }
 
+        function getMissionRankInfo(points) {
+            let current = MISSION_RANK_TIERS[0];
+            let next = null;
+            for (let i = 0; i < MISSION_RANK_TIERS.length; i++) {
+                if (points >= MISSION_RANK_TIERS[i].threshold) {
+                    current = MISSION_RANK_TIERS[i];
+                    next = MISSION_RANK_TIERS[i + 1] || null;
+                }
+            }
+            return { current, next };
+        }
+
         function renderMissionPoints() {
             const el = document.getElementById('missionPointsValue');
             if (el) el.textContent = missionPoints;
+
+            const { current, next } = getMissionRankInfo(missionPoints);
+            const badge = document.getElementById('missionRankBadge');
+            if (badge) badge.textContent = `${current.icon} ${current.name}`;
+
+            const fill = document.getElementById('missionRankProgressFill');
+            const text = document.getElementById('missionRankProgressText');
+            if (fill && text) {
+                if (next) {
+                    const span = next.threshold - current.threshold;
+                    const progressed = missionPoints - current.threshold;
+                    const pct = Math.max(0, Math.min(100, Math.round((progressed / span) * 100)));
+                    fill.style.width = `${pct}%`;
+                    text.textContent = `${missionPoints} / ${next.threshold} pts to ${next.icon} ${next.name}`;
+                } else {
+                    fill.style.width = '100%';
+                    text.textContent = `${missionPoints} pts • Max rank reached! 👑`;
+                }
+            }
         }
 
         function renderMissions() {
@@ -4387,32 +4501,30 @@ Use the conversation history provided to you to remember what's already been sai
                 return;
             }
 
-            // Sort: today's not-yet-done missions first (soonest time first), then done, then not-scheduled-today
+            // Sort purely by the user's chosen manual order (falls back to creation order)
             const sorted = missions.slice().sort((a, b) => {
-                const aToday = isMissionScheduledToday(a);
-                const bToday = isMissionScheduledToday(b);
-                const aDone = isMissionDoneToday(a);
-                const bDone = isMissionDoneToday(b);
-                const aRank = aToday && !aDone ? 0 : (aToday && aDone ? 1 : 2);
-                const bRank = bToday && !bDone ? 0 : (bToday && bDone ? 1 : 2);
-                if (aRank !== bRank) return aRank - bRank;
-                if (a.time && b.time) return a.time.localeCompare(b.time);
-                if (a.time) return -1;
-                if (b.time) return 1;
-                return 0;
+                const ao = (a.order !== undefined && a.order !== null) ? a.order : 0;
+                const bo = (b.order !== undefined && b.order !== null) ? b.order : 0;
+                return ao - bo;
             });
 
-            list.innerHTML = sorted.map(mission => {
+            list.innerHTML = sorted.map((mission, index) => {
                 const scheduledToday = isMissionScheduledToday(mission);
                 const done = isMissionDoneToday(mission);
                 const canComplete = scheduledToday && !done;
                 let btnLabel = '✓ Mark Done';
                 if (done) btnLabel = '✅ Done today';
                 else if (!scheduledToday) btnLabel = 'Not scheduled today';
+                const isFirst = index === 0;
+                const isLast = index === sorted.length - 1;
                 return `
                     <div class="mission-card ${done ? 'done' : ''}">
                         <div class="mission-card-top">
-                            <div>
+                            <div class="mission-reorder-col">
+                                <button class="mission-reorder-btn" ${isFirst ? 'disabled' : ''} onclick="moveMission('${mission.id}', 'up')" title="Move up">▲</button>
+                                <button class="mission-reorder-btn" ${isLast ? 'disabled' : ''} onclick="moveMission('${mission.id}', 'down')" title="Move down">▼</button>
+                            </div>
+                            <div style="flex: 1;">
                                 <div class="mission-title">${escapeHtml(mission.title)}</div>
                                 <div class="mission-meta">${formatMissionSchedule(mission)}</div>
                             </div>
@@ -4420,12 +4532,35 @@ Use the conversation history provided to you to remember what's already been sai
                         </div>
                         <div class="mission-actions">
                             <button class="mission-btn complete" ${canComplete ? '' : 'disabled'} onclick="completeMission('${mission.id}')">${btnLabel}</button>
-                            <button class="mission-btn delete" onclick="deleteMission('${mission.id}')">🗑️</button>
+                            <button class="mission-btn edit" onclick="openAddMissionModal('${mission.id}')" title="Edit">✏️</button>
+                            <button class="mission-btn delete" onclick="deleteMission('${mission.id}')" title="Delete">🗑️</button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
+
+        // Swap this mission's order with its neighbor above/below in the current list
+        window.moveMission = function(id, direction) {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
+            const sorted = missions.slice().sort((a, b) => {
+                const ao = (a.order !== undefined && a.order !== null) ? a.order : 0;
+                const bo = (b.order !== undefined && b.order !== null) ? b.order : 0;
+                return ao - bo;
+            });
+            const index = sorted.findIndex(m => m.id === id);
+            if (index === -1) return;
+            const swapIndex = direction === 'up' ? index - 1 : index + 1;
+            if (swapIndex < 0 || swapIndex >= sorted.length) return;
+
+            const a = sorted[index];
+            const b = sorted[swapIndex];
+            const aOrder = (a.order !== undefined && a.order !== null) ? a.order : index;
+            const bOrder = (b.order !== undefined && b.order !== null) ? b.order : swapIndex;
+
+            set(ref(database, `users/${currentUser.username}/missions/${a.id}/order`), bOrder);
+            set(ref(database, `users/${currentUser.username}/missions/${b.id}/order`), aOrder);
+        };
 
         function escapeHtml(str) {
             const div = document.createElement('div');
@@ -4433,17 +4568,42 @@ Use the conversation history provided to you to remember what's already been sai
             return div.innerHTML;
         }
 
-        window.openAddMissionModal = function() {
+        window.openAddMissionModal = function(id) {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
                 showNotification('Missions are only available for Zezo', true);
                 return;
             }
-            document.getElementById('missionTitle').value = '';
-            document.getElementById('missionTime').value = '';
-            document.getElementById('missionTime').disabled = false;
-            document.getElementById('missionNoTimeCheck').checked = false;
-            selectedMissionDays = [];
-            document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.remove('selected'));
+
+            const titleEl = document.querySelector('#addMissionModal .modal-title');
+            const saveBtn = document.querySelector('#addMissionModal .modal-btn.confirm');
+
+            const mission = id ? missions.find(m => m.id === id) : null;
+            editingMissionId = mission ? mission.id : null;
+
+            if (mission) {
+                if (titleEl) titleEl.textContent = 'Edit Mission';
+                if (saveBtn) saveBtn.textContent = 'Save Changes';
+                document.getElementById('missionTitle').value = mission.title || '';
+                const hasTime = !!mission.time;
+                document.getElementById('missionTime').value = hasTime ? mission.time : '';
+                document.getElementById('missionTime').disabled = !hasTime;
+                document.getElementById('missionNoTimeCheck').checked = !hasTime;
+                selectedMissionDays = Array.isArray(mission.days) ? mission.days.slice() : [];
+            } else {
+                if (titleEl) titleEl.textContent = 'Add Mission';
+                if (saveBtn) saveBtn.textContent = 'Add Mission';
+                document.getElementById('missionTitle').value = '';
+                document.getElementById('missionTime').value = '';
+                document.getElementById('missionTime').disabled = false;
+                document.getElementById('missionNoTimeCheck').checked = false;
+                selectedMissionDays = [];
+            }
+
+            document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => {
+                const day = parseInt(chip.getAttribute('data-day'));
+                chip.classList.toggle('selected', selectedMissionDays.includes(day));
+            });
+
             document.getElementById('addMissionModal').classList.add('active');
         };
 
@@ -4487,11 +4647,29 @@ Use the conversation history provided to you to remember what's already been sai
             const noTime = document.getElementById('missionNoTimeCheck').checked;
             const timeVal = noTime ? null : (document.getElementById('missionTime').value || null);
 
+            if (editingMissionId) {
+                // Update the existing mission in place — keep its history and order untouched
+                const missionRef = ref(database, `users/${currentUser.username}/missions/${editingMissionId}`);
+                update(missionRef, {
+                    title,
+                    time: timeVal,
+                    days: selectedMissionDays.slice().sort()
+                }).then(() => {
+                    closeModal('addMissionModal');
+                    editingMissionId = null;
+                    showNotification('Mission updated!');
+                }).catch(err => {
+                    showNotification('Failed to update mission: ' + err.message, true);
+                });
+                return;
+            }
+
             const newMission = {
                 title,
                 time: timeVal,
                 days: selectedMissionDays.slice().sort(),
                 points: MISSION_POINTS_PER_TASK,
+                order: missions.length, // new missions go to the bottom by default
                 completedDates: [],
                 createdAt: new Date().toISOString()
             };
@@ -5422,6 +5600,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
         window.closeModal = function(modalId) {
             document.getElementById(modalId).classList.remove('active');
+            if (modalId === 'addMissionModal') {
+                editingMissionId = null;
+            }
         };
 
         // Open edit transaction modal

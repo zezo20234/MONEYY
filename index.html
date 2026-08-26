@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="./icon-192.png">
     <link rel="icon" type="image/png" href="./icon-192.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <!-- Groq AI is called directly via REST fetch (OpenAI-compatible chat completions API) -->
     <!-- (see generateAIResponse below) -->
     <style>
@@ -1656,30 +1657,32 @@
             border: 1px solid rgba(102, 126, 234, 0.3);
         }
 
-        .mission-reorder-col {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .mission-drag-handle {
+            width: 32px;
+            height: 44px;
             flex-shrink: 0;
-        }
-
-        .mission-reorder-btn {
-            width: 28px;
-            height: 22px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.08);
-            color: rgba(255,255,255,0.75);
-            font-size: 11px;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 18px;
+            color: rgba(255,255,255,0.4);
+            cursor: grab;
+            touch-action: none;
+            border-radius: 8px;
         }
 
-        .mission-reorder-btn:disabled {
-            opacity: 0.25;
-            cursor: default;
+        .mission-drag-handle:active {
+            cursor: grabbing;
+            color: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .mission-card.sortable-ghost {
+            opacity: 0.4;
+        }
+
+        .mission-card.sortable-drag {
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
         }
 
         .day-chips {
@@ -4508,22 +4511,17 @@ Use the conversation history provided to you to remember what's already been sai
                 return ao - bo;
             });
 
-            list.innerHTML = sorted.map((mission, index) => {
+            list.innerHTML = sorted.map((mission) => {
                 const scheduledToday = isMissionScheduledToday(mission);
                 const done = isMissionDoneToday(mission);
                 const canComplete = scheduledToday && !done;
                 let btnLabel = '✓ Mark Done';
                 if (done) btnLabel = '✅ Done today';
                 else if (!scheduledToday) btnLabel = 'Not scheduled today';
-                const isFirst = index === 0;
-                const isLast = index === sorted.length - 1;
                 return `
-                    <div class="mission-card ${done ? 'done' : ''}">
+                    <div class="mission-card ${done ? 'done' : ''}" data-mission-id="${mission.id}">
                         <div class="mission-card-top">
-                            <div class="mission-reorder-col">
-                                <button class="mission-reorder-btn" ${isFirst ? 'disabled' : ''} onclick="moveMission('${mission.id}', 'up')" title="Move up">▲</button>
-                                <button class="mission-reorder-btn" ${isLast ? 'disabled' : ''} onclick="moveMission('${mission.id}', 'down')" title="Move down">▼</button>
-                            </div>
+                            <div class="mission-drag-handle" title="Drag to reorder">⠿</div>
                             <div style="flex: 1;">
                                 <div class="mission-title">${escapeHtml(mission.title)}</div>
                                 <div class="mission-meta">${formatMissionSchedule(mission)}</div>
@@ -4538,29 +4536,44 @@ Use the conversation history provided to you to remember what's already been sai
                     </div>
                 `;
             }).join('');
+
+            initMissionDragAndDrop(list);
         }
 
-        // Swap this mission's order with its neighbor above/below in the current list
-        window.moveMission = function(id, direction) {
-            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
-            const sorted = missions.slice().sort((a, b) => {
-                const ao = (a.order !== undefined && a.order !== null) ? a.order : 0;
-                const bo = (b.order !== undefined && b.order !== null) ? b.order : 0;
-                return ao - bo;
+        // Drag-and-drop reordering via SortableJS — grab the handle, drop it
+        // wherever, and the new order is written straight back to Firebase.
+        let missionSortableInstance = null;
+        function initMissionDragAndDrop(list) {
+            if (typeof Sortable === 'undefined') return; // library failed to load (e.g. offline)
+            if (missionSortableInstance) {
+                missionSortableInstance.destroy();
+                missionSortableInstance = null;
+            }
+            missionSortableInstance = Sortable.create(list, {
+                handle: '.mission-drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onEnd: function() {
+                    const orderedIds = Array.from(list.children)
+                        .map(el => el.getAttribute('data-mission-id'))
+                        .filter(Boolean);
+                    persistMissionOrder(orderedIds);
+                }
             });
-            const index = sorted.findIndex(m => m.id === id);
-            if (index === -1) return;
-            const swapIndex = direction === 'up' ? index - 1 : index + 1;
-            if (swapIndex < 0 || swapIndex >= sorted.length) return;
+        }
 
-            const a = sorted[index];
-            const b = sorted[swapIndex];
-            const aOrder = (a.order !== undefined && a.order !== null) ? a.order : index;
-            const bOrder = (b.order !== undefined && b.order !== null) ? b.order : swapIndex;
-
-            set(ref(database, `users/${currentUser.username}/missions/${a.id}/order`), bOrder);
-            set(ref(database, `users/${currentUser.username}/missions/${b.id}/order`), aOrder);
-        };
+        function persistMissionOrder(orderedIds) {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
+            const updates = {};
+            orderedIds.forEach((id, index) => {
+                updates[`${id}/order`] = index;
+                const m = missions.find(mm => mm.id === id);
+                if (m) m.order = index; // update local copy so a re-render before Firebase echoes back doesn't jump
+            });
+            const missionsRef = ref(database, `users/${currentUser.username}/missions`);
+            update(missionsRef, updates);
+        }
 
         function escapeHtml(str) {
             const div = document.createElement('div');

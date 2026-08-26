@@ -1452,6 +1452,220 @@
             }
         }
 
+        /* ---- Missions (Zezo only) ---- */
+        .mode-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .mode-option-btn {
+            padding: 14px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .mode-option-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mode-option-btn.selected {
+            background: linear-gradient(135deg, rgba(46, 213, 115, 0.85) 0%, rgba(29, 209, 161, 0.85) 100%);
+            border-color: rgba(46, 213, 115, 1);
+            box-shadow: 0 4px 20px rgba(46, 213, 115, 0.35);
+        }
+
+        .mode-option-sub {
+            font-size: 11px;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .points-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .points-card .points-value {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffd166 0%, #f7b733 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .points-card .points-label {
+            font-size: 13px;
+            color: rgba(255,255,255,0.65);
+            margin-top: 4px;
+        }
+
+        .notif-permission-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            background: rgba(102, 126, 234, 0.18);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            color: #a5b4fc;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mission-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: all 0.25s ease;
+        }
+
+        .mission-card.done {
+            border-color: rgba(46, 213, 115, 0.5);
+            background: rgba(46, 213, 115, 0.08);
+        }
+
+        .mission-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .mission-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .mission-meta {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .mission-points-badge {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #ffd166 0%, #f7b733 100%);
+            color: #241a00;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .mission-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .mission-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 12px;
+            border: none;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mission-btn.complete {
+            background: linear-gradient(135deg, #2ed573 0%, #1dd1a1 100%);
+            color: #063b21;
+        }
+
+        .mission-btn.complete:disabled {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.4);
+            cursor: default;
+        }
+
+        .mission-btn.delete {
+            flex: 0 0 44px;
+            background: rgba(255, 71, 87, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+
+        .day-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .day-chip {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .day-chip.selected {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
+            border-color: rgba(102, 126, 234, 1);
+        }
+
+        .everyday-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px dashed rgba(255,255,255,0.25);
+            border-radius: 12px;
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .time-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .empty-missions {
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            padding: 30px 10px;
+        }
+
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -1520,6 +1734,10 @@
                         <span class="bottom-nav-icon">🤖</span>
                         <span class="bottom-nav-label">AI</span>
                         <span class="offline-cross" id="aiOfflineCross">✕</span>
+                    </div>
+                    <div class="bottom-nav-item" onclick="switchTab('missions')" id="nav-missions" style="display: none;">
+                        <span class="bottom-nav-icon">🎯</span>
+                        <span class="bottom-nav-label">Missions</span>
                     </div>
                 </div>
             </div>
@@ -1641,6 +1859,27 @@
             </div>
         </div>
 
+        <div class="section" id="missionsSection" style="display: none;">
+            <div class="section-title">🎯 Missions</div>
+
+            <div class="points-card">
+                <div class="points-value" id="missionPointsValue">0</div>
+                <div class="points-label">Total Points • 10 pts per completed mission</div>
+            </div>
+
+            <button class="notif-permission-btn" id="notifPermissionBtn" onclick="requestMissionNotifications()">
+                🔔 Enable mission reminders
+            </button>
+
+            <button class="action-btn primary" style="width: 100%; margin-bottom: 16px;" onclick="openAddMissionModal()">
+                ➕ Add Mission
+            </button>
+
+            <div id="missionsList">
+                <div class="empty-missions">No missions yet. Add your first one!</div>
+            </div>
+        </div>
+
 
     </div>
 
@@ -1650,6 +1889,19 @@
             <div class="modal-header">
                 <div class="modal-title">Add Allowance</div>
                 <button class="close-btn" onclick="closeModal('allowanceModal')">&times;</button>
+            </div>
+            <div class="form-group" id="allowanceModeGroup" style="display:none;">
+                <label class="form-label">Mode</label>
+                <div class="mode-options">
+                    <button type="button" class="mode-option-btn selected" id="allowanceModeNormalBtn" onclick="selectAllowanceMode('normal')">
+                        Normal
+                        <span class="mode-option-sub">Usual split</span>
+                    </button>
+                    <button type="button" class="mode-option-btn" id="allowanceModeSavingBtn" onclick="selectAllowanceMode('saving')">
+                        💎 Saving
+                        <span class="mode-option-sub">Save more money</span>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Total Amount (SAR)</label>
@@ -1683,6 +1935,49 @@
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('allowanceModal')">Cancel</button>
                 <button class="modal-btn confirm" onclick="addAllowance()">Add Allowance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Mission Modal (Zezo only) -->
+    <div class="modal" id="addMissionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Mission</div>
+                <button class="close-btn" onclick="closeModal('addMissionModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mission Title</label>
+                <input type="text" class="form-input" id="missionTitle" placeholder="e.g. Clean my room">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Time (optional)</label>
+                <div class="time-toggle-row">
+                    <input type="checkbox" id="missionNoTimeCheck" onchange="toggleMissionTimeInput()">
+                    <label for="missionNoTimeCheck" style="cursor:pointer;">No specific time</label>
+                </div>
+                <input type="time" class="form-input" id="missionTime">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Repeat</label>
+                <button type="button" class="everyday-btn" onclick="setMissionEveryDay()">Set to every day</button>
+                <div class="day-chips" id="missionDayChips">
+                    <button type="button" class="day-chip" data-day="0" onclick="toggleMissionDay(0)">Sun</button>
+                    <button type="button" class="day-chip" data-day="1" onclick="toggleMissionDay(1)">Mon</button>
+                    <button type="button" class="day-chip" data-day="2" onclick="toggleMissionDay(2)">Tue</button>
+                    <button type="button" class="day-chip" data-day="3" onclick="toggleMissionDay(3)">Wed</button>
+                    <button type="button" class="day-chip" data-day="4" onclick="toggleMissionDay(4)">Thu</button>
+                    <button type="button" class="day-chip" data-day="5" onclick="toggleMissionDay(5)">Fri</button>
+                    <button type="button" class="day-chip" data-day="6" onclick="toggleMissionDay(6)">Sat</button>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label class="form-label">Reward</label>
+                <div style="font-size: 14px; color: rgba(255,255,255,0.8);">🏅 10 points per completion</div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('addMissionModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveMission()">Add Mission</button>
             </div>
         </div>
     </div>
@@ -3311,6 +3606,16 @@ Use the conversation history provided to you to remember what's already been sai
         let goals = [];
         let goalKeys = []; // Store Firebase keys for editing/deleting goals
 
+        // ---- Missions (Zezo only) ----
+        let missions = []; // [{ id, title, time: 'HH:MM'|null, days: [0-6], points, completedDates: [ 'YYYY-MM-DD', ... ] }]
+        let missionPoints = 0;
+        let selectedMissionDays = []; // working state while the Add Mission modal is open
+        let missionCheckInterval = null;
+        const MISSION_POINTS_PER_TASK = 10;
+
+        // Allowance mode toggle (Zezo only): 'normal' or 'saving'
+        let allowanceMode = 'normal';
+
         // Savings rank tiers — 5th tier gets a glowing badge
         const RANK_TIERS = [
             { name: 'Bronze Saver',   icon: '🥉' },
@@ -3388,6 +3693,15 @@ Use the conversation history provided to you to remember what's already been sai
             if (!currentUser) return;
 
             const username = currentUser.username;
+
+            // Show/hide the Missions tab and the allowance mode toggle — Zezo only
+            applyZezoOnlyUI();
+
+            // Reset missions state before loading the new user's data
+            missions = [];
+            missionPoints = 0;
+            renderMissions();
+            renderMissionPoints();
 
             // Check for / listen for app update announcements (shared, not per-user)
             listenForUpdates();
@@ -3538,6 +3852,30 @@ Use the conversation history provided to you to remember what's already been sai
                 initializeGroqAI();
                 setTimeout(checkAIWarnings, 3000);
             });
+
+            // Missions & points — Zezo only feature, but harmless to keep isolated per-user
+            if (username.toLowerCase() === 'zezo') {
+                const missionsRef = ref(database, `users/${username}/missions`);
+                onValue(missionsRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        missions = Object.keys(data).map(id => ({ id, ...data[id] }));
+                    } else {
+                        missions = [];
+                    }
+                    renderMissions();
+                });
+
+                const pointsRef = ref(database, `users/${username}/points`);
+                onValue(pointsRef, (snapshot) => {
+                    missionPoints = snapshot.exists() ? (snapshot.val() || 0) : 0;
+                    renderMissionPoints();
+                });
+
+                startMissionNotificationScheduler();
+            } else {
+                stopMissionNotificationScheduler();
+            }
         }
 
         // Update UI
@@ -3968,11 +4306,336 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById('transactionsSection').style.display = tab === 'transactions' ? 'block' : 'none';
             document.getElementById('chartsSection').style.display = tab === 'charts' ? 'block' : 'none';
             document.getElementById('aiSection').style.display = tab === 'ai' ? 'block' : 'none';
+            const missionsSectionEl = document.getElementById('missionsSection');
+            if (missionsSectionEl) missionsSectionEl.style.display = tab === 'missions' ? 'block' : 'none';
 
             if (tab === 'transactions') {
                 updateTransactionsList();
             }
+            if (tab === 'missions') {
+                renderMissions();
+                renderMissionPoints();
+                updateNotifPermissionButton();
+            }
         };
+
+        // Show the Missions nav tab and the allowance Saving-mode toggle only for Zezo
+        function applyZezoOnlyUI() {
+            const isZezo = currentUser && currentUser.username.toLowerCase() === 'zezo';
+            const navMissions = document.getElementById('nav-missions');
+            if (navMissions) navMissions.style.display = isZezo ? 'flex' : 'none';
+            if (!isZezo) {
+                // If the user is on the missions tab and switches accounts, bounce back home
+                const missionsSectionEl = document.getElementById('missionsSection');
+                if (missionsSectionEl && missionsSectionEl.style.display === 'block') {
+                    switchTab('home');
+                }
+            }
+        }
+
+        /* ============================================================
+           MISSIONS (Zezo only)
+           ============================================================ */
+
+        function getTodayDateStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function isMissionScheduledToday(mission) {
+            const todayIndex = new Date().getDay(); // 0 = Sunday ... 6 = Saturday
+            return Array.isArray(mission.days) && mission.days.includes(todayIndex);
+        }
+
+        function isMissionDoneToday(mission) {
+            return Array.isArray(mission.completedDates) && mission.completedDates.includes(getTodayDateStr());
+        }
+
+        const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        function formatMissionSchedule(mission) {
+            let daysText;
+            if (mission.days && mission.days.length === 7) {
+                daysText = 'Every day';
+            } else if (mission.days && mission.days.length > 0) {
+                daysText = mission.days.slice().sort().map(d => DAY_LABELS[d]).join(', ');
+            } else {
+                daysText = 'No days set';
+            }
+            const timeText = mission.time ? ` • ⏰ ${formatTime12h(mission.time)}` : ' • Any time';
+            return daysText + timeText;
+        }
+
+        function formatTime12h(hhmm) {
+            const [h, m] = hhmm.split(':').map(Number);
+            const period = h >= 12 ? 'PM' : 'AM';
+            const hour12 = ((h % 12) === 0) ? 12 : (h % 12);
+            return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+        }
+
+        function renderMissionPoints() {
+            const el = document.getElementById('missionPointsValue');
+            if (el) el.textContent = missionPoints;
+        }
+
+        function renderMissions() {
+            const list = document.getElementById('missionsList');
+            if (!list) return;
+
+            if (!missions || missions.length === 0) {
+                list.innerHTML = '<div class="empty-missions">No missions yet. Add your first one!</div>';
+                return;
+            }
+
+            // Sort: today's not-yet-done missions first (soonest time first), then done, then not-scheduled-today
+            const sorted = missions.slice().sort((a, b) => {
+                const aToday = isMissionScheduledToday(a);
+                const bToday = isMissionScheduledToday(b);
+                const aDone = isMissionDoneToday(a);
+                const bDone = isMissionDoneToday(b);
+                const aRank = aToday && !aDone ? 0 : (aToday && aDone ? 1 : 2);
+                const bRank = bToday && !bDone ? 0 : (bToday && bDone ? 1 : 2);
+                if (aRank !== bRank) return aRank - bRank;
+                if (a.time && b.time) return a.time.localeCompare(b.time);
+                if (a.time) return -1;
+                if (b.time) return 1;
+                return 0;
+            });
+
+            list.innerHTML = sorted.map(mission => {
+                const scheduledToday = isMissionScheduledToday(mission);
+                const done = isMissionDoneToday(mission);
+                const canComplete = scheduledToday && !done;
+                let btnLabel = '✓ Mark Done';
+                if (done) btnLabel = '✅ Done today';
+                else if (!scheduledToday) btnLabel = 'Not scheduled today';
+                return `
+                    <div class="mission-card ${done ? 'done' : ''}">
+                        <div class="mission-card-top">
+                            <div>
+                                <div class="mission-title">${escapeHtml(mission.title)}</div>
+                                <div class="mission-meta">${formatMissionSchedule(mission)}</div>
+                            </div>
+                            <div class="mission-points-badge">+${mission.points || MISSION_POINTS_PER_TASK} pts</div>
+                        </div>
+                        <div class="mission-actions">
+                            <button class="mission-btn complete" ${canComplete ? '' : 'disabled'} onclick="completeMission('${mission.id}')">${btnLabel}</button>
+                            <button class="mission-btn delete" onclick="deleteMission('${mission.id}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        window.openAddMissionModal = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Missions are only available for Zezo', true);
+                return;
+            }
+            document.getElementById('missionTitle').value = '';
+            document.getElementById('missionTime').value = '';
+            document.getElementById('missionTime').disabled = false;
+            document.getElementById('missionNoTimeCheck').checked = false;
+            selectedMissionDays = [];
+            document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.remove('selected'));
+            document.getElementById('addMissionModal').classList.add('active');
+        };
+
+        window.toggleMissionTimeInput = function() {
+            const noTime = document.getElementById('missionNoTimeCheck').checked;
+            const timeInput = document.getElementById('missionTime');
+            timeInput.disabled = noTime;
+            if (noTime) timeInput.value = '';
+        };
+
+        window.toggleMissionDay = function(day) {
+            const idx = selectedMissionDays.indexOf(day);
+            if (idx === -1) {
+                selectedMissionDays.push(day);
+            } else {
+                selectedMissionDays.splice(idx, 1);
+            }
+            const chip = document.querySelector(`#missionDayChips .day-chip[data-day="${day}"]`);
+            if (chip) chip.classList.toggle('selected', selectedMissionDays.includes(day));
+        };
+
+        window.setMissionEveryDay = function() {
+            selectedMissionDays = [0, 1, 2, 3, 4, 5, 6];
+            document.querySelectorAll('#missionDayChips .day-chip').forEach(chip => chip.classList.add('selected'));
+        };
+
+        window.saveMission = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Missions are only available for Zezo', true);
+                return;
+            }
+            const title = document.getElementById('missionTitle').value.trim();
+            if (!title) {
+                showNotification('Please enter a mission title', true);
+                return;
+            }
+            if (selectedMissionDays.length === 0) {
+                showNotification('Please choose at least one day', true);
+                return;
+            }
+            const noTime = document.getElementById('missionNoTimeCheck').checked;
+            const timeVal = noTime ? null : (document.getElementById('missionTime').value || null);
+
+            const newMission = {
+                title,
+                time: timeVal,
+                days: selectedMissionDays.slice().sort(),
+                points: MISSION_POINTS_PER_TASK,
+                completedDates: [],
+                createdAt: new Date().toISOString()
+            };
+
+            const missionsRef = ref(database, `users/${currentUser.username}/missions`);
+            const newRef = push(missionsRef);
+            set(newRef, newMission).then(() => {
+                closeModal('addMissionModal');
+                showNotification('Mission added!');
+            }).catch(err => {
+                showNotification('Failed to add mission: ' + err.message, true);
+            });
+        };
+
+        window.completeMission = function(id) {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
+            const mission = missions.find(m => m.id === id);
+            if (!mission) return;
+            if (!isMissionScheduledToday(mission) || isMissionDoneToday(mission)) return;
+
+            const updatedDates = Array.isArray(mission.completedDates) ? mission.completedDates.slice() : [];
+            updatedDates.push(getTodayDateStr());
+
+            const missionRef = ref(database, `users/${currentUser.username}/missions/${id}/completedDates`);
+            set(missionRef, updatedDates);
+
+            const newPoints = (missionPoints || 0) + (mission.points || MISSION_POINTS_PER_TASK);
+            const pointsRef = ref(database, `users/${currentUser.username}/points`);
+            set(pointsRef, newPoints);
+
+            showNotification(`+${mission.points || MISSION_POINTS_PER_TASK} points! Mission complete 🎉`);
+        };
+
+        window.deleteMission = function(id) {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
+            const missionRef = ref(database, `users/${currentUser.username}/missions/${id}`);
+            set(missionRef, null).then(() => {
+                showNotification('Mission deleted');
+            });
+        };
+
+        /* ---- Mission notifications ---- */
+
+        function updateNotifPermissionButton() {
+            const btn = document.getElementById('notifPermissionBtn');
+            if (!btn) return;
+            if (!('Notification' in window)) {
+                btn.textContent = '🔕 Notifications not supported on this device';
+                btn.disabled = true;
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                btn.textContent = '🔔 Mission reminders enabled';
+                btn.disabled = true;
+            } else if (Notification.permission === 'denied') {
+                btn.textContent = '🔕 Notifications blocked — enable them in browser settings';
+                btn.disabled = true;
+            } else {
+                btn.textContent = '🔔 Enable mission reminders';
+                btn.disabled = false;
+            }
+        }
+
+        window.requestMissionNotifications = function() {
+            if (!('Notification' in window)) {
+                showNotification('Notifications are not supported on this device', true);
+                return;
+            }
+            Notification.requestPermission().then(() => {
+                updateNotifPermissionButton();
+                if (Notification.permission === 'granted') {
+                    new Notification('Money Manager', { body: "Mission reminders are on. I'll let you know when it's time!" });
+                }
+            });
+        };
+
+        function sendMissionNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body });
+            } else {
+                showNotification(`${title}: ${body}`);
+            }
+        }
+
+        function missionNotifiedKey(missionId, tag) {
+            return `mm_mission_notified_${missionId}_${getTodayDateStr()}_${tag}`;
+        }
+
+        function alreadyNotified(missionId, tag) {
+            return localStorage.getItem(missionNotifiedKey(missionId, tag)) === '1';
+        }
+
+        function markNotified(missionId, tag) {
+            localStorage.setItem(missionNotifiedKey(missionId, tag), '1');
+        }
+
+        // Checks every mission scheduled for today and fires a notification when
+        // it's coming up soon (or, for missions with no set time, a generic
+        // end-of-day nudge so nothing gets forgotten).
+        function checkMissionNotifications() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+            missions.forEach(mission => {
+                if (!isMissionScheduledToday(mission) || isMissionDoneToday(mission)) return;
+
+                if (mission.time) {
+                    const [h, m] = mission.time.split(':').map(Number);
+                    const missionMinutes = h * 60 + m;
+                    const diff = missionMinutes - nowMinutes;
+
+                    // 15 minutes heads-up
+                    if (diff <= 15 && diff > 5 && !alreadyNotified(mission.id, 'pre')) {
+                        sendMissionNotification('⏰ Mission coming up', `"${mission.title}" is in about ${diff} minutes.`);
+                        markNotified(mission.id, 'pre');
+                    }
+                    // At/just past the scheduled time
+                    if (diff <= 0 && diff > -30 && !alreadyNotified(mission.id, 'due')) {
+                        sendMissionNotification('🎯 Time for your mission!', `It's time to do "${mission.title}".`);
+                        markNotified(mission.id, 'due');
+                    }
+                } else {
+                    // No specific time set — nudge once in the evening so it doesn't get missed
+                    if (nowMinutes >= 19 * 60 && !alreadyNotified(mission.id, 'generic')) {
+                        sendMissionNotification('🎯 Don\'t forget your mission', `When will you do "${mission.title}"? Don't run out of time!`);
+                        markNotified(mission.id, 'generic');
+                    }
+                }
+            });
+        }
+
+        function startMissionNotificationScheduler() {
+            if (missionCheckInterval) return;
+            checkMissionNotifications();
+            missionCheckInterval = setInterval(checkMissionNotifications, 60 * 1000);
+        }
+
+        function stopMissionNotificationScheduler() {
+            if (missionCheckInterval) {
+                clearInterval(missionCheckInterval);
+                missionCheckInterval = null;
+            }
+        }
 
         // Fallback emoji when the AI can't be reached (non-purchase transaction types,
         // or if the Groq emoji lookup fails)
@@ -4200,7 +4863,17 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 return;
             }
             document.getElementById('allowanceModal').classList.add('active');
-            
+
+            // Zezo-only: show the Normal / Saving mode toggle, reset to Normal each time
+            const isZezo = currentUser.username.toLowerCase() === 'zezo';
+            const modeGroup = document.getElementById('allowanceModeGroup');
+            if (modeGroup) modeGroup.style.display = isZezo ? 'block' : 'none';
+            allowanceMode = 'normal';
+            const normalBtn = document.getElementById('allowanceModeNormalBtn');
+            const savingBtn = document.getElementById('allowanceModeSavingBtn');
+            if (normalBtn) normalBtn.classList.add('selected');
+            if (savingBtn) savingBtn.classList.remove('selected');
+
             // Set default amount based on user preferences
             const defaultAmount = userPreferences.defaultAllowanceAmount || 60;
             document.getElementById('allowanceAmount').value = defaultAmount;
@@ -4212,6 +4885,17 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById(`amount${defaultAmount}`).classList.add('selected');
             
             autoCalculateSplit(); // Auto-calculate when modal opens
+        };
+
+        // Zezo-only: switch between the Normal split and the Saving split (puts
+        // most of the allowance into Savings instead of Hangout).
+        window.selectAllowanceMode = function(mode) {
+            allowanceMode = mode;
+            const normalBtn = document.getElementById('allowanceModeNormalBtn');
+            const savingBtn = document.getElementById('allowanceModeSavingBtn');
+            if (normalBtn) normalBtn.classList.toggle('selected', mode === 'normal');
+            if (savingBtn) savingBtn.classList.toggle('selected', mode === 'saving');
+            autoCalculateSplit();
         };
 
         window.openAddMoneyModal = function() {
@@ -4978,9 +5662,24 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
             
             let hangout, savings, playstation;
-            
-            // Use fixed amounts for Asser, percentages for others
-            if (userPreferences.useFixedAmounts) {
+
+            const isZezoSaving = currentUser && currentUser.username.toLowerCase() === 'zezo' && allowanceMode === 'saving';
+
+            if (isZezoSaving) {
+                // Saving mode: hangout stays at its normal amount — we only
+                // redirect what would've gone to PlayStation into Savings.
+                if (userPreferences.useFixedAmounts) {
+                    hangout = userPreferences.fixedHangoutAmount || 35;
+                    const baseSavings = userPreferences.fixedSavingsAmount || 25;
+                    playstation = 0;
+                    savings = total - hangout;
+                    if (savings < baseSavings) savings = baseSavings; // safety floor
+                } else {
+                    hangout = Math.round(total * (userPreferences.hangoutPercent / 100));
+                    playstation = 0;
+                    savings = total - hangout;
+                }
+            } else if (userPreferences.useFixedAmounts) {
                 hangout = userPreferences.fixedHangoutAmount || 35;
                 savings = userPreferences.fixedSavingsAmount || 25;
                 if (userPreferences.enablePlaystation) {

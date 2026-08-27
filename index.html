@@ -906,61 +906,17 @@
             box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
         }
 
-        /* Collapsible Bottom Navigation with Red Tab */
+        /* Horizontal scrollable navigation bar */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1000;
             padding-bottom: env(safe-area-inset-bottom);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: transform 0.3s ease;
-        }
-
-        .nav-toggle-btn {
-            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
-            border: none;
-            border-radius: 12px 12px 0 0;
-            padding: 12px 30px;
-            color: white;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 1001;
-            box-shadow: 0 -4px 20px rgba(255, 71, 87, 0.4);
-            transition: all 0.3s ease;
-            min-width: 120px;
-            width: 100%;
-            max-width: 200px;
-            order: 2; /* Button on top */
-        }
-
-        .nav-toggle-btn:hover {
-            background: linear-gradient(135deg, #ff6b81 0%, #ff4757 100%);
-        }
-
-        .nav-toggle-btn:active {
-            transform: scale(0.98);
-        }
-
-        .nav-toggle-btn.collapsed {
-            padding: 10px 25px;
-            font-size: 13px;
-            min-width: 100px;
-            max-width: 180px;
-        }
-
-        .nav-toggle-btn .arrow {
-            display: inline-block;
-            margin-left: 8px;
-            transition: transform 0.3s ease;
-        }
-
-        .nav-toggle-btn.collapsed .arrow {
-            transform: rotate(180deg);
         }
 
         .bottom-nav-items {
@@ -971,21 +927,6 @@
             gap: 12px;
             scrollbar-width: none;
             -ms-overflow-style: none;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            max-height: 100px;
-            width: 100%;
-            border-radius: 12px 12px 0 0;
-            order: 1; /* Items below button */
-        }
-
-        .bottom-nav-items.hidden {
-            max-height: 0;
-            padding: 0 20px;
-            opacity: 0;
-            overflow: hidden;
         }
 
         .bottom-nav-items::-webkit-scrollbar {
@@ -1154,7 +1095,7 @@
         @media (max-width: 480px) {
             .section {
                 padding: 20px 15px;
-                padding-bottom: 120px;
+                padding-bottom: 100px;
             }
 
             .ai-chat-input-container {
@@ -1171,21 +1112,8 @@
                 font-size: 14px;
             }
 
-            .nav-toggle-btn {
-                padding: 10px 25px;
-                font-size: 13px;
-                min-width: 100px;
-            }
-
-            .nav-toggle-btn.collapsed {
-                padding: 6px 15px;
-                font-size: 11px;
-                min-width: 70px;
-            }
-
             .bottom-nav-items {
                 padding: 12px 15px;
-                max-height: 80px;
             }
 
             .bottom-nav-item {
@@ -2415,11 +2343,7 @@
 
             <!-- Bottom Navigation -->
             <div class="bottom-nav" id="bottomNav">
-                <button class="nav-toggle-btn" id="navToggleBtn" onclick="toggleNavigation()">
-                    <span id="navToggleText">Menu</span>
-                    <span class="arrow">▲</span>
-                </button>
-                <div class="bottom-nav-items" id="bottomNavItems">
+                <div class="bottom-nav-items">
                     <div class="bottom-nav-item active" onclick="switchTab('home')" id="nav-home">
                         <span class="bottom-nav-icon">🏠</span>
                         <span class="bottom-nav-label">Home</span>
@@ -4721,9 +4645,6 @@ Use the conversation history provided to you to remember what's already been sai
             // Check if we just updated to show welcome screen
             checkForWelcomeScreen();
             
-            // Initialize navigation as collapsed
-            initNavigation();
-            
             setupConnectivityMonitor();
 
             // Check if user is logged in from localStorage
@@ -5495,39 +5416,6 @@ Use the conversation history provided to you to remember what's already been sai
                 updateNotifPermissionButton();
             }
         };
-
-        // Toggle navigation panel
-        window.toggleNavigation = function() {
-            const nav = document.getElementById('bottomNav');
-            const navItems = document.getElementById('bottomNavItems');
-            const toggleBtn = document.getElementById('navToggleBtn');
-            const toggleText = document.getElementById('navToggleText');
-            
-            if (navItems.classList.contains('hidden')) {
-                // Show navigation - slide up
-                navItems.classList.remove('hidden');
-                toggleBtn.classList.remove('collapsed');
-                toggleText.textContent = 'Menu';
-                nav.style.transform = 'translateY(-100px)';
-            } else {
-                // Hide navigation - slide down
-                navItems.classList.add('hidden');
-                toggleBtn.classList.add('collapsed');
-                toggleText.textContent = 'Tabs';
-                nav.style.transform = 'translateY(0)';
-            }
-        };
-
-        // Initialize navigation as collapsed
-        function initNavigation() {
-            const navItems = document.getElementById('bottomNavItems');
-            const toggleBtn = document.getElementById('navToggleBtn');
-            const toggleText = document.getElementById('navToggleText');
-            
-            if (navItems) navItems.classList.add('hidden');
-            if (toggleBtn) toggleBtn.classList.add('collapsed');
-            if (toggleText) toggleText.textContent = 'Tabs';
-        }
 
         // Show the Missions nav tab and the allowance Saving-mode toggle only for Zezo
         function applyZezoOnlyUI() {

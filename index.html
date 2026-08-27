@@ -906,26 +906,80 @@
             box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
         }
 
-        /* Horizontal scrollable navigation bar */
+        /* Collapsible Bottom Navigation with Red Tab */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1000;
             padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-toggle-btn {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            border: none;
+            border-radius: 20px 20px 0 0;
+            padding: 12px 30px;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 -4px 20px rgba(255, 71, 87, 0.4);
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .nav-toggle-btn:hover {
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 -6px 25px rgba(255, 71, 87, 0.5);
+        }
+
+        .nav-toggle-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        .nav-toggle-btn.collapsed {
+            border-radius: 20px;
+            padding: 12px 20px;
+        }
+
+        .nav-toggle-btn .arrow {
+            display: inline-block;
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-toggle-btn.collapsed .arrow {
+            transform: rotate(180deg);
         }
 
         .bottom-nav-items {
             display: flex;
             overflow-x: auto;
+            overflow-y: hidden;
             padding: 16px 20px;
             gap: 12px;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            transform: translateY(0);
+            opacity: 1;
+            max-height: 100px;
+        }
+
+        .bottom-nav-items.hidden {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
         }
 
         .bottom-nav-items::-webkit-scrollbar {
@@ -946,6 +1000,7 @@
             white-space: nowrap;
             min-width: 80px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .bottom-nav-item.active {
@@ -1046,6 +1101,8 @@
             display: flex;
             gap: 10px;
             margin-top: auto;
+            flex-wrap: nowrap;
+            align-items: center;
         }
 
         .ai-chat-input {
@@ -1057,6 +1114,7 @@
             color: white;
             font-size: 14px;
             outline: none;
+            min-width: 0;
         }
 
         .ai-chat-input::placeholder {
@@ -1072,11 +1130,63 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .ai-chat-send-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Section spacing for navigation */
+        .section {
+            padding: 30px 20px;
+            padding-bottom: 120px; /* Extra space for collapsible navigation */
+        }
+
+        @media (max-width: 480px) {
+            .section {
+                padding: 20px 15px;
+                padding-bottom: 100px;
+            }
+
+            .ai-chat-input-container {
+                gap: 8px;
+            }
+
+            .ai-chat-input {
+                padding: 10px 14px;
+                font-size: 16px;
+            }
+
+            .ai-chat-send-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .nav-toggle-btn {
+                padding: 10px 25px;
+                font-size: 13px;
+                min-width: 100px;
+            }
+
+            .bottom-nav-items {
+                padding: 12px 15px;
+            }
+
+            .bottom-nav-item {
+                padding: 10px 15px;
+                min-width: 70px;
+            }
+
+            .bottom-nav-icon {
+                font-size: 20px;
+            }
+
+            .bottom-nav-label {
+                font-size: 11px;
+            }
         }
 
         .ai-quick-actions {
@@ -1845,25 +1955,43 @@
         /* Quick Amount Grid */
         .amount-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(4, 1fr); /* 4 columns for better mobile fit */
+            gap: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .amount-grid {
+                grid-template-columns: repeat(3, 1fr); /* 3 columns on small screens */
+                gap: 8px;
+            }
         }
 
         .amount-grid-btn {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(12px);
             border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px 12px;
+            border-radius: 12px;
+            padding: 14px 6px;
             color: white;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 64px;
+            min-height: 45px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 480px) {
+            .amount-grid-btn {
+                padding: 12px 4px;
+                font-size: 12px;
+                min-height: 40px;
+            }
         }
 
         .amount-grid-btn:hover {
@@ -1876,9 +2004,6 @@
         .amount-grid-btn:active {
             transform: scale(0.95);
         }
-
-        .amount-grid-btn:active {
-            transform: scale(0.95);
         }
 
         /* Filter Chips for Transactions Tab */
@@ -2277,7 +2402,11 @@
 
             <!-- Bottom Navigation -->
             <div class="bottom-nav" id="bottomNav">
-                <div class="bottom-nav-items">
+                <button class="nav-toggle-btn" id="navToggleBtn" onclick="toggleNavigation()">
+                    <span id="navToggleText">Menu</span>
+                    <span class="arrow">▲</span>
+                </button>
+                <div class="bottom-nav-items" id="bottomNavItems">
                     <div class="bottom-nav-item active" onclick="switchTab('home')" id="nav-home">
                         <span class="bottom-nav-icon">🏠</span>
                         <span class="bottom-nav-label">Home</span>
@@ -5348,6 +5477,25 @@ Use the conversation history provided to you to remember what's already been sai
                 renderMissions();
                 renderMissionPoints();
                 updateNotifPermissionButton();
+            }
+        };
+
+        // Toggle navigation panel
+        window.toggleNavigation = function() {
+            const navItems = document.getElementById('bottomNavItems');
+            const toggleBtn = document.getElementById('navToggleBtn');
+            const toggleText = document.getElementById('navToggleText');
+            
+            if (navItems.classList.contains('hidden')) {
+                // Show navigation
+                navItems.classList.remove('hidden');
+                toggleBtn.classList.remove('collapsed');
+                toggleText.textContent = 'Menu';
+            } else {
+                // Hide navigation
+                navItems.classList.add('hidden');
+                toggleBtn.classList.add('collapsed');
+                toggleText.textContent = 'Tabs';
             }
         };
 

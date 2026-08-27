@@ -6,10 +6,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
-    <title>Money Manager</title>
+    <title>Zezo UI 1.0</title>
     <link rel="manifest" href="./manifest.json">
-    <link rel="apple-touch-icon" href="./icon-192.png">
-    <link rel="icon" type="image/png" href="./icon-192.png">
+    <link rel="apple-touch-icon" href="./money.png">
+    <link rel="icon" type="image/png" href="./money.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <!-- Groq AI is called directly via REST fetch (OpenAI-compatible chat completions API) -->
@@ -23,7 +23,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            background: #0a0a0a;
             min-height: 100vh;
             color: white;
             overflow-x: hidden;
@@ -38,9 +38,9 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(46, 213, 115, 0.1) 0%, transparent 30%);
+                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(46, 213, 115, 0.08) 0%, transparent 30%);
             pointer-events: none;
             z-index: 0;
         }
@@ -49,7 +49,7 @@
             max-width: 100%;
             margin: 0 auto;
             padding: 16px;
-            padding-bottom: 120px;
+            padding-bottom: 100px;
             position: relative;
             z-index: 1;
             min-height: 100vh;
@@ -57,29 +57,27 @@
 
         .header {
             text-align: center;
-            padding: 20px 16px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border-radius: 20px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            padding: 24px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .header-logo {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            font-size: 36px;
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
             animation: float 3s ease-in-out infinite;
         }
 
@@ -89,13 +87,14 @@
         }
 
         .header h1 {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 4px;
+            text-shadow: 0 0 30px rgba(0, 245, 212, 0.3);
         }
 
         .total-balance {
@@ -134,21 +133,19 @@
 
         .balance-cards {
             display: grid;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
         .balance-card {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             position: relative;
             overflow: hidden;
         }
@@ -160,27 +157,39 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
         }
 
         .balance-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 
-                0 12px 40px rgba(102, 126, 234, 0.25),
-                inset 0 1px 0 rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
         }
 
         .balance-card.hangout {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            border-color: rgba(168, 85, 247, 0.3);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+        }
+
+        .balance-card.hangout:hover {
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
         }
 
         .balance-card.savings {
-            background: linear-gradient(135deg, rgba(46, 213, 115, 0.15) 0%, rgba(0, 206, 201, 0.15) 100%);
+            border-color: rgba(0, 245, 212, 0.3);
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.1);
+        }
+
+        .balance-card.savings:hover {
+            box-shadow: 0 0 30px rgba(0, 245, 212, 0.3);
         }
 
         .balance-card.playstation {
-            background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 159, 67, 0.15) 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
+        }
+
+        .balance-card.playstation:hover {
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
         }
 
         .card-header {
@@ -216,73 +225,87 @@
         .action-buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
         .action-btn {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            padding: 20px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 24px 20px;
             color: white;
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            min-height: 60px;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            min-height: 64px;
         }
 
         .action-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
         }
 
         .action-btn:active {
-            transform: translateY(-1px);
+            transform: scale(0.95);
         }
 
         .action-btn.primary {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .action-btn.primary:hover {
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
         }
 
         .action-btn.success {
-            background: linear-gradient(135deg, rgba(46, 213, 115, 0.8) 0%, rgba(0, 206, 201, 0.8) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
+            border: 1px solid rgba(0, 245, 212, 0.4);
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.2);
+        }
+
+        .action-btn.success:hover {
+            box-shadow: 0 0 30px rgba(0, 245, 212, 0.4);
         }
 
         .action-btn.warning {
-            background: linear-gradient(135deg, rgba(255, 165, 2, 0.8) 0%, rgba(255, 127, 80, 0.8) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+        }
+
+        .action-btn.warning:hover {
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
         }
 
         .section {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border-radius: 20px;
-            padding: 22px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 800;
-            margin-bottom: 20px;
-            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 24px;
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 0 20px rgba(0, 245, 212, 0.2);
         }
 
         .history-item {
@@ -372,8 +395,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -385,19 +408,17 @@
         }
 
         .modal-content {
-            background: rgba(15, 12, 41, 0.95);
-            backdrop-filter: blur(30px) saturate(200%);
-            -webkit-backdrop-filter: blur(30px) saturate(200%);
-            border-radius: 20px;
-            padding: 20px;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 24px;
             width: 100%;
-            max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            max-width: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
         }
 
         .modal-header {
@@ -460,9 +481,9 @@
         }
 
         .amount-option-btn.selected {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
-            border-color: rgba(102, 126, 234, 1);
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.8) 0%, rgba(0, 217, 245, 0.8) 100%);
+            border-color: rgba(0, 245, 212, 1);
+            box-shadow: 0 4px 20px rgba(0, 245, 212, 0.4);
         }
 
         .form-label {
@@ -476,10 +497,10 @@
         .form-input {
             width: 100%;
             padding: 18px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             color: white;
             font-size: 16px;
             transition: all 0.3s ease;
@@ -487,9 +508,9 @@
 
         .form-input:focus {
             outline: none;
-            border-color: rgba(102, 126, 234, 0.6);
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.25);
-            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(0, 245, 212, 0.5);
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.2);
+            background: rgba(255, 255, 255, 0.08);
         }
 
         .form-input::placeholder {
@@ -499,10 +520,10 @@
         .form-select {
             width: 100%;
             padding: 16px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             color: white;
             font-size: 16px;
             cursor: pointer;
@@ -511,12 +532,12 @@
 
         .form-select:focus {
             outline: none;
-            border-color: rgba(102, 126, 234, 0.6);
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.25);
+            border-color: rgba(0, 245, 212, 0.5);
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.2);
         }
 
         .form-select option {
-            background: #1a1a2e;
+            background: #0a0a0a;
             color: white;
         }
 
@@ -544,17 +565,17 @@
             -webkit-appearance: none;
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 245, 212, 0.5);
             border: 2px solid rgba(255, 255, 255, 0.3);
             transition: all 0.2s ease;
         }
 
         .slider::-webkit-slider-thumb:hover {
             transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 6px 20px rgba(0, 245, 212, 0.6);
         }
 
         .modal-actions {
@@ -566,36 +587,44 @@
 
         .modal-btn {
             padding: 18px 24px;
-            border-radius: 16px;
+            border-radius: 20px;
             font-size: 18px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
             border: none;
         }
 
         .modal-btn.cancel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .modal-btn.cancel:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
         }
 
+        .modal-btn.cancel:active {
+            transform: scale(0.95);
+        }
+
         .modal-btn.confirm {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
-            color: white;
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.8) 0%, rgba(0, 217, 245, 0.8) 100%);
+            color: #0a0a0a;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.3);
         }
 
         .modal-btn.confirm:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 0 30px rgba(0, 245, 212, 0.5);
+        }
+
+        .modal-btn.confirm:active {
+            transform: scale(0.95);
         }
 
         .goals-grid {
@@ -646,9 +675,10 @@
 
         .goal-progress-bar {
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
             border-radius: 4px;
             transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(0, 245, 212, 0.3);
         }
 
         .goal-status {
@@ -693,17 +723,17 @@
         }
 
         .rank-badge.rank-level-5 {
-            border-color: rgba(167, 139, 250, 0.6);
-            background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(102, 126, 234, 0.15));
+            border-color: rgba(0, 245, 212, 0.6);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.15), rgba(0, 217, 245, 0.15));
             animation: rankGlow 1.8s ease-in-out infinite;
         }
 
         @keyframes rankGlow {
             0%, 100% {
-                box-shadow: 0 0 8px rgba(167, 139, 250, 0.5), 0 0 16px rgba(167, 139, 250, 0.25);
+                box-shadow: 0 0 8px rgba(0, 245, 212, 0.5), 0 0 16px rgba(0, 245, 212, 0.25);
             }
             50% {
-                box-shadow: 0 0 20px rgba(167, 139, 250, 0.9), 0 0 44px rgba(167, 139, 250, 0.6);
+                box-shadow: 0 0 20px rgba(0, 245, 212, 0.9), 0 0 44px rgba(0, 245, 212, 0.6);
             }
         }
 
@@ -725,7 +755,7 @@
         }
 
         .rank-up-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
             border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 24px;
             padding: 44px 32px;
@@ -761,7 +791,7 @@
         .rank-up-title {
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -822,73 +852,118 @@
             margin-bottom: 25px;
             overflow-x: auto;
             padding-bottom: 5px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .tab {
             padding: 18px 32px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 25px;
             color: white;
             font-size: 18px;
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            position: relative;
         }
 
         .tab:hover {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
         }
 
-        .tab.active {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        .tab:active {
+            transform: scale(0.95);
         }
 
-        /* Bottom navigation for mobile */
+        .tab.active {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
+            border: 2px solid rgba(0, 245, 212, 0.5);
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.3);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, #00f5d4, #00d9f5);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
+        }
+
+        /* Horizontal scrollable navigation bar */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(15, 12, 41, 0.95);
+            background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1000;
             padding-bottom: env(safe-area-inset-bottom);
-            transition: transform 0.25s ease;
-        }
-
-        .bottom-nav-handle {
-            display: none; /* only shown on mobile, see media query below */
         }
 
         .bottom-nav-items {
             display: flex;
-            justify-content: space-around;
-            padding: 12px 0;
+            overflow-x: auto;
+            padding: 16px 20px;
+            gap: 12px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .bottom-nav-items::-webkit-scrollbar {
+            display: none;
         }
 
         .bottom-nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             color: rgba(255, 255, 255, 0.6);
             text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 12px;
+            padding: 12px 20px;
+            border-radius: 20px;
             transition: all 0.3s ease;
             cursor: pointer;
+            white-space: nowrap;
+            min-width: 80px;
+            position: relative;
         }
 
         .bottom-nav-item.active {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
+            color: #00f5d4;
+            background: rgba(0, 245, 212, 0.1);
+        }
+
+        .bottom-nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background: linear-gradient(90deg, #00f5d4, #00d9f5);
+            border-radius: 2px;
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.6);
         }
 
         .bottom-nav-icon {
@@ -1117,21 +1192,26 @@
         }
 
         .ai-advice-btn {
-            background: linear-gradient(135deg, rgba(46, 213, 115, 0.2) 0%, rgba(0, 206, 201, 0.2) 100%);
-            border: 1px solid rgba(46, 213, 115, 0.4);
-            color: #2ed573;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.2) 0%, rgba(0, 217, 245, 0.2) 100%);
+            border: 1px solid rgba(0, 245, 212, 0.4);
+            color: #00f5d4;
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
         }
 
         .ai-advice-btn:hover {
-            background: linear-gradient(135deg, rgba(46, 213, 115, 0.3) 0%, rgba(0, 206, 201, 0.3) 100%);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
             transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.3);
+        }
+
+        .ai-advice-btn:active {
+            transform: scale(0.95);
         }
 
         .auth-section {
@@ -1280,17 +1360,17 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: rgba(46, 213, 115, 0.95);
-            backdrop-filter: blur(10px);
-            color: white;
+            background: rgba(0, 245, 212, 0.95);
+            backdrop-filter: blur(12px);
+            color: #0a0a0a;
             padding: 24px 36px;
-            border-radius: 20px;
+            border-radius: 24px;
             font-weight: 700;
             font-size: 18px;
             z-index: 2000;
             transform: translateX(400px);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 12px 35px rgba(46, 213, 115, 0.4);
+            box-shadow: 0 12px 35px rgba(0, 245, 212, 0.4);
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
@@ -1299,8 +1379,9 @@
         }
 
         .notification.error {
-            background: rgba(255, 107, 107, 0.95);
-            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            box-shadow: 0 12px 35px rgba(239, 68, 68, 0.4);
         }
 
         @media (max-width: 480px) {
@@ -1316,99 +1397,23 @@
                 grid-template-columns: 1fr;
             }
 
-            /* ===== Bottom nav: mobile-only redesign ===== */
-            /* Equal-width buttons separated by divider lines. The whole bar
-               drops down out of view when collapsed, leaving only a red
-               tab poking up above the screen edge to pull it back up. */
-            .bottom-nav {
-                padding-top: 0;
-                overflow: visible;
-            }
-
-            .bottom-nav-handle {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 46px;
-                height: 16px;
-                background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
-                border-radius: 10px 10px 0 0;
-                margin: 0 auto;
-                position: relative;
-                top: -16px;
-                cursor: pointer;
-                box-shadow: 0 -3px 10px rgba(255, 107, 107, 0.45);
-                transition: all 0.25s ease;
-            }
-
-            .bottom-nav-handle::after {
-                content: '';
-                width: 26px;
-                height: 3px;
-                background: rgba(255, 255, 255, 0.9);
-                border-radius: 2px;
-                transition: transform 0.25s ease;
-            }
-
             .bottom-nav-items {
-                padding: 4px 0;
-                max-height: 200px;
-                overflow: hidden;
-                opacity: 1;
-                transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+                padding: 12px 16px;
             }
 
             .bottom-nav-item {
-                flex: 1;
-                min-width: 0;
-                padding: 6px 2px;
-                border-radius: 0;
-                border-right: 1px solid rgba(255, 255, 255, 0.1);
-                gap: 2px;
-            }
-
-            .bottom-nav-item:last-child {
-                border-right: none;
-            }
-
-            .bottom-nav-item.active {
-                border-radius: 10px;
+                padding: 10px 16px;
+                min-width: 70px;
             }
 
             .bottom-nav-icon {
-                font-size: 18px;
+                font-size: 20px;
             }
 
             .bottom-nav-label {
-                font-size: 9px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 100%;
+                font-size: 10px;
             }
 
-            /* Collapsed state — the tab bar drops down completely out of
-               view; only the red handle remains, and it grows bigger so
-               it's easy to grab and pull back up. */
-            .bottom-nav.collapsed .bottom-nav-items {
-                max-height: 0;
-                padding: 0;
-                opacity: 0;
-                pointer-events: none;
-            }
-
-            .bottom-nav.collapsed .bottom-nav-handle {
-                width: 68px;
-                height: 24px;
-                top: -24px;
-                box-shadow: 0 -3px 14px rgba(255, 107, 107, 0.6);
-            }
-
-            .bottom-nav.collapsed .bottom-nav-handle::after {
-                transform: rotate(180deg);
-            }
-
-            /* ===== AI chat: mobile-only redesign ===== */
             .ai-chat-container {
                 padding: 14px;
                 border-radius: 16px;
@@ -1432,7 +1437,7 @@
             }
 
             .ai-chat-input {
-                font-size: 16px; /* keeps iOS from auto-zooming on focus */
+                font-size: 16px;
                 padding: 10px 14px;
             }
 
@@ -1480,9 +1485,9 @@
         }
 
         .mode-option-btn.selected {
-            background: linear-gradient(135deg, rgba(46, 213, 115, 0.85) 0%, rgba(29, 209, 161, 0.85) 100%);
-            border-color: rgba(46, 213, 115, 1);
-            box-shadow: 0 4px 20px rgba(46, 213, 115, 0.35);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.85) 0%, rgba(0, 217, 245, 0.85) 100%);
+            border-color: rgba(0, 245, 212, 1);
+            box-shadow: 0 4px 20px rgba(0, 245, 212, 0.35);
         }
 
         .mode-option-sub {
@@ -1508,7 +1513,7 @@
         .points-card .points-value {
             font-size: 36px;
             font-weight: 800;
-            background: linear-gradient(135deg, #ffd166 0%, #f7b733 100%);
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -1662,8 +1667,8 @@
         }
 
         .mission-btn.complete {
-            background: linear-gradient(135deg, #2ed573 0%, #1dd1a1 100%);
-            color: #063b21;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            color: #0a0a0a;
         }
 
         .mission-btn.complete:disabled {
@@ -1734,8 +1739,8 @@
         }
 
         .day-chip.selected {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
-            border-color: rgba(102, 126, 234, 1);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.85) 0%, rgba(0, 217, 245, 0.85) 100%);
+            border-color: rgba(0, 245, 212, 1);
         }
 
         .everyday-btn {
@@ -1779,6 +1784,417 @@
             background: rgba(255, 255, 255, 0.3);
             border-radius: 3px;
         }
+
+        /* Category Pills for Log Purchase Tab */
+        .category-pill {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 16px 24px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .category-pill:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .category-pill:active {
+            transform: scale(0.95);
+        }
+
+        .category-pill.selected {
+            border-width: 2px;
+        }
+
+        .category-pill[data-category="hangout"].selected {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .category-pill[data-category="savings"].selected {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
+            border-color: rgba(0, 245, 212, 0.6);
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+        }
+
+        .category-pill[data-category="playstation"].selected {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
+            border-color: rgba(239, 68, 68, 0.6);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .pill-icon {
+            font-size: 20px;
+        }
+
+        .pill-label {
+            font-size: 14px;
+        }
+
+        /* Quick Amount Grid */
+        .amount-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .amount-grid-btn {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 64px;
+        }
+
+        .amount-grid-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: rgba(0, 245, 212, 0.3);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.2);
+        }
+
+        .amount-grid-btn:active {
+            transform: scale(0.95);
+        }
+
+        .amount-grid-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Filter Chips for Transactions Tab */
+        .filter-chips {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .filter-chips::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .filter-chip:active {
+            transform: scale(0.95);
+        }
+
+        .filter-chip.active {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
+            border-color: rgba(0, 245, 212, 0.5);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.3);
+        }
+
+        .filter-chip[data-filter="hangout"].active {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        }
+
+        .filter-chip[data-filter="savings"].active {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
+            border-color: rgba(0, 245, 212, 0.5);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.3);
+        }
+
+        .filter-chip[data-filter="playstation"].active {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
+            border-color: rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Live Summary Bar */
+        .live-summary-bar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .summary-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .summary-amount {
+            font-size: 18px;
+            font-weight: 800;
+            color: #00f5d4;
+            text-shadow: 0 0 10px rgba(0, 245, 212, 0.3);
+        }
+
+        /* Goals Tab Visual Milestones */
+        .goal-milestones {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .milestone {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .milestone.reached {
+            background: linear-gradient(90deg, #00f5d4, #00d9f5);
+            box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
+        }
+
+        .milestone-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .goal-time-info {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .goal-time-info .highlight {
+            color: #00f5d4;
+            font-weight: 700;
+        }
+
+        /* Full-screen Update Experience */
+        .update-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .update-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .update-content {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .update-logo {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .update-title {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            text-shadow: 0 0 30px rgba(0, 245, 212, 0.3);
+        }
+
+        .update-version {
+            font-size: 24px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+        }
+
+        .update-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 400px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .update-loader {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00f5d4;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+            display: none;
+        }
+
+        .update-loader.active {
+            display: block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .update-progress {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 20px;
+            display: none;
+        }
+
+        .update-progress.active {
+            display: block;
+        }
+
+        .update-btn {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.8) 0%, rgba(0, 217, 245, 0.8) 100%);
+            border: 1px solid rgba(0, 245, 212, 0.5);
+            color: #0a0a0a;
+            padding: 18px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.3);
+        }
+
+        .update-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 245, 212, 0.5);
+        }
+
+        .update-btn:active {
+            transform: scale(0.95);
+        }
+
+        .update-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .update-welcome {
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        .update-welcome.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .update-welcome h2 {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .update-welcome p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
@@ -1787,7 +2203,7 @@
         <div class="auth-section" id="authSection">
             <div class="header">
                 <div class="header-logo">💰</div>
-                <h1>Money Manager</h1>
+                <h1>Zezo UI 1.0</h1>
                 <div class="total-label">Welcome to your personal finance tracker</div>
             </div>
             <div style="text-align: center; margin: 30px 0;">
@@ -1815,12 +2231,15 @@
             </div>
 
             <!-- Bottom Navigation -->
-            <div class="bottom-nav collapsed" id="bottomNav">
-                <div class="bottom-nav-handle" id="bottomNavHandle"></div>
+            <div class="bottom-nav" id="bottomNav">
                 <div class="bottom-nav-items">
                     <div class="bottom-nav-item active" onclick="switchTab('home')" id="nav-home">
                         <span class="bottom-nav-icon">🏠</span>
                         <span class="bottom-nav-label">Home</span>
+                    </div>
+                    <div class="bottom-nav-item" onclick="switchTab('logPurchase')" id="nav-logPurchase">
+                        <span class="bottom-nav-icon">🛒</span>
+                        <span class="bottom-nav-label">Log Purchase</span>
                     </div>
                     <div class="bottom-nav-item" onclick="switchTab('transactions')" id="nav-transactions">
                         <span class="bottom-nav-icon">🧾</span>
@@ -1845,7 +2264,7 @@
             <div class="section" id="homeSection">
             <div class="header">
                 <div class="header-logo">💰</div>
-                <h1>Money Manager</h1>
+                <h1>Zezo UI 1.0</h1>
                 <div class="total-label">Total Balance</div>
                 <div class="total-balance" id="totalBalance">0 SAR</div>
                 <div class="allowance-countdown" id="allowanceCountdown" style="display: none;">
@@ -1890,8 +2309,8 @@
             <button class="action-btn warning" onclick="openTransferModal()">
                 🔄 Transfer
             </button>
-            <button class="action-btn" onclick="openPurchaseModal()">
-                🛒 Purchase
+            <button class="action-btn" onclick="switchTab('logPurchase')">
+                🛒 Log Purchase
             </button>
             <button class="action-btn" onclick="openEditModal()">
                 ✏️ Edit Money
@@ -1903,8 +2322,86 @@
             </div>
 
 
+        <div class="section" id="logPurchaseSection" style="display: none;">
+            <div class="section-title">Log Purchase</div>
+            
+            <!-- Category Pill Selector -->
+            <div style="margin-bottom: 24px;">
+                <label class="form-label" style="margin-bottom: 12px;">Select Category</label>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button type="button" class="category-pill" data-category="hangout" onclick="selectPurchaseCategory('hangout')">
+                        <span class="pill-icon">🎮</span>
+                        <span class="pill-label">Hangout</span>
+                    </button>
+                    <button type="button" class="category-pill" data-category="savings" onclick="selectPurchaseCategory('savings')">
+                        <span class="pill-icon">💰</span>
+                        <span class="pill-label">Savings</span>
+                    </button>
+                    <button type="button" class="category-pill" data-category="playstation" onclick="selectPurchaseCategory('playstation')">
+                        <span class="pill-icon">🎯</span>
+                        <span class="pill-label">PlayStation</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Purchase Name Input -->
+            <div class="form-group">
+                <label class="form-label">Purchase Name</label>
+                <input type="text" class="form-input" id="quickPurchaseName" placeholder="Lunch, Game, etc.">
+            </div>
+
+            <!-- Quick-Amount Grid -->
+            <div style="margin-bottom: 24px;">
+                <label class="form-label" style="margin-bottom: 12px;">Quick Amount</label>
+                <div class="amount-grid">
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(1)">1 SAR</button>
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(2)">2 SAR</button>
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(3)">3 SAR</button>
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(4)">4 SAR</button>
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(5)">5 SAR</button>
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(10)">10 SAR</button>
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(15)">15 SAR</button>
+                    <button type="button" class="amount-grid-btn" onclick="setQuickAmount(20)">20 SAR</button>
+                </div>
+            </div>
+
+            <!-- Main Amount Input -->
+            <div class="form-group">
+                <label class="form-label">Custom Amount (SAR)</label>
+                <input type="number" class="form-input" id="quickPurchaseAmount" placeholder="Enter amount" oninput="validatePurchaseAmount()">
+            </div>
+
+            <!-- Confirm Purchase Button -->
+            <button class="action-btn success" style="width: 100%; min-height: 60px; font-size: 18px;" onclick="confirmQuickPurchase()">
+                <span>💳 Confirm Purchase</span>
+            </button>
+
+            <!-- AI Advice Button -->
+            <div class="ai-advice-section" style="margin-top: 16px;">
+                <button class="ai-advice-btn" onclick="askPurchaseAdviceFromLogPurchase()">🤖 Ask AI if this is a good purchase</button>
+            </div>
+        </div>
+
         <div class="section" id="transactionsSection" style="display: none;">
             <div class="section-title">All Transactions</div>
+            
+            <!-- Filter Chips -->
+            <div class="filter-chips">
+                <button class="filter-chip active" data-filter="all" data-type="all" onclick="applyTransactionFilter('all', 'all')">All</button>
+                <button class="filter-chip" data-filter="hangout" data-type="all" onclick="applyTransactionFilter('hangout', 'all')">Hangout</button>
+                <button class="filter-chip" data-filter="savings" data-type="all" onclick="applyTransactionFilter('savings', 'all')">Savings</button>
+                <button class="filter-chip" data-filter="playstation" data-type="all" onclick="applyTransactionFilter('playstation', 'all')">PlayStation</button>
+                <button class="filter-chip" data-filter="all" data-type="purchase" onclick="applyTransactionFilter('all', 'purchase')">Purchases</button>
+                <button class="filter-chip" data-filter="all" data-type="deposit" onclick="applyTransactionFilter('all', 'deposit')">Deposits</button>
+                <button class="filter-chip" data-filter="all" data-type="transfer" onclick="applyTransactionFilter('all', 'transfer')">Transfers</button>
+            </div>
+
+            <!-- Live Summary Bar -->
+            <div class="live-summary-bar" id="liveSummaryBar" style="display: none;">
+                <span class="summary-text" id="summaryText">Total: 0 SAR</span>
+                <span class="summary-amount" id="summaryAmount">0 SAR</span>
+            </div>
+
             <div class="search-input-container">
                 <span class="search-icon">🔍</span>
                 <input type="text" class="form-input" id="transactionSearchInput" placeholder="Search by emoji, text, or date..." oninput="filterTransactions()">
@@ -2153,38 +2650,7 @@
         </div>
     </div>
 
-    <!-- Purchase Modal -->
-    <div class="modal" id="purchaseModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Add Purchase</div>
-                <button class="close-btn" onclick="closeModal('purchaseModal')">&times;</button>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Purchase Name</label>
-                <input type="text" class="form-input" id="purchaseName" placeholder="Lunch, Game, etc.">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Cost (SAR)</label>
-                <input type="number" class="form-input" id="purchaseCost" placeholder="25">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Category</label>
-                <select class="form-select" id="purchaseCategory">
-                    <option value="hangout">Hangout</option>
-                    <option value="savings">Savings</option>
-                    <option value="playstation">PlayStation / Mobily</option>
-                </select>
-            </div>
-            <div class="ai-advice-section">
-                <button class="ai-advice-btn" onclick="askPurchaseAdviceFromModal()">🤖 Ask AI if this is a good purchase</button>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="closeModal('purchaseModal')">Cancel</button>
-                <button class="modal-btn confirm" onclick="addPurchase()">Add Purchase</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Edit Money Modal -->
     <div class="modal" id="editModal">
@@ -2513,10 +2979,10 @@
             <!-- Updates section — always at the very bottom of Settings -->
             <div class="form-group" id="updatesSettingsSection" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; margin-top: 4px;">
                 <label class="form-label">📦 Updates</label>
-                <div id="settingsCurrentVersion" style="font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.85); margin-top: 4px;">Version 0.1</div>
+                <div id="settingsCurrentVersion" style="font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.85); margin-top: 4px;">Zezo UI 1.0</div>
                 <div id="settingsUpdateAvailableNote" style="display:none; margin-top: 8px; padding: 10px 12px; background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.35); border-radius: 10px; font-size: 13px; color: rgba(255,255,255,0.85);">
                     <span id="settingsUpdateAvailableText"></span>
-                    <button type="button" onclick="openUpdateModalFromSettings()" style="display:block; margin-top:8px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:700; font-size:13px; cursor:pointer;">View Update</button>
+                    <button type="button" onclick="startUpdateProcess()" style="display:block; margin-top:8px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:700; font-size:13px; cursor:pointer;">View Update</button>
                 </div>
 
                 <div id="zezoUpdateControls" style="display:none; margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,0.18);">
@@ -2524,8 +2990,8 @@
                     <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Everyone, including you, will get an update popup right away.</small>
                     <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
                         <div>
-                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Version</label>
-                            <input type="text" class="form-input" id="sendUpdateVersion" placeholder="0.2">
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Version (e.g., 1.1)</label>
+                            <input type="text" class="form-input" id="sendUpdateVersion" placeholder="1.1">
                         </div>
                         <div>
                             <label style="font-size: 12px; color: rgba(255,255,255,0.6);">What's new</label>
@@ -2543,23 +3009,7 @@
         </div>
     </div>
 
-    <!-- Update Available Modal -->
-    <div class="modal" id="updateModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">🚀 Update Available</div>
-                <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
-            </div>
-            <div class="form-group">
-                <div id="updateModalVersion" style="font-size: 18px; font-weight: 800; color: #ff6b6b; margin-bottom: 10px;">Version 0.2</div>
-                <p id="updateModalDescription" style="color: rgba(255,255,255,0.8); line-height: 1.5; font-size: 14px;"></p>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="closeModal('updateModal')">Close</button>
-                <button class="modal-btn confirm" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);" onclick="applyAppUpdate()">Update Now</button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Edit Goal Modal -->
     <div class="modal" id="editGoalModal">
@@ -2585,6 +3035,27 @@
     </div>
 
     <div class="notification" id="notification"></div>
+
+    <!-- Full-screen Update Experience -->
+    <div class="update-overlay" id="updateOverlay">
+        <div class="update-content">
+            <div class="update-logo">💰</div>
+            <div class="update-title">Update Available</div>
+            <div class="update-version" id="overlayUpdateVersion">Zezo UI 1.1</div>
+            <div class="update-description" id="overlayUpdateDescription">
+                New features and improvements are ready to install.
+            </div>
+            <div class="update-loader" id="updateLoader"></div>
+            <div class="update-progress" id="updateProgress">Loading update...</div>
+            <button class="update-btn" id="updateBtn" onclick="startUpdateProcess()">Update Now</button>
+            
+            <div class="update-welcome" id="updateWelcome">
+                <h2 id="welcomeTitle">Welcome to Zezo UI 1.1</h2>
+                <p>Your app has been successfully updated!</p>
+                <button class="update-btn" onclick="dismissUpdateOverlay()">Continue</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Rank Up Celebration Overlay -->
     <div class="rank-up-overlay" id="rankUpOverlay">
@@ -2853,11 +3324,13 @@
         }
 
         // ===== App Update / Version Announcement System =====
-        // This build starts at version 0.1. Only the "zezo" account can
+        // This build starts at version Zezo UI 1.0. Only the "zezo" account can
         // broadcast a new update from Settings; every device (Safari tab or
         // installed PWA) sees a red dot + popup until it taps "Update Now",
         // which clears caches/SW and reloads to fetch the freshest files.
-        const APP_VERSION = '0.1';
+        // Updates are MANUAL - users must explicitly choose to update to get
+        // the new version. The app won't auto-update on restart.
+        const APP_VERSION = 'Zezo UI 1.0';
         let latestUpdateInfo = null; // { version, description, releasedAt, releasedBy }
         let updateListenerAttached = false;
 
@@ -2870,15 +3343,27 @@
         }
 
         function isNewerVersion(remote, local) {
-            const r = parseFloat(remote);
-            const l = parseFloat(local);
+            // Parse versions like "Zezo UI 1.0" or "Zezo UI 1.1"
+            const extractVersion = (versionStr) => {
+                const match = versionStr.match(/Zezo UI\s*(\d+\.?\d*)/i);
+                return match ? parseFloat(match[1]) : 0;
+            };
+            
+            const r = extractVersion(remote);
+            const l = extractVersion(local);
             if (isNaN(r) || isNaN(l)) return false;
-            return r > l + 1e-9;
+            return r > l;
         }
 
         function nextSuggestedVersion(fromVersion) {
-            const base = parseFloat(fromVersion) || parseFloat(APP_VERSION);
-            return (Math.round((base + 0.1) * 10) / 10).toFixed(1);
+            const extractVersion = (versionStr) => {
+                const match = versionStr.match(/Zezo UI\s*(\d+\.?\d*)/i);
+                return match ? parseFloat(match[1]) : 1.0;
+            };
+            
+            const base = extractVersion(fromVersion) || extractVersion(APP_VERSION);
+            const next = base + 0.1;
+            return `Zezo UI ${next.toFixed(1)}`;
         }
 
         function showUpdateBadge(show) {
@@ -2887,24 +3372,20 @@
         }
 
         function showUpdatePopup(data) {
-            const versionEl = document.getElementById('updateModalVersion');
-            const descEl = document.getElementById('updateModalDescription');
-            if (versionEl) versionEl.textContent = 'Version ' + data.version;
-            if (descEl) descEl.textContent = data.description || 'General improvements and bug fixes.';
-            const modal = document.getElementById('updateModal');
-            if (modal) modal.classList.add('active');
+            // Now uses full-screen update overlay instead of modal
+            showFullScreenUpdate(data);
         }
 
         window.openUpdateModalFromSettings = function() {
             if (!latestUpdateInfo) return;
-            showUpdatePopup(latestUpdateInfo);
+            showFullScreenUpdate(latestUpdateInfo);
         };
 
         // Called from Settings whenever the modal is opened, to keep the
         // version number and (for zezo) the send-update box up to date.
         function renderUpdatesSettingsUI() {
             const versionEl = document.getElementById('settingsCurrentVersion');
-            if (versionEl) versionEl.textContent = 'Version ' + getInstalledVersion();
+            if (versionEl) versionEl.textContent = getInstalledVersion();
 
             const noteBox = document.getElementById('settingsUpdateAvailableNote');
             const noteText = document.getElementById('settingsUpdateAvailableText');
@@ -2913,7 +3394,7 @@
                 noteBox.style.display = hasUpdate ? 'block' : 'none';
             }
             if (hasUpdate && noteText) {
-                noteText.textContent = `Version ${latestUpdateInfo.version} is available.`;
+                noteText.textContent = `${latestUpdateInfo.version} is available.`;
             }
 
             const isZezo = currentUser && currentUser.username.toLowerCase() === 'zezo';
@@ -2923,7 +3404,14 @@
                 if (isZezo) {
                     const baseline = (latestUpdateInfo && latestUpdateInfo.version) || getInstalledVersion();
                     const versionInput = document.getElementById('sendUpdateVersion');
-                    if (versionInput) versionInput.value = nextSuggestedVersion(baseline);
+                    if (versionInput) {
+                        // Extract just the number for the input
+                        const extractVersion = (versionStr) => {
+                            const match = versionStr.match(/Zezo UI\s*(\d+\.?\d*)/i);
+                            return match ? match[1] : '1.1';
+                        };
+                        versionInput.value = extractVersion(nextSuggestedVersion(baseline));
+                    }
                 }
             }
         }
@@ -2941,7 +3429,7 @@
                 renderUpdatesSettingsUI();
                 if (latestUpdateInfo.version && isNewerVersion(latestUpdateInfo.version, getInstalledVersion())) {
                     showUpdateBadge(true);
-                    showUpdatePopup(latestUpdateInfo);
+                    showFullScreenUpdate(latestUpdateInfo);
                 } else {
                     showUpdateBadge(false);
                 }
@@ -2956,8 +3444,14 @@
             }
             const versionInput = document.getElementById('sendUpdateVersion');
             const descInput = document.getElementById('sendUpdateDescription');
-            const version = (versionInput.value || '').trim();
+            let version = (versionInput.value || '').trim();
             const description = (descInput.value || '').trim();
+            
+            // Ensure version starts with "Zezo UI" format
+            if (!version.toLowerCase().startsWith('zezo ui')) {
+                version = `Zezo UI ${version}`;
+            }
+            
             if (!version) {
                 showNotification('Enter a version number', true);
                 return;
@@ -2976,12 +3470,50 @@
             });
         };
 
-        // Applies the update: clears the service worker + caches so the PWA
-        // (home screen version) stops serving stale files, then reloads.
-        // The signed-in username stays in localStorage, so login is kept.
-        window.applyAppUpdate = async function() {
+        // Show full-screen update experience
+        function showFullScreenUpdate(data) {
+            const overlay = document.getElementById('updateOverlay');
+            const versionEl = document.getElementById('overlayUpdateVersion');
+            const descEl = document.getElementById('overlayUpdateDescription');
+            const loader = document.getElementById('updateLoader');
+            const progress = document.getElementById('updateProgress');
+            const btn = document.getElementById('updateBtn');
+            const welcome = document.getElementById('updateWelcome');
+            const welcomeTitle = document.getElementById('welcomeTitle');
+
+            if (overlay) {
+                overlay.classList.add('active');
+                if (versionEl) versionEl.textContent = data.version;
+                if (descEl) descEl.textContent = data.description || 'New features and improvements are ready to install.';
+                if (loader) loader.classList.remove('active');
+                if (progress) progress.classList.remove('active');
+                if (btn) btn.style.display = 'block';
+                if (welcome) welcome.classList.remove('active');
+            }
+        }
+
+        // Start the update process with loading animation
+        window.startUpdateProcess = async function() {
+            const loader = document.getElementById('updateLoader');
+            const progress = document.getElementById('updateProgress');
+            const btn = document.getElementById('updateBtn');
             const versionToApply = (latestUpdateInfo && latestUpdateInfo.version) || APP_VERSION;
+
+            if (btn) btn.style.display = 'none';
+            if (loader) loader.classList.add('active');
+            if (progress) progress.classList.add('active');
+
+            // Simulate loading progress
+            let progressValue = 0;
+            const progressInterval = setInterval(() => {
+                progressValue += 10;
+                if (progress <= 100) {
+                    if (progress) progress.textContent = `Loading update... ${progressValue}%`;
+                }
+            }, 200);
+
             try {
+                // Clear service workers and caches
                 if ('serviceWorker' in navigator) {
                     const regs = await navigator.serviceWorker.getRegistrations();
                     for (const reg of regs) {
@@ -2995,17 +3527,59 @@
             } catch (e) {
                 console.log('Error clearing caches during update:', e);
             }
+
+            clearInterval(progressInterval);
+            
+            // Update installed version
             setInstalledVersion(versionToApply);
             showUpdateBadge(false);
-            closeModal('updateModal');
-            showNotification('Updating to version ' + versionToApply + '...');
+
+            // Show welcome screen
+            setTimeout(() => {
+                if (loader) loader.classList.remove('active');
+                if (progress) progress.classList.remove('active');
+                
+                const welcome = document.getElementById('updateWelcome');
+                const welcomeTitle = document.getElementById('welcomeTitle');
+                if (welcome) welcome.classList.add('active');
+                if (welcomeTitle) welcomeTitle.textContent = `Welcome to ${versionToApply}`;
+            }, 500);
+        };
+
+        // Dismiss the update overlay and reload
+        window.dismissUpdateOverlay = function() {
+            const overlay = document.getElementById('updateOverlay');
+            if (overlay) overlay.classList.remove('active');
+            
+            // Reset the overlay state for next time
+            setTimeout(() => {
+                const loader = document.getElementById('updateLoader');
+                const progress = document.getElementById('updateProgress');
+                const btn = document.getElementById('updateBtn');
+                const welcome = document.getElementById('updateWelcome');
+                
+                if (loader) loader.classList.remove('active');
+                if (progress) progress.classList.remove('active');
+                if (btn) btn.style.display = 'block';
+                if (welcome) welcome.classList.remove('active');
+            }, 300);
+
+            // Reload the page to apply the update
             setTimeout(() => {
                 location.reload(true);
-            }, 400);
+            }, 500);
+        };
+
+        // Applies the update: clears the service worker + caches so the PWA
+        // (home screen version) stops serving stale files, then reloads.
+        // The signed-in username stays in localStorage, so login is kept.
+        // This function is kept for backward compatibility but now redirects to full-screen experience
+        window.applyAppUpdate = async function() {
+            showFullScreenUpdate(latestUpdateInfo || { version: 'Zezo UI 1.1', description: 'Update available' });
         };
 
         // Groq AI Integration (direct REST calls to Groq's OpenAI-compatible API)
-        const GROQ_API_KEY = "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";
+        const GROQ_API_KEY = "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";
         const GROQ_API_BASE = "https://api.groq.com/openai/v1";
 
         // Models to try, in order. Update this list if Groq renames/retires models —
@@ -3573,13 +4147,12 @@ Use the conversation history provided to you to remember what's already been sai
             sendAIMessage();
         }
 
-        // Ask AI advice from purchase modal
-        window.askPurchaseAdviceFromModal = function() {
-            const itemName = document.getElementById('purchaseName').value || 'this item';
-            const cost = document.getElementById('purchaseCost').value || 'unknown amount';
-            const fromBucket = document.getElementById('purchaseCategory').value;
+        // Ask AI advice from Log Purchase tab
+        window.askPurchaseAdviceFromLogPurchase = function() {
+            const itemName = document.getElementById('quickPurchaseName').value || 'this item';
+            const cost = document.getElementById('quickPurchaseAmount').value || 'unknown amount';
+            const fromBucket = selectedPurchaseCategory;
             
-            closeModal('purchaseModal');
             switchTab('ai');
             
             setTimeout(() => {
@@ -3808,6 +4381,18 @@ Use the conversation history provided to you to remember what's already been sai
             });
         }
 
+        // Global sound effect function for money operations
+        function playMoneySound() {
+            try {
+                const audio = new Audio('money.mp3');
+                audio.play().catch(err => {
+                    console.log('Sound effect failed to play:', err);
+                });
+            } catch (err) {
+                console.log('Audio not supported:', err);
+            }
+        }
+
         // Initialize
         function init() {
             setupConnectivityMonitor();
@@ -3866,6 +4451,9 @@ Use the conversation history provided to you to remember what's already been sai
             // connection is available.
             loadCachedUserDataLocally(username);
             flushPendingWrites();
+
+            // Initialize Log Purchase tab
+            initLogPurchaseTab();
 
             // Load user preferences
             const prefsRef = ref(database, `users/${username}/preferences`);
@@ -4079,6 +4667,26 @@ Use the conversation history provided to you to remember what's already been sai
             updateRankDisplay();
         }
 
+        // Transaction filter state
+        let currentFilterCategory = 'all';
+        let currentFilterType = 'all';
+
+        // Apply transaction filter
+        window.applyTransactionFilter = function(category, type) {
+            currentFilterCategory = category;
+            currentFilterType = type;
+
+            // Update filter chip UI
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+                if (chip.dataset.filter === category && chip.dataset.type === type) {
+                    chip.classList.add('active');
+                }
+            });
+
+            updateTransactionsList();
+        };
+
         // Update the full Transactions tab list, applying the search filter if any
         function updateTransactionsList() {
             const list = document.getElementById('transactionsList');
@@ -4089,6 +4697,21 @@ Use the conversation history provided to you to remember what's already been sai
 
             let items = history.map((item, index) => ({ item, index }));
 
+            // Apply category filter
+            if (currentFilterCategory !== 'all') {
+                items = items.filter(({ item }) => item.category === currentFilterCategory);
+            }
+
+            // Apply type filter
+            if (currentFilterType === 'purchase') {
+                items = items.filter(({ item }) => item.type === 'Purchase');
+            } else if (currentFilterType === 'deposit') {
+                items = items.filter(({ item }) => item.type === 'Allowance' || item.type === 'Add Money');
+            } else if (currentFilterType === 'transfer') {
+                items = items.filter(({ item }) => item.type === 'Transfer' || item.type === 'Auto Transfer');
+            }
+
+            // Apply search filter
             if (query) {
                 items = items.filter(({ item }) => {
                     const dateObj = new Date(item.date);
@@ -4106,8 +4729,11 @@ Use the conversation history provided to you to remember what's already been sai
                 });
             }
 
+            // Update live summary
+            updateLiveSummary(items);
+
             if (items.length === 0) {
-                list.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">${query ? 'No transactions match your search' : 'No transactions yet'}</div>`;
+                list.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">${query || currentFilterCategory !== 'all' || currentFilterType !== 'all' ? 'No transactions match your filters' : 'No transactions yet'}</div>`;
                 return;
             }
 
@@ -4129,11 +4755,46 @@ Use the conversation history provided to you to remember what's already been sai
             `).join('');
         }
 
+        // Update live summary bar
+        function updateLiveSummary(items) {
+            const summaryBar = document.getElementById('liveSummaryBar');
+            const summaryText = document.getElementById('summaryText');
+            const summaryAmount = document.getElementById('summaryAmount');
+
+            if (items.length === 0) {
+                summaryBar.style.display = 'none';
+                return;
+            }
+
+            summaryBar.style.display = 'flex';
+
+            let total = 0;
+            items.forEach(({ item }) => {
+                total += Math.abs(item.amount);
+            });
+
+            // Customize summary text based on filters
+            let text = 'Total';
+            if (currentFilterCategory !== 'all') {
+                text = currentFilterCategory.charAt(0).toUpperCase() + currentFilterCategory.slice(1);
+            }
+            if (currentFilterType === 'purchase') {
+                text += ' Purchases';
+            } else if (currentFilterType === 'deposit') {
+                text += ' Deposits';
+            } else if (currentFilterType === 'transfer') {
+                text += ' Transfers';
+            }
+
+            summaryText.textContent = `${text}:`;
+            summaryAmount.textContent = `${total} SAR`;
+        }
+
         window.filterTransactions = function() {
             updateTransactionsList();
         };
 
-        // Update goals list
+        // Update goals list with advanced calculations
         function updateGoalsList() {
             const goalsList = document.getElementById('goalsList');
             if (goals.length === 0) {
@@ -4142,9 +4803,24 @@ Use the conversation history provided to you to remember what's already been sai
             }
 
             const totalSavings = balances.savings;
+            const allowanceAmount = userPreferences.defaultAllowanceAmount || 60; // Default 60 SAR per cycle
+
             goalsList.innerHTML = goals.map((goal, index) => {
                 const progress = Math.min((totalSavings / goal.amount) * 100, 100);
                 const remaining = Math.max(goal.amount - totalSavings, 0);
+                
+                // Calculate time to goal
+                const cyclesNeeded = Math.ceil(remaining / allowanceAmount);
+                const timeText = cyclesNeeded === 1 ? '1 allowance cycle' : `${cyclesNeeded} allowance cycles`;
+                
+                // Calculate cycle contribution
+                const perCycle = Math.ceil(remaining / cyclesNeeded);
+                
+                // Visual milestones
+                const show50Milestone = progress >= 50;
+                const show90Milestone = progress >= 90;
+                const show100Milestone = progress >= 100;
+
                 return `
                     <div class="goal-card">
                         <div class="goal-header">
@@ -4154,9 +4830,31 @@ Use the conversation history provided to you to remember what's already been sai
                         <div class="goal-progress">
                             <div class="goal-progress-bar" style="width: ${progress}%"></div>
                         </div>
+                        
+                        <!-- Visual Milestones -->
+                        <div class="goal-milestones">
+                            <div class="milestone ${show50Milestone ? 'reached' : ''}" title="50%"></div>
+                            <div class="milestone ${show90Milestone ? 'reached' : ''}" title="90%"></div>
+                            <div class="milestone ${show100Milestone ? 'reached' : ''}" title="100%"></div>
+                        </div>
+                        <div class="milestone-label">50% &nbsp; 90% &nbsp; 100%</div>
+                        
                         <div class="goal-status">
                             ${progress >= 100 ? '🎉 Goal reached!' : `${remaining} SAR to go`}
                         </div>
+                        
+                        <!-- Advanced Goals Engine -->
+                        <div class="goal-time-info">
+                            ${progress >= 100 
+                                ? '🎉 Goal achieved!' 
+                                : `⏱️ <span class="highlight">${timeText}</span> to hit this goal`}
+                        </div>
+                        ${progress < 100 ? `
+                        <div class="goal-time-info">
+                            💡 To buy this soon, save <span class="highlight">${perCycle} SAR</span> per cycle
+                        </div>
+                        ` : ''}
+                        
                         <div class="goal-actions">
                             <button class="history-action-btn edit" onclick="openEditGoal(${index})">✏️ Edit</button>
                             <button class="history-action-btn delete" onclick="deleteGoal(${index})">🗑️ Delete</button>
@@ -4449,6 +5147,7 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById(`nav-${tab}`).classList.add('active');
 
             document.getElementById('homeSection').style.display = tab === 'home' ? 'block' : 'none';
+            document.getElementById('logPurchaseSection').style.display = tab === 'logPurchase' ? 'block' : 'none';
             document.getElementById('transactionsSection').style.display = tab === 'transactions' ? 'block' : 'none';
             document.getElementById('chartsSection').style.display = tab === 'charts' ? 'block' : 'none';
             document.getElementById('aiSection').style.display = tab === 'ai' ? 'block' : 'none';
@@ -4457,6 +5156,9 @@ Use the conversation history provided to you to remember what's already been sai
 
             if (tab === 'transactions') {
                 updateTransactionsList();
+            }
+            if (tab === 'logPurchase') {
+                initLogPurchaseTab();
             }
             if (tab === 'missions') {
                 renderMissions();
@@ -5209,7 +5911,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 showNotification('Please login first', true);
                 return;
             }
-            document.getElementById('purchaseModal').classList.add('active');
+            // Navigate to the Log Purchase tab instead of opening a modal
+            switchTab('logPurchase');
         };
 
         window.openEditModal = function() {
@@ -6053,6 +6756,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const appliedSavings = savings + (userPreferences.enablePlaystation ? 0 : playstation);
 
             saveBalances();
+            playMoneySound();
             // Record exactly what landed in each bucket (splitHangout/splitSavings/
             // splitPlaystation) so deleting this entry later can reverse it precisely.
             addToHistory('Allowance', total, null, `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`, null, {
@@ -6095,6 +6799,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             balances[bucket] += amount;
             saveBalances();
+            playMoneySound();
             addToHistory('Add Money', amount, bucket);
             checkHangoutLimit();
             closeModal('addMoneyModal');
@@ -6149,11 +6854,126 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             balances[from] -= amount;
             balances[to] += amount;
             saveBalances();
+            playMoneySound();
             addToHistory('Transfer', -amount, from, `Transferred to ${to}`);
             checkHangoutLimit();
             closeModal('transferModal');
             showNotification(`Transferred ${amount} SAR from ${from} to ${to}`);
         };
+
+        // Log Purchase Tab Functions
+        let selectedPurchaseCategory = 'hangout';
+
+        window.selectPurchaseCategory = function(category) {
+            selectedPurchaseCategory = category;
+            document.querySelectorAll('.category-pill').forEach(pill => {
+                pill.classList.remove('selected');
+                if (pill.dataset.category === category) {
+                    pill.classList.add('selected');
+                }
+            });
+        };
+
+        window.setQuickAmount = function(amount) {
+            document.getElementById('quickPurchaseAmount').value = amount;
+            validatePurchaseAmount();
+        };
+
+        window.validatePurchaseAmount = function() {
+            const amount = parseFloat(document.getElementById('quickPurchaseAmount').value);
+            const confirmBtn = document.querySelector('#logPurchaseSection .action-btn');
+            
+            if (isNaN(amount) || amount <= 0) {
+                confirmBtn.style.opacity = '0.5';
+                confirmBtn.style.pointerEvents = 'none';
+            } else {
+                confirmBtn.style.opacity = '1';
+                confirmBtn.style.pointerEvents = 'auto';
+            }
+        };
+
+        window.confirmQuickPurchase = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const name = document.getElementById('quickPurchaseName').value;
+            const cost = parseFloat(document.getElementById('quickPurchaseAmount').value);
+
+            if (!name || isNaN(cost) || cost <= 0) {
+                showNotification('Please fill in all fields', true);
+                return;
+            }
+
+            if (balances[selectedPurchaseCategory] < cost) {
+                showNotification(`Insufficient funds in ${selectedPurchaseCategory}`, true);
+                return;
+            }
+
+            // Minimum savings check for Asser
+            if (currentUser.username.toLowerCase() === 'asser' && selectedPurchaseCategory === 'savings') {
+                const minimumSavings = userPreferences.minimumSavings || 50;
+                const remainingAfterPurchase = balances.savings - cost;
+                
+                if (remainingAfterPurchase < minimumSavings) {
+                    const allowedAmount = balances.savings - minimumSavings;
+                    if (allowedAmount <= 0) {
+                        showNotification(`⚠️ Cannot spend from Savings! You must keep at least ${minimumSavings} SAR in Savings. Your current balance is ${balances.savings} SAR.`, true);
+                        return;
+                    } else {
+                        const confirmation = confirm(`⚠️ Minimum Savings Warning: This purchase will bring your Savings below ${minimumSavings} SAR.\n\n• Current Savings: ${balances.savings} SAR\n• Purchase cost: ${cost} SAR\n• Remaining: ${remainingAfterPurchase} SAR\n• Minimum required: ${minimumSavings} SAR\n\nYou can only spend up to ${allowedAmount} SAR from Savings. Continue anyway?`);
+                        if (!confirmation) {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Smart warning for Asser's hangout purchases with monthly budgeting
+            if (currentUser.username.toLowerCase() === 'asser' && selectedPurchaseCategory === 'hangout') {
+                const monthlyAnalysis = analyzeMonthlySpending();
+                
+                if (monthlyAnalysis.warningLevel === 'critical') {
+                    const confirmation = confirm(`⚠️ CRITICAL WARNING: ${monthlyAnalysis.message}\n\n${monthlyAnalysis.suggestion}\n\nContinue anyway? You still have enough money, but this will make it very hard to last the month.`);
+                    if (!confirmation) {
+                        return;
+                    }
+                } else if (monthlyAnalysis.warningLevel === 'high') {
+                    const confirmation = confirm(`⚠️ Spending Warning: ${monthlyAnalysis.message}\n\n${monthlyAnalysis.suggestion}\n\nContinue anyway?`);
+                    if (!confirmation) {
+                        return;
+                    }
+                } else if (monthlyAnalysis.warningLevel === 'medium') {
+                    const confirmation = confirm(`💡 Budget Tip: ${monthlyAnalysis.message}\n\n${monthlyAnalysis.suggestion}\n\nContinue?`);
+                    if (!confirmation) {
+                        return;
+                    }
+                }
+            }
+
+            balances[selectedPurchaseCategory] -= cost;
+            saveBalances();
+            playMoneySound();
+
+            // Record the purchase right away with a sensible fallback emoji so the
+            // UI never blocks on the AI or on being online. Once we're actually
+            // connected, flushPendingWrites() looks up a proper AI-picked emoji
+            // for it and patches the saved entry in place.
+            addToHistory('Purchase', -cost, selectedPurchaseCategory, name, null, null, true);
+            
+            // Clear form
+            document.getElementById('quickPurchaseName').value = '';
+            document.getElementById('quickPurchaseAmount').value = '';
+            
+            showNotification(`Purchase "${name}" recorded`);
+        };
+
+        // Initialize the Log Purchase tab
+        function initLogPurchaseTab() {
+            selectPurchaseCategory('hangout');
+            validatePurchaseAmount();
+        }
 
         // Add purchase
         window.addPurchase = function() {
@@ -6219,6 +7039,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             balances[category] -= cost;
             saveBalances();
+            playMoneySound();
 
             // Record the purchase right away with a sensible fallback emoji so the
             // UI never blocks on the AI or on being online. Once we're actually
@@ -6529,48 +7350,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }, 3000);
         }
 
-        // Bottom nav: mobile drag handle — pull up to reveal the tab bar,
-        // push down to drop it completely out of view, leaving just the
-        // red handle (which grows bigger when collapsed so it's easy to
-        // grab again). Tapping the handle toggles between the two states
-        // too, for anyone who doesn't want to drag.
-        (function setupBottomNavHandle() {
-            const nav = document.getElementById('bottomNav');
-            const handle = document.getElementById('bottomNavHandle');
-            if (!nav || !handle) return;
-
-            let startY = null;
-            let dragging = false;
-
-            function collapse() { nav.classList.add('collapsed'); }
-            function expand() { nav.classList.remove('collapsed'); }
-
-            handle.addEventListener('click', () => {
-                nav.classList.toggle('collapsed');
-            });
-
-            handle.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-                dragging = true;
-            }, { passive: true });
-
-            handle.addEventListener('touchmove', (e) => {
-                if (!dragging || startY === null) return;
-                const diff = e.touches[0].clientY - startY; // positive = dragged down
-                if (diff > 20) {
-                    collapse();
-                    dragging = false;
-                } else if (diff < -20) {
-                    expand();
-                    dragging = false;
-                }
-            }, { passive: true });
-
-            handle.addEventListener('touchend', () => {
-                dragging = false;
-                startY = null;
-            });
-        })();
+        // Horizontal scrollable navigation - no drag handle needed
+        // The navigation bar is always visible and horizontally scrollable
 
         // Initialize app
         init();

@@ -915,14 +915,15 @@
             z-index: 1000;
             padding-bottom: env(safe-area-inset-bottom);
             display: flex;
-            flex-direction: column-reverse;
+            flex-direction: column;
             align-items: center;
+            transition: transform 0.3s ease;
         }
 
         .nav-toggle-btn {
             background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
             border: none;
-            border-radius: 20px;
+            border-radius: 12px 12px 0 0;
             padding: 12px 30px;
             color: white;
             font-weight: 700;
@@ -932,23 +933,24 @@
             box-shadow: 0 -4px 20px rgba(255, 71, 87, 0.4);
             transition: all 0.3s ease;
             min-width: 120px;
-            margin-bottom: 0;
+            width: 100%;
+            max-width: 200px;
+            order: 2; /* Button on top */
         }
 
         .nav-toggle-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 -6px 25px rgba(255, 71, 87, 0.5);
+            background: linear-gradient(135deg, #ff6b81 0%, #ff4757 100%);
         }
 
         .nav-toggle-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.98);
         }
 
         .nav-toggle-btn.collapsed {
-            border-radius: 50px;
-            padding: 8px 20px;
-            font-size: 12px;
-            min-width: 80px;
+            padding: 10px 25px;
+            font-size: 13px;
+            min-width: 100px;
+            max-width: 180px;
         }
 
         .nav-toggle-btn .arrow {
@@ -975,15 +977,15 @@
             transition: all 0.3s ease;
             max-height: 100px;
             width: 100%;
-            border-radius: 20px 20px 0 0;
+            border-radius: 12px 12px 0 0;
+            order: 1; /* Items below button */
         }
 
         .bottom-nav-items.hidden {
             max-height: 0;
             padding: 0 20px;
             opacity: 0;
-            pointer-events: none;
-            border: none;
+            overflow: hidden;
         }
 
         .bottom-nav-items::-webkit-scrollbar {
@@ -5496,20 +5498,23 @@ Use the conversation history provided to you to remember what's already been sai
 
         // Toggle navigation panel
         window.toggleNavigation = function() {
+            const nav = document.getElementById('bottomNav');
             const navItems = document.getElementById('bottomNavItems');
             const toggleBtn = document.getElementById('navToggleBtn');
             const toggleText = document.getElementById('navToggleText');
             
             if (navItems.classList.contains('hidden')) {
-                // Show navigation
+                // Show navigation - slide up
                 navItems.classList.remove('hidden');
                 toggleBtn.classList.remove('collapsed');
                 toggleText.textContent = 'Menu';
+                nav.style.transform = 'translateY(-100px)';
             } else {
-                // Hide navigation
+                // Hide navigation - slide down
                 navItems.classList.add('hidden');
                 toggleBtn.classList.add('collapsed');
                 toggleText.textContent = 'Tabs';
+                nav.style.transform = 'translateY(0)';
             }
         };
 

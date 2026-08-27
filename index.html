@@ -914,16 +914,15 @@
             right: 0;
             z-index: 1000;
             padding-bottom: env(safe-area-inset-bottom);
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
         }
 
         .nav-toggle-btn {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
             background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
             border: none;
-            border-radius: 20px 20px 0 0;
+            border-radius: 20px;
             padding: 12px 30px;
             color: white;
             font-weight: 700;
@@ -933,20 +932,23 @@
             box-shadow: 0 -4px 20px rgba(255, 71, 87, 0.4);
             transition: all 0.3s ease;
             min-width: 120px;
+            margin-bottom: 0;
         }
 
         .nav-toggle-btn:hover {
-            transform: translateX(-50%) translateY(-2px);
+            transform: translateY(-2px);
             box-shadow: 0 -6px 25px rgba(255, 71, 87, 0.5);
         }
 
         .nav-toggle-btn:active {
-            transform: translateX(-50%) scale(0.95);
+            transform: scale(0.95);
         }
 
         .nav-toggle-btn.collapsed {
-            border-radius: 20px;
-            padding: 12px 20px;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-size: 12px;
+            min-width: 80px;
         }
 
         .nav-toggle-btn .arrow {
@@ -970,16 +972,18 @@
             background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            transform: translateY(0);
-            opacity: 1;
+            transition: all 0.3s ease;
             max-height: 100px;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
         }
 
         .bottom-nav-items.hidden {
-            transform: translateY(100%);
+            max-height: 0;
+            padding: 0 20px;
             opacity: 0;
             pointer-events: none;
+            border: none;
         }
 
         .bottom-nav-items::-webkit-scrollbar {
@@ -1148,7 +1152,7 @@
         @media (max-width: 480px) {
             .section {
                 padding: 20px 15px;
-                padding-bottom: 100px;
+                padding-bottom: 120px;
             }
 
             .ai-chat-input-container {
@@ -1171,8 +1175,15 @@
                 min-width: 100px;
             }
 
+            .nav-toggle-btn.collapsed {
+                padding: 6px 15px;
+                font-size: 11px;
+                min-width: 70px;
+            }
+
             .bottom-nav-items {
                 padding: 12px 15px;
+                max-height: 80px;
             }
 
             .bottom-nav-item {
@@ -4708,6 +4719,9 @@ Use the conversation history provided to you to remember what's already been sai
             // Check if we just updated to show welcome screen
             checkForWelcomeScreen();
             
+            // Initialize navigation as collapsed
+            initNavigation();
+            
             setupConnectivityMonitor();
 
             // Check if user is logged in from localStorage
@@ -5498,6 +5512,17 @@ Use the conversation history provided to you to remember what's already been sai
                 toggleText.textContent = 'Tabs';
             }
         };
+
+        // Initialize navigation as collapsed
+        function initNavigation() {
+            const navItems = document.getElementById('bottomNavItems');
+            const toggleBtn = document.getElementById('navToggleBtn');
+            const toggleText = document.getElementById('navToggleText');
+            
+            if (navItems) navItems.classList.add('hidden');
+            if (toggleBtn) toggleBtn.classList.add('collapsed');
+            if (toggleText) toggleText.textContent = 'Tabs';
+        }
 
         // Show the Missions nav tab and the allowance Saving-mode toggle only for Zezo
         function applyZezoOnlyUI() {

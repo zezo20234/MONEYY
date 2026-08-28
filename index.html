@@ -2479,12 +2479,124 @@
             line-height: 1.6;
         }
 
+        .weekly-mission-stats {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .weekly-mission-stats h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+        }
+
+        #missionStreaksContent {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .mission-streak-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .mission-streak-name {
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .mission-streak-value {
+            font-weight: 700;
+            color: #00f5d4;
+        }
+
+        /* Daily Score Popup */
+        .daily-report-content {
+            padding: 20px 0;
+        }
+
+        .daily-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .daily-score-large {
+            font-size: 72px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .daily-score-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 8px;
+        }
+
+        .daily-mission-streaks {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .daily-mission-streaks h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+        }
+
+        #dailyStreaksContent {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .daily-analysis {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .daily-analysis h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+        }
+
+        #dailyAnalysisContent {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
         @media (max-width: 480px) {
             .weekly-stats {
                 grid-template-columns: 1fr;
             }
 
             .weekly-score-large {
+                font-size: 56px;
+            }
+
+            .daily-score-large {
                 font-size: 56px;
             }
         }
@@ -2762,20 +2874,6 @@
                 <div class="score-text" id="dailyScoreText">0 / 10</div>
             </div>
 
-            <!-- Weekly Score Card -->
-            <div class="weekly-score-card">
-                <div class="score-title">Weekly Score</div>
-                <div class="score-value" id="weeklyScoreValue">0</div>
-                <div class="score-bar">
-                    <div class="score-fill" id="weeklyScoreFill" style="width: 0%;"></div>
-                </div>
-                <div class="score-text" id="weeklyScoreText">0 / 100</div>
-                <div class="streak-info" id="streakInfo">
-                    <span class="streak-label">Current Streak:</span>
-                    <span class="streak-value" id="currentStreak">0 days</span>
-                </div>
-            </div>
-
             <div class="points-card">
                 <div class="points-value" id="missionPointsValue">0</div>
                 <div class="points-label">Total Points • 10 pts per completed mission</div>
@@ -2789,7 +2887,7 @@
             </div>
 
             <button class="notif-permission-btn" id="notifPermissionBtn" onclick="requestMissionNotifications()">
-                🔔 Enable mission reminders
+                🔔 Enable reminders (2pm, 5pm, 7:30pm)
             </button>
 
             <button class="action-btn primary" style="width: 100%; margin-bottom: 16px;" onclick="openAddMissionModal()">
@@ -3419,6 +3517,11 @@
                     <div id="analysisContent">Loading your weekly performance...</div>
                 </div>
 
+                <div class="weekly-mission-stats" id="weeklyMissionStats">
+                    <h3>🎯 Mission Streaks</h3>
+                    <div id="missionStreaksContent">Loading mission streaks...</div>
+                </div>
+
                 <div class="weekly-missed" id="weeklyMissed" style="display: none;">
                     <h3>⚠️ Missed Opportunities</h3>
                     <div id="missedContent"></div>
@@ -3426,6 +3529,35 @@
             </div>
             <div class="modal-actions">
                 <button class="modal-btn confirm" onclick="closeModal('weeklyScoreModal')">Got it! 🎯</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Score Popup -->
+    <div class="modal" id="dailyScoreModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🌙 Daily Summary</div>
+                <button class="close-btn" onclick="closeModal('dailyScoreModal')">&times;</button>
+            </div>
+            <div class="daily-report-content">
+                <div class="daily-header">
+                    <div class="daily-score-large" id="dailyScoreLarge">0</div>
+                    <div class="daily-score-label">out of 10</div>
+                </div>
+                
+                <div class="daily-mission-streaks" id="dailyMissionStreaks">
+                    <h3>🎯 Mission Streaks Today</h3>
+                    <div id="dailyStreaksContent">Loading mission streaks...</div>
+                </div>
+
+                <div class="daily-analysis" id="dailyAnalysis">
+                    <h3>📈 Performance Analysis</h3>
+                    <div id="dailyAnalysisContent">Loading your daily performance...</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn confirm" onclick="closeModal('dailyScoreModal')">Good night! 🌙</button>
             </div>
         </div>
     </div>
@@ -3444,6 +3576,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, set, get, update, onValue, push, remove, query, orderByChild, equalTo } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyCugS0qHKstGZArd5vEBzm-DaLZAIDugo",
@@ -3456,8 +3589,43 @@
             measurementId: "G-YYQD2E5J7J"
         };
 
+        // VAPID key for Firebase Cloud Messaging (you'll need to get this from Firebase Console)
+        const VAPID_KEY = "BL7rsvWz4BsL0CnbBLrrLUoWtNO4r5TMLygYl8A_YT1qVCfVr8ZjBW7OLjbBswac1fHs74-Aw6Wl1gxG6ipyf78";
+
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        let messaging = null;
+
+        // Initialize Firebase Messaging
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                messaging = getMessaging(app);
+                
+                // Request permission and get token
+                getToken(messaging, { vapidKey: VAPID_KEY }).then((currentToken) => {
+                    if (currentToken) {
+                        console.log('FCM Token:', currentToken);
+                        // Save token to Firebase or send to your server
+                        localStorage.setItem('fcmToken', currentToken);
+                    } else {
+                        console.log('No registration token available');
+                    }
+                }).catch((err) => {
+                    console.log('An error occurred while retrieving token:', err);
+                });
+
+                // Handle incoming messages
+                onMessage(messaging, (payload) => {
+                    console.log('Message received:', payload);
+                    new Notification(payload.notification.title, {
+                        body: payload.notification.body,
+                        icon: payload.notification.icon || './money.jpeg'
+                    });
+                });
+            } catch (e) {
+                console.log('Firebase Messaging not available:', e);
+            }
+        }
 
         // ===== Offline mode =====
         // Money Manager keeps working with no wifi. Every action (purchase,
@@ -4903,6 +5071,11 @@ Use the conversation history provided to you to remember what's already been sai
             // Check if we just updated to show welcome screen
             checkForWelcomeScreen();
             
+            // Schedule notifications if permission is granted
+            if (Notification.permission === 'granted') {
+                scheduleNotifications();
+            }
+            
             setupConnectivityMonitor();
 
             // Check if user is logged in from localStorage
@@ -5897,9 +6070,11 @@ Use the conversation history provided to you to remember what's already been sai
                 }).join('');
             }
 
-            // Update daily and weekly scores
+            // Update daily score
             updateDailyScore();
-            updateWeeklyScore();
+            
+            // Check for daily popup (9 PM)
+            checkDailyPopup();
             
             // Check for weekly popup (Thursday)
             checkWeeklyPopup();
@@ -5939,6 +6114,9 @@ Use the conversation history provided to you to remember what's already been sai
 
             // Save daily score
             localStorage.setItem('dailyScore_' + getTodayDateStr(), score);
+            
+            // Update individual mission streaks
+            updateMissionStreaks();
         }
 
         // Calculate weekly score (0-100)
@@ -5994,17 +6172,10 @@ Use the conversation history provided to you to remember what's already been sai
             }
         }
 
-        // Update weekly score display
+        // Update weekly score display (hidden from UI, used for tracking)
         function updateWeeklyScore() {
             const score = calculateWeeklyScore();
-            const scoreValue = document.getElementById('weeklyScoreValue');
-            const scoreFill = document.getElementById('weeklyScoreFill');
-            const scoreText = document.getElementById('weeklyScoreText');
-
-            if (scoreValue) scoreValue.textContent = score;
-            if (scoreFill) scoreFill.style.width = `${score}%`;
-            if (scoreText) scoreText.textContent = `${score} / 100`;
-
+            
             // Update streak
             updateStreak();
 
@@ -6021,14 +6192,11 @@ Use the conversation history provided to you to remember what's already been sai
             return `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
         }
 
-        // Calculate and update streak
+        // Calculate and update streak (no UI update since weekly score is hidden)
         function updateStreak() {
             const currentStreak = calculateCurrentStreak();
             const bestStreak = calculateBestStreak();
             const recoveries = calculateRecoveries();
-
-            const streakValue = document.getElementById('currentStreak');
-            if (streakValue) streakValue.textContent = `${currentStreak} days`;
 
             // Save streak data
             localStorage.setItem('currentStreak', currentStreak);
@@ -6110,6 +6278,78 @@ Use the conversation history provided to you to remember what's already been sai
             }
         }
 
+        // Check if daily popup should show (9 PM)
+        function checkDailyPopup() {
+            const today = new Date();
+            const hour = today.getHours();
+            const todayStr = getTodayDateStr();
+            const lastShown = localStorage.getItem('dailyPopupShown_' + todayStr);
+
+            if (hour >= 21 && lastShown !== todayStr) {
+                // Show daily popup
+                showDailyPopup();
+                localStorage.setItem('dailyPopupShown_' + todayStr, todayStr);
+            }
+        }
+
+        // Update individual mission streaks
+        function updateMissionStreaks() {
+            if (!missions) return;
+            missions.forEach(mission => {
+                const streak = calculateMissionStreak(mission);
+                mission.currentStreak = streak;
+                mission.bestStreak = calculateMissionBestStreak(mission);
+                mission.streakRecoveries = calculateMissionRecoveries(mission);
+            });
+        }
+
+        // Calculate individual mission streak
+        function calculateMissionStreak(mission) {
+            let streak = 0;
+            const today = new Date();
+            
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                
+                const scheduled = isMissionScheduledForDate(mission, date);
+                if (scheduled) {
+                    if (mission.completedDates && mission.completedDates.includes(dateStr)) {
+                        streak++;
+                    } else if (i === 0) {
+                        // Today, check if streak continues
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            
+            return streak;
+        }
+
+        // Calculate best streak for a mission
+        function calculateMissionBestStreak(mission) {
+            const best = mission.bestStreak || 0;
+            const current = calculateMissionStreak(mission);
+            return Math.max(best, current);
+        }
+
+        // Calculate streak recoveries for a mission
+        function calculateMissionRecoveries(mission) {
+            const recoveries = mission.streakRecoveries || 0;
+            const current = calculateMissionStreak(mission);
+            const previous = mission.previousStreak || 0;
+            
+            if (previous === 0 && current > 0) {
+                return recoveries + 1;
+            }
+            
+            mission.previousStreak = current;
+            return recoveries;
+        }
+
         // Show weekly popup
         function showWeeklyPopup() {
             const score = calculateWeeklyScore();
@@ -6125,6 +6365,7 @@ Use the conversation history provided to you to remember what's already been sai
             const analysisContent = document.getElementById('analysisContent');
             const missedContent = document.getElementById('missedContent');
             const weeklyMissed = document.getElementById('weeklyMissed');
+            const missionStreaksContent = document.getElementById('missionStreaksContent');
 
             if (scoreLarge) scoreLarge.textContent = score;
             if (reportCurrentStreak) reportCurrentStreak.textContent = `${currentStreak} days`;
@@ -6147,6 +6388,21 @@ Use the conversation history provided to you to remember what's already been sai
 
             if (analysisContent) analysisContent.textContent = analysis;
 
+            // Generate mission streaks
+            if (missionStreaksContent && missions) {
+                const streaksHTML = missions.map(mission => {
+                    const currentStreak = mission.currentStreak || 0;
+                    const bestStreak = mission.bestStreak || 0;
+                    return `
+                        <div class="mission-streak-item">
+                            <span class="mission-streak-name">${escapeHtml(mission.title)}</span>
+                            <span class="mission-streak-value">Streak: ${currentStreak} (Best: ${bestStreak})</span>
+                        </div>
+                    `;
+                }).join('');
+                missionStreaksContent.innerHTML = streaksHTML || 'No missions to track';
+            }
+
             // Show missed opportunities if score is low
             if (score < 70 && weeklyMissed) {
                 weeklyMissed.style.display = 'block';
@@ -6159,6 +6415,53 @@ Use the conversation history provided to you to remember what's already been sai
 
             // Show modal
             const modal = document.getElementById('weeklyScoreModal');
+            if (modal) modal.classList.add('active');
+        }
+
+        // Show daily popup
+        function showDailyPopup() {
+            const score = calculateDailyScore();
+
+            // Update popup content
+            const scoreLarge = document.getElementById('dailyScoreLarge');
+            const streaksContent = document.getElementById('dailyStreaksContent');
+            const analysisContent = document.getElementById('dailyAnalysisContent');
+
+            if (scoreLarge) scoreLarge.textContent = score;
+
+            // Generate mission streaks
+            if (streaksContent && missions) {
+                const streaksHTML = missions.map(mission => {
+                    const streak = mission.currentStreak || 0;
+                    const status = streak >= 3 ? '🔥' : streak >= 1 ? '✅' : '⚠️';
+                    return `
+                        <div class="mission-streak-item">
+                            <span class="mission-streak-name">${status} ${escapeHtml(mission.title)}</span>
+                            <span class="mission-streak-value">${streak} day streak</span>
+                        </div>
+                    `;
+                }).join('');
+                streaksContent.innerHTML = streaksHTML || 'No missions scheduled for today';
+            }
+
+            // Generate analysis
+            let analysis = '';
+            if (score >= 8) {
+                analysis = '🌟 Excellent work today! You crushed your missions!';
+            } else if (score >= 6) {
+                analysis = '👍 Good job today! You completed most of your missions.';
+            } else if (score >= 4) {
+                analysis = '💪 Decent effort today. You completed about half your missions.';
+            } else if (score >= 2) {
+                analysis = '⚠️ Struggled today. Focus on completing your daily tasks.';
+            } else {
+                analysis = '🚨 Tough day. Don't worry, tomorrow is a fresh start!';
+            }
+
+            if (analysisContent) analysisContent.textContent = analysis;
+
+            // Show modal
+            const modal = document.getElementById('dailyScoreModal');
             if (modal) modal.classList.add('active');
         }
 
@@ -6377,9 +6680,50 @@ Use the conversation history provided to you to remember what's already been sai
                 updateNotifPermissionButton();
                 if (Notification.permission === 'granted') {
                     new Notification('Money Manager', { body: "Mission reminders are on. I'll let you know when it's time!" });
+                    scheduleNotifications();
                 }
             });
         };
+
+        // Schedule notifications for specific times (2pm, 5pm, 7:30pm)
+        function scheduleNotifications() {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+            // Clear existing intervals
+            if (window.notificationIntervals) {
+                window.notificationIntervals.forEach(clearInterval);
+            }
+            window.notificationIntervals = [];
+
+            // Function to send notification
+            const sendNotification = (title, body) => {
+                if (Notification.permission === 'granted') {
+                    new Notification(title, {
+                        body: body,
+                        icon: './money.jpeg',
+                        badge: './money.jpeg'
+                    });
+                }
+            };
+
+            // Schedule notifications for 2pm, 5pm, and 7:30pm
+            const notificationTimes = [
+                { hour: 14, minute: 0, title: '🎯 Mission Reminder', body: 'Don\'t forget to complete your 2pm mission!' },
+                { hour: 17, minute: 0, title: '🎯 Mission Reminder', body: 'Time to complete your 5pm mission!' },
+                { hour: 19, minute: 30, title: '🎯 Mission Reminder', body: 'Final mission reminder for 7:30pm!' }
+            ];
+
+            notificationTimes.forEach((notif) => {
+                const interval = setInterval(() => {
+                    const now = new Date();
+                    if (now.getHours() === notif.hour && now.getMinutes() === notif.minute) {
+                        sendNotification(notif.title, notif.body);
+                    }
+                }, 60000); // Check every minute
+
+                window.notificationIntervals.push(interval);
+            });
+        }
 
         function sendMissionNotification(title, body) {
             if ('Notification' in window && Notification.permission === 'granted') {

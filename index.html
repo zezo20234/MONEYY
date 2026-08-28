@@ -3589,7 +3589,7 @@
             measurementId: "G-YYQD2E5J7J"
         };
 
-        // VAPID key for Firebase Cloud Messaging (you'll need to get this from Firebase Console)
+        // VAPID key for Firebase Cloud Messaging
         const VAPID_KEY = "BL7rsvWz4BsL0CnbBLrrLUoWtNO4r5TMLygYl8A_YT1qVCfVr8ZjBW7OLjbBswac1fHs74-Aw6Wl1gxG6ipyf78";
 
         const app = initializeApp(firebaseConfig);
@@ -3605,7 +3605,6 @@
                 getToken(messaging, { vapidKey: VAPID_KEY }).then((currentToken) => {
                     if (currentToken) {
                         console.log('FCM Token:', currentToken);
-                        // Save token to Firebase or send to your server
                         localStorage.setItem('fcmToken', currentToken);
                     } else {
                         console.log('No registration token available');
@@ -6192,11 +6191,14 @@ Use the conversation history provided to you to remember what's already been sai
             return `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
         }
 
-        // Calculate and update streak (no UI update since weekly score is hidden)
+        // Calculate and update streak
         function updateStreak() {
             const currentStreak = calculateCurrentStreak();
             const bestStreak = calculateBestStreak();
             const recoveries = calculateRecoveries();
+
+            const streakValue = document.getElementById('currentStreak');
+            if (streakValue) streakValue.textContent = `${currentStreak} days`;
 
             // Save streak data
             localStorage.setItem('currentStreak', currentStreak);
@@ -6294,7 +6296,6 @@ Use the conversation history provided to you to remember what's already been sai
 
         // Update individual mission streaks
         function updateMissionStreaks() {
-            if (!missions) return;
             missions.forEach(mission => {
                 const streak = calculateMissionStreak(mission);
                 mission.currentStreak = streak;
@@ -6365,7 +6366,6 @@ Use the conversation history provided to you to remember what's already been sai
             const analysisContent = document.getElementById('analysisContent');
             const missedContent = document.getElementById('missedContent');
             const weeklyMissed = document.getElementById('weeklyMissed');
-            const missionStreaksContent = document.getElementById('missionStreaksContent');
 
             if (scoreLarge) scoreLarge.textContent = score;
             if (reportCurrentStreak) reportCurrentStreak.textContent = `${currentStreak} days`;
@@ -6388,21 +6388,6 @@ Use the conversation history provided to you to remember what's already been sai
 
             if (analysisContent) analysisContent.textContent = analysis;
 
-            // Generate mission streaks
-            if (missionStreaksContent && missions) {
-                const streaksHTML = missions.map(mission => {
-                    const currentStreak = mission.currentStreak || 0;
-                    const bestStreak = mission.bestStreak || 0;
-                    return `
-                        <div class="mission-streak-item">
-                            <span class="mission-streak-name">${escapeHtml(mission.title)}</span>
-                            <span class="mission-streak-value">Streak: ${currentStreak} (Best: ${bestStreak})</span>
-                        </div>
-                    `;
-                }).join('');
-                missionStreaksContent.innerHTML = streaksHTML || 'No missions to track';
-            }
-
             // Show missed opportunities if score is low
             if (score < 70 && weeklyMissed) {
                 weeklyMissed.style.display = 'block';
@@ -6415,53 +6400,6 @@ Use the conversation history provided to you to remember what's already been sai
 
             // Show modal
             const modal = document.getElementById('weeklyScoreModal');
-            if (modal) modal.classList.add('active');
-        }
-
-        // Show daily popup
-        function showDailyPopup() {
-            const score = calculateDailyScore();
-
-            // Update popup content
-            const scoreLarge = document.getElementById('dailyScoreLarge');
-            const streaksContent = document.getElementById('dailyStreaksContent');
-            const analysisContent = document.getElementById('dailyAnalysisContent');
-
-            if (scoreLarge) scoreLarge.textContent = score;
-
-            // Generate mission streaks
-            if (streaksContent && missions) {
-                const streaksHTML = missions.map(mission => {
-                    const streak = mission.currentStreak || 0;
-                    const status = streak >= 3 ? '🔥' : streak >= 1 ? '✅' : '⚠️';
-                    return `
-                        <div class="mission-streak-item">
-                            <span class="mission-streak-name">${status} ${escapeHtml(mission.title)}</span>
-                            <span class="mission-streak-value">${streak} day streak</span>
-                        </div>
-                    `;
-                }).join('');
-                streaksContent.innerHTML = streaksHTML || 'No missions scheduled for today';
-            }
-
-            // Generate analysis
-            let analysis = '';
-            if (score >= 8) {
-                analysis = '🌟 Excellent work today! You crushed your missions!';
-            } else if (score >= 6) {
-                analysis = '👍 Good job today! You completed most of your missions.';
-            } else if (score >= 4) {
-                analysis = '💪 Decent effort today. You completed about half your missions.';
-            } else if (score >= 2) {
-                analysis = '⚠️ Struggled today. Focus on completing your daily tasks.';
-            } else {
-                analysis = '🚨 Tough day. Don't worry, tomorrow is a fresh start!';
-            }
-
-            if (analysisContent) analysisContent.textContent = analysis;
-
-            // Show modal
-            const modal = document.getElementById('dailyScoreModal');
             if (modal) modal.classList.add('active');
         }
 

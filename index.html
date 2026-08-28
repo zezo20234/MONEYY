@@ -1822,6 +1822,84 @@
             padding: 30px 10px;
         }
 
+        /* Daily and Weekly Score Cards */
+        .daily-score-card,
+        .weekly-score-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .score-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+        }
+
+        .score-value {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .score-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 8px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            background: linear-gradient(90deg, #00f5d4 0%, #00d9f5 100%);
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+
+        .score-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+
+        .streak-info {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .streak-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .streak-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #00f5d4;
+        }
+
+        .missions-section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 24px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -2306,6 +2384,110 @@
             margin-bottom: 30px;
             line-height: 1.6;
         }
+
+        /* Weekly Score Popup */
+        .weekly-report-content {
+            padding: 20px 0;
+        }
+
+        .weekly-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .weekly-score-large {
+            font-size: 72px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .weekly-score-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 8px;
+        }
+
+        .weekly-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00f5d4;
+        }
+
+        .weekly-analysis {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .weekly-analysis h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+        }
+
+        #analysisContent {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .weekly-missed {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .weekly-missed h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 71, 87, 0.9);
+            margin-bottom: 16px;
+        }
+
+        #missedContent {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 480px) {
+            .weekly-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .weekly-score-large {
+                font-size: 56px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2570,6 +2752,30 @@
         <div class="section" id="missionsSection" style="display: none;">
             <div class="section-title">🎯 Missions</div>
 
+            <!-- Daily Score Card -->
+            <div class="daily-score-card">
+                <div class="score-title">Today's Score</div>
+                <div class="score-value" id="dailyScoreValue">0</div>
+                <div class="score-bar">
+                    <div class="score-fill" id="dailyScoreFill" style="width: 0%;"></div>
+                </div>
+                <div class="score-text" id="dailyScoreText">0 / 10</div>
+            </div>
+
+            <!-- Weekly Score Card -->
+            <div class="weekly-score-card">
+                <div class="score-title">Weekly Score</div>
+                <div class="score-value" id="weeklyScoreValue">0</div>
+                <div class="score-bar">
+                    <div class="score-fill" id="weeklyScoreFill" style="width: 0%;"></div>
+                </div>
+                <div class="score-text" id="weeklyScoreText">0 / 100</div>
+                <div class="streak-info" id="streakInfo">
+                    <span class="streak-label">Current Streak:</span>
+                    <span class="streak-value" id="currentStreak">0 days</span>
+                </div>
+            </div>
+
             <div class="points-card">
                 <div class="points-value" id="missionPointsValue">0</div>
                 <div class="points-label">Total Points • 10 pts per completed mission</div>
@@ -2590,8 +2796,16 @@
                 ➕ Add Mission
             </button>
 
-            <div id="missionsList">
-                <div class="empty-missions">No missions yet. Add your first one!</div>
+            <!-- Upcoming Missions -->
+            <div class="missions-section-title">📅 Upcoming Missions</div>
+            <div id="upcomingMissionsList">
+                <div class="empty-missions">No upcoming missions</div>
+            </div>
+
+            <!-- Today's Missions -->
+            <div class="missions-section-title">🎯 Today's Missions</div>
+            <div id="todayMissionsList">
+                <div class="empty-missions">No missions scheduled for today</div>
             </div>
         </div>
 
@@ -3168,6 +3382,50 @@
                 <h2 id="welcomeTitle">Welcome to Zezo UI 1.1</h2>
                 <p id="welcomeDescription">Your app has been successfully updated!</p>
                 <button class="update-btn" onclick="dismissUpdateOverlay()">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Score Popup -->
+    <div class="modal" id="weeklyScoreModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📊 Weekly Report</div>
+                <button class="close-btn" onclick="closeModal('weeklyScoreModal')">&times;</button>
+            </div>
+            <div class="weekly-report-content">
+                <div class="weekly-header">
+                    <div class="weekly-score-large" id="weeklyScoreLarge">0</div>
+                    <div class="weekly-score-label">out of 100</div>
+                </div>
+                
+                <div class="weekly-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Current Streak</div>
+                        <div class="stat-value" id="reportCurrentStreak">0 days</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Best Streak</div>
+                        <div class="stat-value" id="reportBestStreak">0 days</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Streak Recoveries</div>
+                        <div class="stat-value" id="reportRecoveries">0</div>
+                    </div>
+                </div>
+
+                <div class="weekly-analysis" id="weeklyAnalysis">
+                    <h3>📈 Performance Analysis</h3>
+                    <div id="analysisContent">Loading your weekly performance...</div>
+                </div>
+
+                <div class="weekly-missed" id="weeklyMissed" style="display: none;">
+                    <h3>⚠️ Missed Opportunities</h3>
+                    <div id="missedContent"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn confirm" onclick="closeModal('weeklyScoreModal')">Got it! 🎯</button>
             </div>
         </div>
     </div>
@@ -5550,11 +5808,13 @@ Use the conversation history provided to you to remember what's already been sai
         };
 
         function renderMissions() {
-            const list = document.getElementById('missionsList');
-            if (!list) return;
+            const upcomingList = document.getElementById('upcomingMissionsList');
+            const todayList = document.getElementById('todayMissionsList');
+            if (!upcomingList || !todayList) return;
 
             if (!missions || missions.length === 0) {
-                list.innerHTML = '<div class="empty-missions">No missions yet. Add your first one!</div>';
+                upcomingList.innerHTML = '<div class="empty-missions">No missions yet. Add your first one!</div>';
+                todayList.innerHTML = '<div class="empty-missions">No missions scheduled for today</div>';
                 return;
             }
 
@@ -5565,33 +5825,341 @@ Use the conversation history provided to you to remember what's already been sai
                 return ao - bo;
             });
 
-            list.innerHTML = sorted.map((mission) => {
+            // Separate upcoming and today's missions
+            const upcoming = [];
+            const today = [];
+            
+            sorted.forEach((mission) => {
                 const scheduledToday = isMissionScheduledToday(mission);
-                const done = isMissionDoneToday(mission);
-                const canComplete = scheduledToday && !done;
-                let btnLabel = '✓ Mark Done';
-                if (done) btnLabel = '✅ Done today';
-                else if (!scheduledToday) btnLabel = 'Not scheduled today';
-                return `
-                    <div class="mission-card ${done ? 'done' : ''}" data-mission-id="${mission.id}">
-                        <div class="mission-card-top">
-                            <div class="mission-drag-handle" title="Drag to reorder">⠿</div>
-                            <div style="flex: 1;">
-                                <div class="mission-title">${escapeHtml(mission.title)}</div>
-                                <div class="mission-meta">${formatMissionSchedule(mission)}</div>
-                            </div>
-                            <div class="mission-points-badge">+${mission.points || MISSION_POINTS_PER_TASK} pts</div>
-                        </div>
-                        <div class="mission-actions">
-                            <button class="mission-btn complete" ${canComplete ? '' : 'disabled'} onclick="completeMission('${mission.id}')">${btnLabel}</button>
-                            <button class="mission-btn edit" onclick="openAddMissionModal('${mission.id}')" title="Edit">✏️</button>
-                            <button class="mission-btn delete" onclick="deleteMission('${mission.id}')" title="Delete">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                if (scheduledToday) {
+                    today.push(mission);
+                } else {
+                    upcoming.push(mission);
+                }
+            });
 
-            initMissionDragAndDrop(list);
+            // Render upcoming missions
+            if (upcoming.length === 0) {
+                upcomingList.innerHTML = '<div class="empty-missions">No upcoming missions</div>';
+            } else {
+                upcomingList.innerHTML = upcoming.map((mission) => {
+                    const done = isMissionDoneToday(mission);
+                    let btnLabel = '✓ Mark Done';
+                    if (done) btnLabel = '✅ Done today';
+                    else btnLabel = 'Not scheduled today';
+                    return `
+                        <div class="mission-card ${done ? 'done' : ''}" data-mission-id="${mission.id}">
+                            <div class="mission-card-top">
+                                <div class="mission-drag-handle" title="Drag to reorder">⠿</div>
+                                <div style="flex: 1;">
+                                    <div class="mission-title">${escapeHtml(mission.title)}</div>
+                                    <div class="mission-meta">${formatMissionSchedule(mission)}</div>
+                                </div>
+                                <div class="mission-points-badge">+${mission.points || MISSION_POINTS_PER_TASK} pts</div>
+                            </div>
+                            <div class="mission-actions">
+                                <button class="mission-btn edit" onclick="openAddMissionModal('${mission.id}')" title="Edit">✏️</button>
+                                <button class="mission-btn delete" onclick="deleteMission('${mission.id}')" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Render today's missions
+            if (today.length === 0) {
+                todayList.innerHTML = '<div class="empty-missions">No missions scheduled for today</div>';
+            } else {
+                todayList.innerHTML = today.map((mission) => {
+                    const scheduledToday = isMissionScheduledToday(mission);
+                    const done = isMissionDoneToday(mission);
+                    const canComplete = scheduledToday && !done;
+                    let btnLabel = '✓ Mark Done';
+                    if (done) btnLabel = '✅ Done today';
+                    else if (!scheduledToday) btnLabel = 'Not scheduled today';
+                    return `
+                        <div class="mission-card ${done ? 'done' : ''}" data-mission-id="${mission.id}">
+                            <div class="mission-card-top">
+                                <div class="mission-drag-handle" title="Drag to reorder">⠿</div>
+                                <div style="flex: 1;">
+                                    <div class="mission-title">${escapeHtml(mission.title)}</div>
+                                    <div class="mission-meta">${formatMissionSchedule(mission)}</div>
+                                </div>
+                                <div class="mission-points-badge">+${mission.points || MISSION_POINTS_PER_TASK} pts</div>
+                            </div>
+                            <div class="mission-actions">
+                                <button class="mission-btn complete" ${canComplete ? '' : 'disabled'} onclick="completeMission('${mission.id}')">${btnLabel}</button>
+                                <button class="mission-btn edit" onclick="openAddMissionModal('${mission.id}')" title="Edit">✏️</button>
+                                <button class="mission-btn delete" onclick="deleteMission('${mission.id}')" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Update daily and weekly scores
+            updateDailyScore();
+            updateWeeklyScore();
+            
+            // Check for weekly popup (Thursday)
+            checkWeeklyPopup();
+
+            initMissionDragAndDrop(todayList);
+        }
+
+        // Calculate daily score (0-10)
+        function calculateDailyScore() {
+            const todayStr = getTodayDateStr();
+            let totalPossible = 0;
+            let completed = 0;
+
+            missions.forEach(mission => {
+                if (isMissionScheduledToday(mission)) {
+                    totalPossible += 1;
+                    if (mission.completedDates && mission.completedDates.includes(todayStr)) {
+                        completed += 1;
+                    }
+                }
+            });
+
+            if (totalPossible === 0) return 0;
+            return Math.round((completed / totalPossible) * 10);
+        }
+
+        // Update daily score display
+        function updateDailyScore() {
+            const score = calculateDailyScore();
+            const scoreValue = document.getElementById('dailyScoreValue');
+            const scoreFill = document.getElementById('dailyScoreFill');
+            const scoreText = document.getElementById('dailyScoreText');
+
+            if (scoreValue) scoreValue.textContent = score;
+            if (scoreFill) scoreFill.style.width = `${score * 10}%`;
+            if (scoreText) scoreText.textContent = `${score} / 10`;
+
+            // Save daily score
+            localStorage.setItem('dailyScore_' + getTodayDateStr(), score);
+        }
+
+        // Calculate weekly score (0-100)
+        function calculateWeeklyScore() {
+            const today = new Date();
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
+            weekStart.setHours(0, 0, 0, 0);
+
+            let totalPossible = 0;
+            let completed = 0;
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + i);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+                missions.forEach(mission => {
+                    const scheduled = isMissionScheduledForDate(mission, date);
+                    if (scheduled) {
+                        totalPossible += 1;
+                        if (mission.completedDates && mission.completedDates.includes(dateStr)) {
+                            completed += 1;
+                        }
+                    }
+                });
+            }
+
+            if (totalPossible === 0) return 0;
+            return Math.round((completed / totalPossible) * 100);
+        }
+
+        // Check if mission is scheduled for a specific date
+        function isMissionScheduledForDate(mission, date) {
+            if (!mission.frequency) return false;
+            
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+            switch (mission.frequency) {
+                case 'daily':
+                    return true;
+                case 'weekdays':
+                    return dayOfWeek >= 1 && dayOfWeek <= 5;
+                case 'weekends':
+                    return dayOfWeek === 0 || dayOfWeek === 6;
+                case 'weekly':
+                    return mission.weeklyDay === dayOfWeek;
+                case 'specific':
+                    return mission.specificDates && mission.specificDates.includes(dateStr);
+                default:
+                    return false;
+            }
+        }
+
+        // Update weekly score display
+        function updateWeeklyScore() {
+            const score = calculateWeeklyScore();
+            const scoreValue = document.getElementById('weeklyScoreValue');
+            const scoreFill = document.getElementById('weeklyScoreFill');
+            const scoreText = document.getElementById('weeklyScoreText');
+
+            if (scoreValue) scoreValue.textContent = score;
+            if (scoreFill) scoreFill.style.width = `${score}%`;
+            if (scoreText) scoreText.textContent = `${score} / 100`;
+
+            // Update streak
+            updateStreak();
+
+            // Save weekly score
+            const weekKey = getWeekKey();
+            localStorage.setItem('weeklyScore_' + weekKey, score);
+        }
+
+        // Get current week key for storage
+        function getWeekKey() {
+            const today = new Date();
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay() + 1);
+            return `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+        }
+
+        // Calculate and update streak
+        function updateStreak() {
+            const currentStreak = calculateCurrentStreak();
+            const bestStreak = calculateBestStreak();
+            const recoveries = calculateRecoveries();
+
+            const streakValue = document.getElementById('currentStreak');
+            if (streakValue) streakValue.textContent = `${currentStreak} days`;
+
+            // Save streak data
+            localStorage.setItem('currentStreak', currentStreak);
+            localStorage.setItem('bestStreak', bestStreak);
+            localStorage.setItem('streakRecoveries', recoveries);
+        }
+
+        // Calculate current streak
+        function calculateCurrentStreak() {
+            let streak = 0;
+            const today = new Date();
+            
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                const weekKey = getWeekKeyForDate(date);
+                const weeklyScore = localStorage.getItem('weeklyScore_' + weekKey);
+                
+                if (weeklyScore && parseInt(weeklyScore) >= 70) {
+                    streak++;
+                } else if (i === 0) {
+                    // Today hasn't been scored yet, check if streak continues
+                    continue;
+                } else {
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+
+        // Calculate best streak ever
+        function calculateBestStreak() {
+            const best = localStorage.getItem('bestStreak');
+            const current = calculateCurrentStreak();
+            if (!best || current > parseInt(best)) {
+                localStorage.setItem('bestStreak', current);
+                return current;
+            }
+            return parseInt(best);
+        }
+
+        // Calculate streak recoveries
+        function calculateRecoveries() {
+            const recoveries = localStorage.getItem('streakRecoveries');
+            const current = calculateCurrentStreak();
+            const previous = localStorage.getItem('previousStreak');
+            
+            if (previous && parseInt(previous) === 0 && current > 0) {
+                const newRecoveries = (parseInt(recoveries) || 0) + 1;
+                localStorage.setItem('streakRecoveries', newRecoveries);
+                localStorage.setItem('previousStreak', current);
+                return newRecoveries;
+            }
+            
+            localStorage.setItem('previousStreak', current);
+            return parseInt(recoveries) || 0;
+        }
+
+        // Get week key for a specific date
+        function getWeekKeyForDate(date) {
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - date.getDay() + 1);
+            return `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+        }
+
+        // Check if weekly popup should show (Thursday)
+        function checkWeeklyPopup() {
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 4 = Thursday
+            const weekKey = getWeekKey();
+            const lastShown = localStorage.getItem('weeklyPopupShown_' + weekKey);
+
+            if (dayOfWeek === 4 && lastShown !== weekKey) {
+                // Show weekly popup
+                showWeeklyPopup();
+                localStorage.setItem('weeklyPopupShown_' + weekKey, weekKey);
+            }
+        }
+
+        // Show weekly popup
+        function showWeeklyPopup() {
+            const score = calculateWeeklyScore();
+            const currentStreak = calculateCurrentStreak();
+            const bestStreak = calculateBestStreak();
+            const recoveries = calculateRecoveries();
+
+            // Update popup content
+            const scoreLarge = document.getElementById('weeklyScoreLarge');
+            const reportCurrentStreak = document.getElementById('reportCurrentStreak');
+            const reportBestStreak = document.getElementById('reportBestStreak');
+            const reportRecoveries = document.getElementById('reportRecoveries');
+            const analysisContent = document.getElementById('analysisContent');
+            const missedContent = document.getElementById('missedContent');
+            const weeklyMissed = document.getElementById('weeklyMissed');
+
+            if (scoreLarge) scoreLarge.textContent = score;
+            if (reportCurrentStreak) reportCurrentStreak.textContent = `${currentStreak} days`;
+            if (reportBestStreak) reportBestStreak.textContent = `${bestStreak} days`;
+            if (reportRecoveries) reportRecoveries.textContent = recoveries;
+
+            // Generate analysis
+            let analysis = '';
+            if (score >= 90) {
+                analysis = '🌟 Amazing performance! You\'re crushing it this week. Keep up the fantastic work!';
+            } else if (score >= 70) {
+                analysis = '👍 Great job! You\'re maintaining a solid streak. You\'re on track to reach your goals.';
+            } else if (score >= 50) {
+                analysis = '💪 Good effort! You\'re making progress, but there\'s room for improvement. Try to complete more daily missions.';
+            } else if (score >= 30) {
+                analysis = '⚠️ Needs attention. Your completion rate is dropping. Focus on hitting your daily targets more consistently.';
+            } else {
+                analysis = '🚨 Critical! You\'re missing most of your missions. This week needs serious focus to get back on track.';
+            }
+
+            if (analysisContent) analysisContent.textContent = analysis;
+
+            // Show missed opportunities if score is low
+            if (score < 70 && weeklyMissed) {
+                weeklyMissed.style.display = 'block';
+                if (missedContent) {
+                    missedContent.textContent = `You missed ${70 - score} points this week. Try to set more realistic daily goals and focus on consistency over perfection.`;
+                }
+            } else if (weeklyMissed) {
+                weeklyMissed.style.display = 'none';
+            }
+
+            // Show modal
+            const modal = document.getElementById('weeklyScoreModal');
+            if (modal) modal.classList.add('active');
         }
 
         // Drag-and-drop reordering via SortableJS — grab the handle, drop it
@@ -5764,6 +6332,9 @@ Use the conversation history provided to you to remember what's already been sai
             const pointsRef = ref(database, `users/${currentUser.username}/points`);
             set(pointsRef, newPoints);
 
+            playMoneySound();
+            updateDailyScore();
+            updateWeeklyScore();
             showNotification(`+${mission.points || MISSION_POINTS_PER_TASK} points! Mission complete 🎉`);
         };
 

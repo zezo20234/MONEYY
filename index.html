@@ -916,7 +916,80 @@
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1000;
-            padding-bottom: env(safe-area-inset-bottom);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bottom-nav.collapsed {
+            transform: translateY(calc(100% - 70px)); /* Show only the tab portion */
+        }
+
+        .bottom-nav.expanded {
+            transform: translateY(0);
+        }
+
+        /* Red pull-out tab - now part of the nav */
+        .nav-pull-tab {
+            background: linear-gradient(135deg, rgba(255, 71, 87, 0.9) 0%, rgba(255, 107, 107, 0.9) 100%);
+            border: 2px solid rgba(255, 71, 87, 1);
+            border-radius: 20px 20px 0 0;
+            padding: 16px 32px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 -4px 20px rgba(255, 71, 87, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            align-self: center;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 1001;
+        }
+
+        .nav-pull-tab:hover {
+            background: linear-gradient(135deg, rgba(255, 71, 87, 1) 0%, rgba(255, 107, 107, 1) 100%);
+            box-shadow: 0 -6px 30px rgba(255, 71, 87, 0.6);
+        }
+
+        .nav-pull-tab:active {
+            transform: scale(0.95);
+        }
+
+        .nav-pull-tab.collapsed {
+            padding: 20px 40px;
+            border-radius: 25px 25px 0 0;
+        }
+
+        .nav-pull-tab.expanded {
+            padding: 12px 24px;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .hamburger-line {
+            width: 28px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-pull-tab.collapsed .hamburger-line {
+            width: 32px;
+            height: 4px;
+        }
+
+        .nav-pull-tab.expanded .hamburger-line {
+            width: 24px;
+            height: 2px;
         }
 
         .bottom-nav-items {
@@ -924,6 +997,7 @@
             overflow-x: auto;
             overflow-y: hidden;
             padding: 16px 20px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
             gap: 12px;
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -1089,13 +1163,13 @@
         /* Section spacing for navigation */
         .section {
             padding: 30px 20px;
-            padding-bottom: 120px; /* Extra space for collapsible navigation */
+            padding-bottom: 140px; /* Extra space for collapsible navigation and pull tab */
         }
 
         @media (max-width: 480px) {
             .section {
                 padding: 20px 15px;
-                padding-bottom: 100px;
+                padding-bottom: 120px; /* Extra space for collapsible navigation and pull tab */
             }
 
             .ai-chat-input-container {
@@ -1114,6 +1188,7 @@
 
             .bottom-nav-items {
                 padding: 12px 15px;
+                padding-bottom: calc(12px + env(safe-area-inset-bottom));
             }
 
             .bottom-nav-item {
@@ -1127,6 +1202,24 @@
 
             .bottom-nav-label {
                 font-size: 11px;
+            }
+
+            .nav-pull-tab.collapsed {
+                padding: 16px 32px;
+            }
+
+            .nav-pull-tab.expanded {
+                padding: 10px 20px;
+            }
+
+            .nav-pull-tab.collapsed .hamburger-line {
+                width: 28px;
+                height: 3px;
+            }
+
+            .nav-pull-tab.expanded .hamburger-line {
+                width: 20px;
+                height: 2px;
             }
         }
 
@@ -1450,6 +1543,7 @@
 
             .bottom-nav-items {
                 padding: 12px 16px;
+                padding-bottom: calc(12px + env(safe-area-inset-bottom));
             }
 
             .bottom-nav-item {
@@ -1463,6 +1557,24 @@
 
             .bottom-nav-label {
                 font-size: 10px;
+            }
+
+            .nav-pull-tab.collapsed {
+                padding: 14px 28px;
+            }
+
+            .nav-pull-tab.expanded {
+                padding: 8px 18px;
+            }
+
+            .nav-pull-tab.collapsed .hamburger-line {
+                width: 26px;
+                height: 3px;
+            }
+
+            .nav-pull-tab.expanded .hamburger-line {
+                width: 18px;
+                height: 2px;
             }
 
             .ai-chat-container {
@@ -2636,7 +2748,16 @@
             </div>
 
             <!-- Bottom Navigation -->
-            <div class="bottom-nav" id="bottomNav">
+            <div class="bottom-nav collapsed" id="bottomNav">
+                <!-- Red Pull-out Tab - now part of the nav -->
+                <div class="nav-pull-tab collapsed" id="navPullTab" onclick="toggleNav()">
+                    <div class="hamburger-icon">
+                        <div class="hamburger-line"></div>
+                        <div class="hamburger-line"></div>
+                        <div class="hamburger-line"></div>
+                    </div>
+                </div>
+                
                 <div class="bottom-nav-items">
                     <div class="bottom-nav-item active" onclick="switchTab('home')" id="nav-home">
                         <span class="bottom-nav-icon">🏠</span>
@@ -5818,6 +5939,26 @@ Use the conversation history provided to you to remember what's already been sai
         // Chart tab switching (removed - now showing all charts)
         window.switchChartTab = function(tab) {
             // All charts are now shown by default
+        };
+
+        // Toggle bottom navigation collapse/expand
+        window.toggleNav = function() {
+            const bottomNav = document.getElementById('bottomNav');
+            const pullTab = document.getElementById('navPullTab');
+            
+            if (bottomNav.classList.contains('collapsed')) {
+                // Expand nav
+                bottomNav.classList.remove('collapsed');
+                bottomNav.classList.add('expanded');
+                pullTab.classList.remove('collapsed');
+                pullTab.classList.add('expanded');
+            } else {
+                // Collapse nav
+                bottomNav.classList.remove('expanded');
+                bottomNav.classList.add('collapsed');
+                pullTab.classList.remove('expanded');
+                pullTab.classList.add('collapsed');
+            }
         };
 
         // Main tab switching

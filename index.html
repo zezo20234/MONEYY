@@ -912,75 +912,11 @@
             bottom: 0;
             left: 0;
             right: 0;
-            z-index: 1000;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        /* Red pull tab that opens/closes the nav. Sits above the nav panel
-           and stays visible whether the panel is open or closed. */
-        .nav-toggle {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 56px;
-            height: 30px;
-            background: linear-gradient(135deg, #ff4757, #ff3742);
-            border-radius: 16px 16px 0 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 -6px 18px rgba(255, 71, 87, 0.45);
-            transition: width 0.3s ease, height 0.3s ease, top 0.3s ease, border-radius 0.3s ease;
-            z-index: 1001;
-        }
-
-        .nav-toggle:active {
-            filter: brightness(0.92);
-        }
-
-        /* Smaller once the panel is open */
-        .nav-toggle.open {
-            width: 44px;
-            height: 22px;
-            top: -22px;
-        }
-
-        .nav-toggle-lines {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            pointer-events: none;
-        }
-
-        .nav-toggle-lines span {
-            display: block;
-            width: 22px;
-            height: 2px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, 0.95);
-            transition: width 0.3s ease, height 0.3s ease;
-        }
-
-        .nav-toggle.open .nav-toggle-lines span {
-            width: 16px;
-        }
-
-        /* Panel that actually collapses. Closed by default so the app opens
-           with the tab bar tucked away and only the red pull-tab visible. */
-        .bottom-nav-panel {
-            max-height: 0;
-            overflow: hidden;
             background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .bottom-nav-panel.open {
-            max-height: 140px;
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .bottom-nav-items {
@@ -2701,14 +2637,6 @@
 
             <!-- Bottom Navigation -->
             <div class="bottom-nav" id="bottomNav">
-                <div class="nav-toggle" id="navToggle" onclick="toggleBottomNav()">
-                    <div class="nav-toggle-lines">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-                <div class="bottom-nav-panel" id="bottomNavPanel">
                 <div class="bottom-nav-items">
                     <div class="bottom-nav-item active" onclick="switchTab('home')" id="nav-home">
                         <span class="bottom-nav-icon">🏠</span>
@@ -2735,7 +2663,6 @@
                         <span class="bottom-nav-icon">🎯</span>
                         <span class="bottom-nav-label">Missions</span>
                     </div>
-                </div>
                 </div>
             </div>
 
@@ -3357,7 +3284,7 @@
 
             <div class="form-group">
                 <label class="form-label">Enable PlayStation/Mobily Bucket</label>
-                <select class="form-select" id="setupEnablePlaystation">
+                <select class="form-select" id="setupEnablePlaystation" onchange="toggleSetupPlaystationVisibility()">
                     <option value="true">Yes, I need this bucket</option>
                     <option value="false">No, I don't use this</option>
                 </select>
@@ -3373,7 +3300,7 @@
 
             <div class="form-group" id="setupPercentageSettings">
                 <label class="form-label">Default Allowance Split</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div id="setupPercentSplitGrid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
                         <input type="number" class="form-input" id="setupHangoutPercent" value="50" min="0" max="100">
@@ -3382,7 +3309,7 @@
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
                         <input type="number" class="form-input" id="setupSavingsPercent" value="37.5" min="0" max="100">
                     </div>
-                    <div>
+                    <div id="setupPlaystationPercentGroup">
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
                         <input type="number" class="form-input" id="setupPlaystationPercent" value="12.5" min="0" max="100">
                     </div>
@@ -3427,7 +3354,7 @@
 
             <div class="form-group">
                 <label class="form-label">Enable PlayStation/Mobily Bucket</label>
-                <select class="form-select" id="settingsEnablePlaystation">
+                <select class="form-select" id="settingsEnablePlaystation" onchange="toggleSettingsPlaystationVisibility()">
                     <option value="true">Yes, I need this bucket</option>
                     <option value="false">No, I don't use this</option>
                 </select>
@@ -3435,7 +3362,7 @@
 
             <div class="form-group" id="percentageSettings">
                 <label class="form-label">Default Allowance Split</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div id="settingsPercentSplitGrid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
                         <input type="number" class="form-input" id="settingsHangoutPercent" min="0" max="100">
@@ -3444,7 +3371,7 @@
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
                         <input type="number" class="form-input" id="settingsSavingsPercent" min="0" max="100">
                     </div>
-                    <div>
+                    <div id="settingsPlaystationPercentGroup">
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
                         <input type="number" class="form-input" id="settingsPlaystationPercent" min="0" max="100">
                     </div>
@@ -5893,15 +5820,6 @@ Use the conversation history provided to you to remember what's already been sai
             // All charts are now shown by default
         };
 
-        // Red pull-tab: toggles the bottom nav panel open/closed.
-        // Starts closed by default every time the app loads (no stored state).
-        window.toggleBottomNav = function() {
-            const panel = document.getElementById('bottomNavPanel');
-            const toggle = document.getElementById('navToggle');
-            const isOpen = panel.classList.toggle('open');
-            toggle.classList.toggle('open', isOpen);
-        };
-
         // Main tab switching
         window.switchTab = function(tab) {
             // Update bottom navigation
@@ -7405,6 +7323,16 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
         };
 
+        // Show/hide the PlayStation % field in the Default Allowance Split
+        // based on whether the PlayStation/Mobily bucket is enabled.
+        window.toggleSetupPlaystationVisibility = function() {
+            const enablePlaystation = document.getElementById('setupEnablePlaystation').value === 'true';
+            const psGroup = document.getElementById('setupPlaystationPercentGroup');
+            const grid = document.getElementById('setupPercentSplitGrid');
+            if (psGroup) psGroup.style.display = enablePlaystation ? 'block' : 'none';
+            if (grid) grid.style.gridTemplateColumns = enablePlaystation ? '1fr 1fr 1fr' : '1fr 1fr';
+        };
+
         window.completeSetup = function() {
             const hangoutLimit = parseInt(document.getElementById('setupHangoutLimit').value) || 140;
             const enablePlaystation = document.getElementById('setupEnablePlaystation').value === 'true';
@@ -7429,7 +7357,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             } else {
                 const hangoutPercent = parseFloat(document.getElementById('setupHangoutPercent').value) || 50;
                 const savingsPercent = parseFloat(document.getElementById('setupSavingsPercent').value) || 37.5;
-                const playstationPercent = parseFloat(document.getElementById('setupPlaystationPercent').value) || 12.5;
+                const playstationPercent = enablePlaystation
+                    ? (parseFloat(document.getElementById('setupPlaystationPercent').value) || 12.5)
+                    : 0;
 
                 // Validate percentages
                 if (Math.abs(hangoutPercent + savingsPercent + playstationPercent - 100) > 0.1) {
@@ -7477,6 +7407,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 document.getElementById('settingsPlaystationPercent').value = userPreferences.playstationPercent;
             }
 
+            // Hide the PlayStation % field in the split if the bucket is disabled
+            toggleSettingsPlaystationVisibility();
+
             // Rank threshold is only editable for non-Asser users — Asser's ranks
             // are fixed at 30/60/90/120/150 SAR.
             const rankGroup = document.getElementById('rankThresholdSettingsGroup');
@@ -7492,6 +7425,16 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             renderUpdatesSettingsUI();
 
             document.getElementById('settingsModal').classList.add('active');
+        };
+
+        // Show/hide the PlayStation % field in the Default Allowance Split
+        // based on whether the PlayStation/Mobily bucket is enabled.
+        window.toggleSettingsPlaystationVisibility = function() {
+            const enablePlaystation = document.getElementById('settingsEnablePlaystation').value === 'true';
+            const psGroup = document.getElementById('settingsPlaystationPercentGroup');
+            const grid = document.getElementById('settingsPercentSplitGrid');
+            if (psGroup) psGroup.style.display = enablePlaystation ? 'block' : 'none';
+            if (grid) grid.style.gridTemplateColumns = enablePlaystation ? '1fr 1fr 1fr' : '1fr 1fr';
         };
 
         window.saveSettings = function() {
@@ -7532,7 +7475,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             } else {
                 const hangoutPercent = parseFloat(document.getElementById('settingsHangoutPercent').value) || 50;
                 const savingsPercent = parseFloat(document.getElementById('settingsSavingsPercent').value) || 37.5;
-                const playstationPercent = parseFloat(document.getElementById('settingsPlaystationPercent').value) || 12.5;
+                const playstationPercent = enablePlaystation
+                    ? (parseFloat(document.getElementById('settingsPlaystationPercent').value) || 12.5)
+                    : 0;
 
                 // Validate percentages
                 if (Math.abs(hangoutPercent + savingsPercent + playstationPercent - 100) > 0.1) {

@@ -3624,6 +3624,17 @@
                 <small style="color: rgba(255,255,255,0.5);">Reach this amount in Savings to earn your 1st rank. The 5th (top) rank is always 220 SAR.</small>
             </div>
 
+            <!-- AI Settings (Groq API key) -->
+            <div class="form-group" id="apiKeySettingsSection" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
+                <label class="form-label">🔑 AI Settings</label>
+                <div id="apiKeySettingsStatus" style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 12px;">⚠️ No API key set — AI features are off</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="modal-btn confirm" style="flex:1; min-width:120px; padding:14px 16px; font-size:15px;" onclick="openApiKeyModal()">Manage API Key</button>
+                    <button type="button" class="modal-btn cancel" id="apiKeyRemoveBtn" style="flex:1; min-width:120px; padding:14px 16px; font-size:15px; display:none;" onclick="removeGroqApiKey()">Remove Key</button>
+                </div>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Powers the AI chat assistant and the mission paper scanner. Saved only on this device, never inside this file.</small>
+            </div>
+
             <!-- App Lock (PIN) section -->
             <div class="form-group" id="pinSettingsSection" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
                 <label class="form-label">🔒 App Lock (PIN)</label>
@@ -3669,6 +3680,29 @@
     </div>
 
 
+
+    <!-- Groq AI API Key Modal -->
+    <div class="modal" id="apiKeyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🔑 AI API Key</div>
+                <button class="close-btn" onclick="closeModal('apiKeyModal')">&times;</button>
+            </div>
+            <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">Your key is saved only on this device's local storage — never written into this app's file — and powers the AI chat assistant and the mission paper scanner.</p>
+            <div class="form-group">
+                <label class="form-label">Groq API Key</label>
+                <input type="password" class="form-input" id="groqApiKeyInput" placeholder="gsk_...">
+                <label style="font-size:12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:6px; cursor:pointer; margin-top:8px;">
+                    <input type="checkbox" id="groqApiKeyShowToggle" onchange="toggleGroqKeyVisibility()"> Show key
+                </label>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Don't have one? Ask Zezo for one.</small>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('apiKeyModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveGroqApiKey()">Save Key</button>
+            </div>
+        </div>
+    </div>
 
     <!-- First-time PIN setup prompt -->
     <div class="modal" id="pinPromptModal">
@@ -4461,7 +4495,61 @@
         };
 
         // Groq AI Integration (direct REST calls to Groq's OpenAI-compatible API)
-        const GROQ_API_KEY = "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";
+        // The API key is NOT stored in this file — it lives only in this device's
+        // localStorage, entered once via Settings, so the key never ends up in
+        // the HTML file itself (e.g. if it's shared, uploaded, or committed somewhere).
+        const GROQ_KEY_STORAGE = 'mm_groq_api_key';
+        function getGroqApiKey() {
+            return (localStorage.getItem(GROQ_KEY_STORAGE) || '').trim();
+        }
+        function setGroqApiKey(key) {
+            localStorage.setItem(GROQ_KEY_STORAGE, key.trim());
+        }
+        function clearGroqApiKey() {
+            localStorage.removeItem(GROQ_KEY_STORAGE);
+        }
+
+        window.openApiKeyModal = function() {
+            const input = document.getElementById('groqApiKeyInput');
+            input.value = getGroqApiKey();
+            input.type = 'password';
+            document.getElementById('groqApiKeyShowToggle').checked = false;
+            document.getElementById('apiKeyModal').classList.add('active');
+        };
+
+        window.toggleGroqKeyVisibility = function() {
+            const input = document.getElementById('groqApiKeyInput');
+            input.type = document.getElementById('groqApiKeyShowToggle').checked ? 'text' : 'password';
+        };
+
+        window.saveGroqApiKey = function() {
+            const val = document.getElementById('groqApiKeyInput').value.trim();
+            if (!val) {
+                showNotification('Enter a key, or use Remove Key in Settings to clear it', true);
+                return;
+            }
+            setGroqApiKey(val);
+            workingGroqModel = null; // force re-check against the new key next time AI is used
+            closeModal('apiKeyModal');
+            showNotification('API key saved on this device');
+            renderApiKeySettingsStatus();
+        };
+
+        window.removeGroqApiKey = function() {
+            clearGroqApiKey();
+            workingGroqModel = null;
+            showNotification('API key removed');
+            renderApiKeySettingsStatus();
+        };
+
+        function renderApiKeySettingsStatus() {
+            const statusEl = document.getElementById('apiKeySettingsStatus');
+            const removeBtn = document.getElementById('apiKeyRemoveBtn');
+            if (!statusEl) return;
+            const hasKey = !!getGroqApiKey();
+            statusEl.textContent = hasKey ? '🔑 API key is set on this device' : '⚠️ No API key set — AI features are off';
+            if (removeBtn) removeBtn.style.display = hasKey ? 'inline-block' : 'none';
+        }
         const GROQ_API_BASE = "https://api.groq.com/openai/v1";
 
         // Models to try, in order. Update this list if Groq renames/retires models —
@@ -4509,7 +4597,7 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${GROQ_API_KEY}`
+                    "Authorization": `Bearer ${getGroqApiKey()}`
                 },
                 body: JSON.stringify({ model: modelName, messages })
             });
@@ -4535,7 +4623,7 @@
         window.initializeGroqAI = async function() {
             console.log("Attempting to initialize Groq AI via REST...");
 
-            if (!GROQ_API_KEY || GROQ_API_KEY.trim() === "") {
+            if (!getGroqApiKey()) {
                 console.error("No Groq API key set.");
                 return;
             }
@@ -4618,7 +4706,11 @@
         // Generate AI response
         window.generateAIResponse = async function(userMessage) {
             console.log("Generating AI response for:", userMessage);
-            
+
+            if (!getGroqApiKey()) {
+                return `🔑 **No AI Key Set**\n\nYou don't have an API key set up. Ask Zezo for one, then add it in Settings → AI Settings.`;
+            }
+
             if (!workingGroqModel) {
                 console.log("AI model not initialized, attempting initialization...");
                 await initializeGroqAI();
@@ -7188,7 +7280,7 @@ Use the conversation history provided to you to remember what's already been sai
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${GROQ_API_KEY}`
+                    "Authorization": `Bearer ${getGroqApiKey()}`
                 },
                 body: JSON.stringify({
                     model: modelName,
@@ -7261,6 +7353,13 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
 
         window.runMissionScan = async function() {
             if (!scanImageDataUrl) return;
+
+            if (!getGroqApiKey()) {
+                closeScanMissionsModal();
+                showNotification('Add your Groq API key in Settings first', true);
+                openApiKeyModal();
+                return;
+            }
 
             document.getElementById('scanStepUpload').style.display = 'none';
             document.getElementById('scanStepLoading').style.display = 'block';
@@ -8193,6 +8292,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             // PIN lock status
             renderPinSettingsStatus();
+
+            // AI API key status
+            renderApiKeySettingsStatus();
 
             document.getElementById('settingsModal').classList.add('active');
         };

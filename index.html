@@ -627,6 +627,190 @@
             transform: scale(0.95);
         }
 
+        /* PIN Lock */
+        .pin-lock-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #0a0a0a;
+            z-index: 3000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .pin-lock-overlay.active {
+            display: flex;
+        }
+
+        .pin-lock-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+        }
+
+        .pin-lock-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .pin-lock-sub {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 28px;
+            text-align: center;
+            max-width: 280px;
+        }
+
+        .pin-dots {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .pin-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            transition: all 0.15s ease;
+        }
+
+        .pin-dot.filled {
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            border-color: transparent;
+            box-shadow: 0 0 12px rgba(0, 245, 212, 0.6);
+        }
+
+        .pin-dot.error {
+            background: #ff4757;
+            border-color: #ff4757;
+            box-shadow: 0 0 12px rgba(255, 71, 87, 0.6);
+        }
+
+        .pin-dots.pin-lock-shake {
+            animation: pinShake 0.4s ease;
+        }
+
+        @keyframes pinShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .pin-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            width: 100%;
+            max-width: 260px;
+        }
+
+        .pin-key {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .pin-key:active {
+            background: rgba(0, 245, 212, 0.25);
+            border-color: rgba(0, 245, 212, 0.4);
+            transform: scale(0.92);
+        }
+
+        .pin-key.action {
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            background: transparent;
+            border: none;
+        }
+
+        .pin-lock-forgot {
+            margin-top: 26px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 13px;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* Mission Paper Scanner */
+        .mission-scan-btn {
+            width: 100%;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.2) 0%, rgba(0, 217, 245, 0.2) 100%);
+            border: 1px solid rgba(0, 245, 212, 0.35);
+        }
+
+        .scan-detected-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .scan-detected-item.unchecked {
+            opacity: 0.4;
+        }
+
+        .scan-detected-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #00f5d4;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .scan-detected-item .scan-item-text {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .scan-loading-spinner {
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.15);
+            border-top-color: #00f5d4;
+            animation: scanSpin 0.9s linear infinite;
+        }
+
+        @keyframes scanSpin {
+            to { transform: rotate(360deg); }
+        }
+
         .goals-grid {
             display: grid;
             gap: 15px;
@@ -1433,299 +1617,6 @@
             background: rgba(239, 68, 68, 0.95);
             color: white;
             box-shadow: 0 12px 35px rgba(239, 68, 68, 0.4);
-        }
-
-        /* PIN Lock Screen */
-        .pin-lock-screen {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 10, 10, 0.98);
-            backdrop-filter: blur(20px);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .pin-lock-screen.active {
-            display: flex;
-        }
-
-        .pin-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 32px;
-            max-width: 360px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .pin-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: rgba(255, 255, 255, 0.95);
-        }
-
-        .pin-subtitle {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 24px;
-        }
-
-        .pin-dots {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
-        .pin-dot {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            background: transparent;
-            transition: all 0.3s ease;
-        }
-
-        .pin-dot.filled {
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
-            border-color: #00f5d4;
-            box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
-        }
-
-        .pin-dot.error {
-            background: #ff6b6b;
-            border-color: #ff6b6b;
-            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-            animation: shake 0.5s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .pin-keypad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .pin-key {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            padding: 20px;
-            font-size: 24px;
-            font-weight: 700;
-            color: white;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 64px;
-        }
-
-        .pin-key:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .pin-key:active {
-            transform: scale(0.95);
-        }
-
-        .pin-key.clear {
-            background: rgba(255, 107, 107, 0.2);
-            border-color: rgba(255, 107, 107, 0.4);
-            color: #ff6b6b;
-            font-size: 16px;
-        }
-
-        .pin-key.skip {
-            background: rgba(102, 126, 234, 0.2);
-            border-color: rgba(102, 126, 234, 0.4);
-            color: #667eea;
-            font-size: 14px;
-        }
-
-        .pin-error {
-            color: #ff6b6b;
-            font-size: 14px;
-            margin-top: 16px;
-            min-height: 20px;
-        }
-
-        /* Paper Mission Scanner */
-        .scanner-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-
-        .scanner-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .scanner-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.95);
-        }
-
-        .scan-btn {
-            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
-            border: 1px solid rgba(0, 245, 212, 0.4);
-            color: #00f5d4;
-            padding: 12px 20px;
-            border-radius: 16px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .scan-btn:hover {
-            background: linear-gradient(135deg, rgba(0, 245, 212, 0.4) 0%, rgba(0, 217, 245, 0.4) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(0, 245, 212, 0.3);
-        }
-
-        .camera-preview {
-            width: 100%;
-            height: 300px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 16px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .camera-preview.active {
-            display: flex;
-        }
-
-        .camera-preview video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .camera-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 3px solid rgba(0, 245, 212, 0.5);
-            border-radius: 16px;
-            pointer-events: none;
-        }
-
-        .camera-overlay::before {
-            content: '📷 Align paper with boxes';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            color: white;
-            text-align: center;
-        }
-
-        .capture-btn {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 16px 32px;
-            border-radius: 20px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0 auto;
-            display: block;
-        }
-
-        .capture-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
-        }
-
-        .scan-status {
-            text-align: center;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            margin-top: 16px;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .scan-status.processing {
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.3);
-        }
-
-        .scan-status.error {
-            background: rgba(255, 107, 107, 0.1);
-            border: 1px solid rgba(255, 107, 107, 0.3);
-            color: #ff6b6b;
-        }
-
-        .scan-status.success {
-            background: rgba(0, 245, 212, 0.1);
-            border: 1px solid rgba(0, 245, 212, 0.3);
-            color: #00f5d4;
-        }
-
-        .retake-btn {
-            background: rgba(255, 107, 107, 0.2);
-            border: 1px solid rgba(255, 107, 107, 0.4);
-            color: #ff6b6b;
-            padding: 12px 24px;
-            border-radius: 16px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 16px auto 0;
-            display: none;
-        }
-
-        .retake-btn.show {
-            display: block;
-        }
-
-        .retake-btn:hover {
-            background: rgba(255, 107, 107, 0.3);
-            transform: translateY(-2px);
         }
 
         @media (max-width: 480px) {
@@ -3183,31 +3074,13 @@
                 🔔 Enable reminders (2pm, 5pm, 7:30pm)
             </button>
 
-            <button class="action-btn primary" style="width: 100%; margin-bottom: 16px;" onclick="openAddMissionModal()">
+            <button class="action-btn primary" style="width: 100%; margin-bottom: 12px;" onclick="openAddMissionModal()">
                 ➕ Add Mission
             </button>
 
-            <!-- Paper Mission Scanner -->
-            <div class="scanner-container">
-                <div class="scanner-header">
-                    <div class="scanner-title">📷 Scan Paper Missions</div>
-                    <button class="scan-btn" onclick="openScanner()">
-                        <span>📸</span> Scan
-                    </button>
-                </div>
-                
-                <div class="camera-preview" id="cameraPreview">
-                    <video id="cameraVideo" autoplay playsinline></video>
-                    <div class="camera-overlay"></div>
-                </div>
-                
-                <button class="capture-btn" id="captureBtn" style="display: none;" onclick="capturePhoto()">
-                    📸 Capture
-                </button>
-                
-                <div class="scan-status" id="scanStatus" style="display: none;"></div>
-                <button class="retake-btn" id="retakeBtn" onclick="retakePhoto()">🔄 Retake Photo</button>
-            </div>
+            <button class="action-btn mission-scan-btn" onclick="openScanMissionsModal()">
+                📷 Scan Paper for Today's Missions
+            </button>
 
             <!-- Upcoming Missions -->
             <div class="missions-section-title">📅 Upcoming Missions</div>
@@ -3321,6 +3194,43 @@
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('addMissionModal')">Cancel</button>
                 <button class="modal-btn confirm" onclick="saveMission()">Add Mission</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan Paper for Missions Modal -->
+    <div class="modal" id="scanMissionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📷 Scan Paper for Missions</div>
+                <button class="close-btn" onclick="closeScanMissionsModal()">&times;</button>
+            </div>
+
+            <div id="scanStepUpload">
+                <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">Take a photo (or upload one) of your paper list of missions. The AI will carefully read every line — even messy handwriting — and add them as <strong>today's</strong> missions only.</p>
+                <label for="scanFileInput" class="everyday-btn" style="display:block; text-align:center; cursor:pointer; padding: 14px;">📸 Take Photo / Choose Image</label>
+                <input type="file" id="scanFileInput" accept="image/*" capture="environment" style="display:none;" onchange="handleScanFileSelect(event)">
+                <div id="scanImagePreviewWrap" style="display:none; margin-bottom: 16px;">
+                    <img id="scanImagePreview" style="width:100%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); max-height: 320px; object-fit: contain; background: rgba(255,255,255,0.03);" alt="Selected paper">
+                </div>
+                <button type="button" class="modal-btn confirm" id="scanRunBtn" style="width:100%; opacity:0.5; pointer-events:none;" onclick="runMissionScan()">🔍 Scan for Missions</button>
+            </div>
+
+            <div id="scanStepLoading" style="display:none; text-align:center; padding: 30px 0;">
+                <div class="scan-loading-spinner"></div>
+                <div style="font-weight:700; margin-bottom: 6px;" id="scanLoadingTitle">Reading your handwriting...</div>
+                <div style="color: rgba(255,255,255,0.5); font-size: 13px;" id="scanLoadingSub">The AI is working hard on every line — this can take a moment.</div>
+            </div>
+
+            <div id="scanStepReview" style="display:none;">
+                <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 12px;">Here's what the AI found. Uncheck anything that's wrong, then add the rest as today's missions.</p>
+                <div id="scanDetectedList" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 16px; max-height: 320px; overflow-y:auto;"></div>
+                <button type="button" class="everyday-btn" style="width:100%;" onclick="rescanMissions()">↩️ Try a different photo</button>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeScanMissionsModal()">Cancel</button>
+                <button class="modal-btn confirm" id="scanAddBtn" style="display:none;" onclick="addScannedMissions()">Add Missions</button>
             </div>
         </div>
     </div>
@@ -3714,14 +3624,15 @@
                 <small style="color: rgba(255,255,255,0.5);">Reach this amount in Savings to earn your 1st rank. The 5th (top) rank is always 220 SAR.</small>
             </div>
 
-            <!-- PIN Settings -->
-            <div class="form-group" id="pinSettingsGroup" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; margin-top: 4px;">
-                <label class="form-label">🔐 PIN Lock</label>
-                <div id="pinStatus" style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 8px;">Loading...</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                    <button type="button" class="modal-btn confirm" onclick="changePin()" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%); font-size: 14px; padding: 12px;">Change PIN</button>
-                    <button type="button" class="modal-btn cancel" onclick="removePin()" style="background: rgba(255, 107, 107, 0.2); border-color: rgba(255, 107, 107, 0.4); color: #ff6b6b; font-size: 14px; padding: 12px;">Remove PIN</button>
+            <!-- App Lock (PIN) section -->
+            <div class="form-group" id="pinSettingsSection" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
+                <label class="form-label">🔒 App Lock (PIN)</label>
+                <div id="pinSettingsStatus" style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 12px;">🔓 PIN lock is OFF</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="modal-btn confirm" id="pinChangeBtn" style="flex:1; min-width:120px; padding:14px 16px; font-size:15px;" onclick="openChangePinModal()">Set PIN</button>
+                    <button type="button" class="modal-btn cancel" id="pinRemoveBtn" style="flex:1; min-width:120px; padding:14px 16px; font-size:15px; display:none;" onclick="removePinLock()">Remove PIN</button>
                 </div>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Require a 4-digit PIN every time you open the app.</small>
             </div>
 
             <!-- Updates section — always at the very bottom of Settings -->
@@ -3758,6 +3669,47 @@
     </div>
 
 
+
+    <!-- First-time PIN setup prompt -->
+    <div class="modal" id="pinPromptModal">
+        <div class="modal-content" style="text-align:center;">
+            <div class="pin-lock-icon" style="margin: 0 auto 16px;">🔒</div>
+            <div class="modal-title" style="display:block;">Protect your app with a PIN?</div>
+            <p style="color:rgba(255,255,255,0.6); font-size:14px; margin:12px 0 24px;">Add a 4-digit PIN so only you can open Money Manager. You can always turn this on later in Settings.</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="skipPinPrompt()">Not now</button>
+                <button class="modal-btn confirm" onclick="startPinSetupFromPrompt()">Set a PIN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN lock / entry overlay (used for unlocking, creating, and changing the PIN) -->
+    <div class="pin-lock-overlay" id="pinLockOverlay">
+        <div class="pin-lock-icon">🔒</div>
+        <div class="pin-lock-title" id="pinLockTitle">Enter your PIN</div>
+        <div class="pin-lock-sub" id="pinLockSub">Enter your 4-digit PIN to continue</div>
+        <div class="pin-dots" id="pinDots">
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+        </div>
+        <div class="pin-keypad">
+            <button type="button" class="pin-key" onclick="pinKeyPress('1')">1</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('2')">2</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('3')">3</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('4')">4</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('5')">5</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('6')">6</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('7')">7</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('8')">8</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('9')">9</button>
+            <button type="button" class="pin-key action" id="pinCancelKey" onclick="cancelPinFlow()" style="display:none;">Cancel</button>
+            <button type="button" class="pin-key" onclick="pinKeyPress('0')">0</button>
+            <button type="button" class="pin-key action" onclick="pinKeyBackspace()">⌫</button>
+        </div>
+        <button type="button" class="pin-lock-forgot" id="pinLockForgot" onclick="forgotPin()" style="display:none;">Forgot PIN?</button>
+    </div>
 
     <!-- Edit Goal Modal -->
     <div class="modal" id="editGoalModal">
@@ -3855,40 +3807,6 @@
             <div class="modal-actions">
                 <button class="modal-btn confirm" onclick="closeModal('weeklyScoreModal')">Got it! 🎯</button>
             </div>
-        </div>
-    </div>
-
-    <!-- PIN Lock Screen -->
-    <div class="pin-lock-screen" id="pinLockScreen">
-        <div class="pin-container">
-            <div class="pin-title" id="pinTitle">Enter PIN</div>
-            <div class="pin-subtitle" id="pinSubtitle">Enter your 4 or 6 digit PIN</div>
-            
-            <div class="pin-dots" id="pinDots">
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot" id="pinDot5" style="display: none;"></div>
-                <div class="pin-dot" id="pinDot6" style="display: none;"></div>
-            </div>
-            
-            <div class="pin-keypad">
-                <div class="pin-key" onclick="handlePinInput(1)">1</div>
-                <div class="pin-key" onclick="handlePinInput(2)">2</div>
-                <div class="pin-key" onclick="handlePinInput(3)">3</div>
-                <div class="pin-key" onclick="handlePinInput(4)">4</div>
-                <div class="pin-key" onclick="handlePinInput(5)">5</div>
-                <div class="pin-key" onclick="handlePinInput(6)">6</div>
-                <div class="pin-key" onclick="handlePinInput(7)">7</div>
-                <div class="pin-key" onclick="handlePinInput(8)">8</div>
-                <div class="pin-key" onclick="handlePinInput(9)">9</div>
-                <div class="pin-key clear" onclick="handlePinClear()">Clear</div>
-                <div class="pin-key" onclick="handlePinInput(0)">0</div>
-                <div class="pin-key skip" id="pinSkipBtn" onclick="handlePinSkip()" style="display: none;">Skip</div>
-            </div>
-            
-            <div class="pin-error" id="pinError"></div>
         </div>
     </div>
 
@@ -5357,6 +5275,212 @@ Use the conversation history provided to you to remember what's already been sai
             }
         }
 
+        // ===== PIN Lock =====
+        let pinEntryBuffer = '';
+        let pinEntryMode = 'unlock'; // 'unlock' | 'create' | 'confirm' | 'change-verify'
+        let pinFirstEntry = '';
+
+        function pinStorageKey(username) {
+            return `mm_pin_${username}`;
+        }
+
+        function pinPromptStorageKey(username) {
+            return `mm_pin_prompt_shown_${username}`;
+        }
+
+        function hasPinSet(username) {
+            return !!localStorage.getItem(pinStorageKey(username));
+        }
+
+        function isPinPromptShown(username) {
+            return localStorage.getItem(pinPromptStorageKey(username)) === '1';
+        }
+
+        function markPinPromptShown(username) {
+            localStorage.setItem(pinPromptStorageKey(username), '1');
+        }
+
+        // Call this right after a user is logged in / restored from a saved session
+        function checkPinAfterLogin() {
+            if (!currentUser) return;
+            const username = currentUser.username;
+            if (hasPinSet(username)) {
+                openPinOverlay('unlock');
+            } else if (!isPinPromptShown(username)) {
+                document.getElementById('pinPromptModal').classList.add('active');
+            }
+        }
+
+        window.skipPinPrompt = function() {
+            if (currentUser) markPinPromptShown(currentUser.username);
+            closeModal('pinPromptModal');
+        };
+
+        window.startPinSetupFromPrompt = function() {
+            if (currentUser) markPinPromptShown(currentUser.username);
+            closeModal('pinPromptModal');
+            openPinOverlay('create', 'Create a PIN', 'Enter a 4-digit PIN to protect your app');
+        };
+
+        // Settings entry point: set a new PIN, or verify the old one first if changing
+        window.openChangePinModal = function() {
+            if (!currentUser) return;
+            if (hasPinSet(currentUser.username)) {
+                openPinOverlay('change-verify', 'Enter current PIN', 'Verify your current PIN to continue');
+            } else {
+                openPinOverlay('create', 'Create a PIN', 'Enter a 4-digit PIN to protect your app');
+            }
+        };
+
+        window.removePinLock = function() {
+            if (!currentUser) return;
+            localStorage.removeItem(pinStorageKey(currentUser.username));
+            showNotification('PIN lock removed');
+            renderPinSettingsStatus();
+        };
+
+        function renderPinSettingsStatus() {
+            if (!currentUser) return;
+            const statusEl = document.getElementById('pinSettingsStatus');
+            const changeBtn = document.getElementById('pinChangeBtn');
+            const removeBtn = document.getElementById('pinRemoveBtn');
+            const enabled = hasPinSet(currentUser.username);
+            if (statusEl) statusEl.textContent = enabled ? '🔒 PIN lock is ON' : '🔓 PIN lock is OFF';
+            if (changeBtn) changeBtn.textContent = enabled ? 'Change PIN' : 'Set PIN';
+            if (removeBtn) removeBtn.style.display = enabled ? 'inline-block' : 'none';
+        }
+
+        function openPinOverlay(mode, title, sub) {
+            pinEntryMode = mode;
+            pinEntryBuffer = '';
+            pinFirstEntry = '';
+            document.getElementById('pinLockTitle').textContent = title || 'Enter your PIN';
+            document.getElementById('pinLockSub').textContent = sub || 'Enter your 4-digit PIN to continue';
+            document.getElementById('pinCancelKey').style.display = (mode === 'unlock') ? 'none' : 'flex';
+            document.getElementById('pinLockForgot').style.display = (mode === 'unlock') ? 'block' : 'none';
+            renderPinDots();
+            document.getElementById('pinLockOverlay').classList.add('active');
+        }
+
+        function renderPinDots() {
+            const dotsContainer = document.getElementById('pinDots');
+            if (!dotsContainer) return;
+            dotsContainer.classList.remove('pin-lock-shake');
+            const dots = dotsContainer.querySelectorAll('.pin-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('filled', i < pinEntryBuffer.length);
+                dot.classList.remove('error');
+            });
+        }
+
+        function shakePinDots(afterShake) {
+            const dotsContainer = document.getElementById('pinDots');
+            if (dotsContainer) {
+                dotsContainer.querySelectorAll('.pin-dot').forEach(d => d.classList.add('error'));
+                dotsContainer.classList.add('pin-lock-shake');
+            }
+            setTimeout(() => {
+                pinEntryBuffer = '';
+                renderPinDots();
+                if (afterShake) afterShake();
+            }, 450);
+        }
+
+        window.pinKeyPress = function(digit) {
+            if (pinEntryBuffer.length >= 4) return;
+            pinEntryBuffer += digit;
+            renderPinDots();
+            if (pinEntryBuffer.length === 4) {
+                setTimeout(handlePinComplete, 150);
+            }
+        };
+
+        window.pinKeyBackspace = function() {
+            pinEntryBuffer = pinEntryBuffer.slice(0, -1);
+            renderPinDots();
+        };
+
+        window.cancelPinFlow = function() {
+            document.getElementById('pinLockOverlay').classList.remove('active');
+            pinEntryBuffer = '';
+            pinFirstEntry = '';
+        };
+
+        window.forgotPin = function() {
+            if (currentUser) {
+                localStorage.removeItem(pinStorageKey(currentUser.username));
+            }
+            document.getElementById('pinLockOverlay').classList.remove('active');
+            pinEntryBuffer = '';
+            showNotification('PIN reset — please log in again');
+            if (typeof logout === 'function') logout();
+        };
+
+        function handlePinComplete() {
+            const username = currentUser ? currentUser.username : null;
+
+            if (pinEntryMode === 'unlock') {
+                if (username && pinEntryBuffer === localStorage.getItem(pinStorageKey(username))) {
+                    document.getElementById('pinLockOverlay').classList.remove('active');
+                    pinEntryBuffer = '';
+                } else {
+                    showNotification('Incorrect PIN', true);
+                    shakePinDots();
+                }
+            } else if (pinEntryMode === 'change-verify') {
+                if (username && pinEntryBuffer === localStorage.getItem(pinStorageKey(username))) {
+                    pinEntryMode = 'create';
+                    pinFirstEntry = '';
+                    pinEntryBuffer = '';
+                    document.getElementById('pinLockTitle').textContent = 'Create a new PIN';
+                    document.getElementById('pinLockSub').textContent = 'Enter a new 4-digit PIN';
+                    renderPinDots();
+                } else {
+                    showNotification('Incorrect PIN', true);
+                    shakePinDots();
+                }
+            } else if (pinEntryMode === 'create') {
+                pinFirstEntry = pinEntryBuffer;
+                pinEntryBuffer = '';
+                pinEntryMode = 'confirm';
+                document.getElementById('pinLockTitle').textContent = 'Confirm your PIN';
+                document.getElementById('pinLockSub').textContent = 'Enter the same 4-digit PIN again';
+                renderPinDots();
+            } else if (pinEntryMode === 'confirm') {
+                if (pinEntryBuffer === pinFirstEntry) {
+                    if (username) {
+                        localStorage.setItem(pinStorageKey(username), pinEntryBuffer);
+                    }
+                    document.getElementById('pinLockOverlay').classList.remove('active');
+                    pinEntryBuffer = '';
+                    pinFirstEntry = '';
+                    showNotification('PIN saved!');
+                    renderPinSettingsStatus();
+                } else {
+                    showNotification("PINs didn't match, try again", true);
+                    shakePinDots(() => {
+                        pinEntryMode = 'create';
+                        pinFirstEntry = '';
+                        document.getElementById('pinLockTitle').textContent = 'Create a new PIN';
+                        document.getElementById('pinLockSub').textContent = 'Enter a new 4-digit PIN';
+                    });
+                }
+            }
+        }
+
+        // Support physical keyboard input (desktop) while the PIN overlay is open
+        document.addEventListener('keydown', (e) => {
+            const overlay = document.getElementById('pinLockOverlay');
+            if (!overlay || !overlay.classList.contains('active')) return;
+            if (e.key >= '0' && e.key <= '9') {
+                window.pinKeyPress(e.key);
+            } else if (e.key === 'Backspace') {
+                window.pinKeyBackspace();
+            } else if (e.key === 'Escape' && pinEntryMode !== 'unlock') {
+                window.cancelPinFlow();
+            }
+        });
+
         // Check if user just updated and show welcome screen
         function checkForWelcomeScreen() {
             const lastShownVersion = localStorage.getItem('zezoWelcomeShown');
@@ -5444,6 +5568,7 @@ Use the conversation history provided to you to remember what's already been sai
                 document.getElementById('authSection').classList.remove('active');
                 document.getElementById('appContent').classList.add('active');
                 loadUserData();
+                checkPinAfterLogin();
             } else {
                 currentUser = null;
                 document.getElementById('authSection').classList.add('active');
@@ -6230,11 +6355,10 @@ Use the conversation history provided to you to remember what's already been sai
         }
 
         function isMissionScheduledToday(mission) {
-            // Check if it's a paper mission for today
-            if (mission.isPaperMission && mission.paperMissionDate) {
-                return mission.paperMissionDate === getTodayDateStr();
+            // One-off missions (e.g. from the paper scanner) are scheduled for exactly one date
+            if (mission.oneOff) {
+                return mission.date === getTodayDateStr();
             }
-            
             const todayIndex = new Date().getDay(); // 0 = Sunday ... 6 = Saturday
             // No days chosen (optional) means the mission is available every day
             if (!Array.isArray(mission.days) || mission.days.length === 0) return true;
@@ -6248,6 +6372,10 @@ Use the conversation history provided to you to remember what's already been sai
         const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         function formatMissionSchedule(mission) {
+            if (mission.oneOff) {
+                const timeText = mission.time ? ` • ⏰ ${formatTime12h(mission.time)}` : ' • Any time';
+                return '📷 Today only' + timeText;
+            }
             let daysText;
             if (mission.days && mission.days.length === 7) {
                 daysText = 'Every day';
@@ -6366,6 +6494,9 @@ Use the conversation history provided to you to remember what's already been sai
             const today = [];
             
             sorted.forEach((mission) => {
+                // Expired one-off missions (from a previous day's paper scan) just fade away —
+                // no need to clutter the upcoming list with tasks that will never be "today" again.
+                if (mission.oneOff && mission.date !== getTodayDateStr()) return;
                 const scheduledToday = isMissionScheduledToday(mission);
                 if (scheduledToday) {
                     today.push(mission);
@@ -6951,6 +7082,277 @@ Use the conversation history provided to you to remember what's already been sai
             });
         };
 
+        /* ---- Mission Paper Scanner ---- */
+        // Vision-capable Groq models, tried in order. The bigger model goes first
+        // since it's better at puzzling out messy handwriting; if it's ever
+        // unavailable we fall back to the smaller (faster) vision model.
+        const GROQ_VISION_MODELS_TO_TRY = [
+            "meta-llama/llama-4-maverick-17b-128e-instruct",
+            "meta-llama/llama-4-scout-17b-16e-instruct"
+        ];
+
+        let scanImageDataUrl = null;
+        let scanDetectedMissions = []; // [{ title, selected }]
+
+        window.openScanMissionsModal = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Missions are only available for Zezo', true);
+                return;
+            }
+            resetScanModal();
+            document.getElementById('scanMissionsModal').classList.add('active');
+        };
+
+        window.closeScanMissionsModal = function() {
+            closeModal('scanMissionsModal');
+            resetScanModal();
+        };
+
+        function resetScanModal() {
+            scanImageDataUrl = null;
+            scanDetectedMissions = [];
+            document.getElementById('scanFileInput').value = '';
+            document.getElementById('scanImagePreviewWrap').style.display = 'none';
+            document.getElementById('scanImagePreview').src = '';
+            const runBtn = document.getElementById('scanRunBtn');
+            runBtn.style.opacity = '0.5';
+            runBtn.style.pointerEvents = 'none';
+            document.getElementById('scanStepUpload').style.display = 'block';
+            document.getElementById('scanStepLoading').style.display = 'none';
+            document.getElementById('scanStepReview').style.display = 'none';
+            document.getElementById('scanAddBtn').style.display = 'none';
+        }
+
+        window.rescanMissions = function() {
+            scanDetectedMissions = [];
+            document.getElementById('scanStepReview').style.display = 'none';
+            document.getElementById('scanAddBtn').style.display = 'none';
+            document.getElementById('scanStepUpload').style.display = 'block';
+        };
+
+        // Downscale + compress the photo before sending it to the AI — camera
+        // photos can be huge, and a reasonably sized, well-compressed JPEG is
+        // plenty for reading handwriting while keeping the upload fast.
+        function resizeImageFileToDataUrl(file, maxDim = 1600, quality = 0.88) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Could not read the selected file.'));
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error('Could not load the selected image.'));
+                    img.onload = () => {
+                        let { width, height } = img;
+                        if (width > maxDim || height > maxDim) {
+                            if (width >= height) {
+                                height = Math.round(height * (maxDim / width));
+                                width = maxDim;
+                            } else {
+                                width = Math.round(width * (maxDim / height));
+                                height = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.handleScanFileSelect = async function(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            try {
+                scanImageDataUrl = await resizeImageFileToDataUrl(file);
+                document.getElementById('scanImagePreview').src = scanImageDataUrl;
+                document.getElementById('scanImagePreviewWrap').style.display = 'block';
+                const runBtn = document.getElementById('scanRunBtn');
+                runBtn.style.opacity = '1';
+                runBtn.style.pointerEvents = 'auto';
+            } catch (err) {
+                showNotification('Could not load that image: ' + err.message, true);
+            }
+        };
+
+        // Multimodal call to Groq's vision-capable models. Kept separate from
+        // callGroq() since it needs an image_url content block, a low
+        // temperature (accuracy over creativity), and its own model fallback list.
+        async function callGroqVision(modelName, imageDataUrl, promptText) {
+            const url = `${GROQ_API_BASE}/chat/completions`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${GROQ_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: modelName,
+                    temperature: 0.2,
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                { type: "text", text: promptText },
+                                { type: "image_url", image_url: { url: imageDataUrl } }
+                            ]
+                        }
+                    ]
+                })
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok) {
+                const groqMessage = data?.error?.message || res.statusText;
+                const err = new Error(`HTTP ${res.status}: ${groqMessage}`);
+                err.status = res.status;
+                throw err;
+            }
+
+            const text = data?.choices?.[0]?.message?.content || "";
+            if (!text) {
+                throw new Error("The AI returned an empty response.");
+            }
+            return text;
+        }
+
+        // Pull the JSON array out of the model's reply even if it wrapped it in
+        // markdown fences or added a stray sentence before/after it.
+        function parseScannedMissionsJson(rawText) {
+            let cleaned = rawText.trim();
+            cleaned = cleaned.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const start = cleaned.indexOf('[');
+            const end = cleaned.lastIndexOf(']');
+            if (start === -1 || end === -1 || end < start) {
+                throw new Error("Couldn't find a mission list in the AI's response.");
+            }
+            const jsonSlice = cleaned.slice(start, end + 1);
+            const parsed = JSON.parse(jsonSlice);
+            if (!Array.isArray(parsed)) {
+                throw new Error("Unexpected response format from the AI.");
+            }
+            return parsed
+                .map(item => (typeof item === 'string' ? item : item?.title))
+                .filter(title => typeof title === 'string' && title.trim().length > 0)
+                .map(title => title.trim());
+        }
+
+        const MISSION_SCAN_PROMPT = `You are an extremely careful, hard-working OCR and handwriting-reading assistant built into a kid's chore/mission tracker app. You will be shown a photo of a piece of paper containing a handwritten or printed list of tasks/missions/chores.
+
+Work VERY hard on this — take your time reasoning through unclear letters using context (this is a plausible kid's chore/task list), letter shapes, spacing, and partial words, even if the handwriting is messy, slanted, faint, or has spelling mistakes. Do not give up on a line just because it's hard to read — make your best expert guess rather than skipping it.
+
+Rules:
+- Extract EVERY distinct task/mission written on the page. Don't skip any line.
+- Don't merge two separate lines into one task, and don't split one task across two entries.
+- Don't invent tasks that clearly aren't on the page.
+- Ignore dates, page titles/headers, decorations, doodles, checkboxes, or numbering — only extract the actual task text itself.
+- For each task, output a short, clean, corrected title: fix obvious spelling mistakes, use normal sentence case, and keep it concise (a few words, like "Clean my room" or "Take out the trash").
+
+Respond with ONLY a strict JSON array of objects and nothing else — no markdown formatting, no code fences, no commentary before or after. Each object must look like {"title": "..."}.
+
+Example valid response: [{"title":"Clean my room"},{"title":"Take out trash"},{"title":"Feed the dog"}]
+
+If you genuinely cannot find any tasks on the page, respond with exactly: []`;
+
+        window.runMissionScan = async function() {
+            if (!scanImageDataUrl) return;
+
+            document.getElementById('scanStepUpload').style.display = 'none';
+            document.getElementById('scanStepLoading').style.display = 'block';
+            document.getElementById('scanLoadingTitle').textContent = 'Reading your handwriting...';
+            document.getElementById('scanLoadingSub').textContent = 'The AI is working hard on every line — this can take a moment.';
+
+            let lastError = null;
+            for (const modelName of GROQ_VISION_MODELS_TO_TRY) {
+                try {
+                    const rawText = await callGroqVision(modelName, scanImageDataUrl, MISSION_SCAN_PROMPT);
+                    const titles = parseScannedMissionsJson(rawText);
+
+                    if (titles.length === 0) {
+                        document.getElementById('scanStepLoading').style.display = 'none';
+                        document.getElementById('scanStepUpload').style.display = 'block';
+                        showNotification("Couldn't find any missions on that photo — try a clearer, brighter shot", true);
+                        return;
+                    }
+
+                    scanDetectedMissions = titles.map(title => ({ title, selected: true }));
+                    renderScanDetectedList();
+                    document.getElementById('scanStepLoading').style.display = 'none';
+                    document.getElementById('scanStepReview').style.display = 'block';
+                    document.getElementById('scanAddBtn').style.display = 'block';
+                    return; // success
+                } catch (err) {
+                    console.log(`Vision model ${modelName} failed: ${err.message}`);
+                    lastError = err;
+                    // Keep trying the next model unless it's clearly an auth problem
+                    if (err.status === 401 || err.status === 403) break;
+                }
+            }
+
+            document.getElementById('scanStepLoading').style.display = 'none';
+            document.getElementById('scanStepUpload').style.display = 'block';
+            showNotification('Scan failed: ' + (lastError ? lastError.message : 'Unknown error'), true);
+        };
+
+        function renderScanDetectedList() {
+            const list = document.getElementById('scanDetectedList');
+            list.innerHTML = scanDetectedMissions.map((item, index) => `
+                <label class="scan-detected-item ${item.selected ? '' : 'unchecked'}" id="scanItem${index}">
+                    <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleScanDetectedMission(${index})">
+                    <span class="scan-item-text">${escapeHtml(item.title)}</span>
+                </label>
+            `).join('');
+        }
+
+        window.toggleScanDetectedMission = function(index) {
+            const item = scanDetectedMissions[index];
+            if (!item) return;
+            item.selected = !item.selected;
+            const row = document.getElementById(`scanItem${index}`);
+            if (row) row.classList.toggle('unchecked', !item.selected);
+        };
+
+        window.addScannedMissions = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
+            const selected = scanDetectedMissions.filter(item => item.selected);
+            if (selected.length === 0) {
+                showNotification('Select at least one mission to add', true);
+                return;
+            }
+
+            const todayStr = getTodayDateStr();
+            const missionsRef = ref(database, `users/${currentUser.username}/missions`);
+            const baseOrder = missions.length;
+
+            const writes = selected.map((item, i) => {
+                const newMission = {
+                    title: item.title,
+                    time: null,
+                    days: [], // unused for one-off missions, kept for shape consistency
+                    oneOff: true,
+                    date: todayStr,
+                    points: MISSION_POINTS_PER_TASK,
+                    order: baseOrder + i,
+                    completedDates: [],
+                    createdAt: new Date().toISOString()
+                };
+                const newRef = push(missionsRef);
+                return set(newRef, newMission);
+            });
+
+            Promise.all(writes).then(() => {
+                closeScanMissionsModal();
+                showNotification(`Added ${selected.length} mission${selected.length > 1 ? 's' : ''} for today! 📷`);
+            }).catch(err => {
+                showNotification('Failed to add scanned missions: ' + err.message, true);
+            });
+        };
+
         /* ---- Mission notifications ---- */
 
         function updateNotifPermissionButton() {
@@ -7403,18 +7805,6 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 showNotification('Please login first', true);
                 return;
             }
-            
-            // Update PIN status
-            const pinStatus = document.getElementById('pinStatus');
-            const userPin = localStorage.getItem(`userPin_${currentUser.username}`);
-            if (userPin) {
-                pinStatus.textContent = `PIN is set (${userPin.length} digits)`;
-                pinStatus.style.color = '#00f5d4';
-            } else {
-                pinStatus.textContent = 'No PIN set';
-                pinStatus.style.color = 'rgba(255,255,255,0.5)';
-            }
-            
             document.getElementById('settingsModal').classList.add('active');
         };
 
@@ -7437,476 +7827,6 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('signupModal').classList.add('active');
         };
 
-        // PIN Lock System
-        let pinInput = '';
-        let pinMode = 'enter'; // 'enter', 'setup', 'confirm'
-        let tempPin = '';
-        let pinLength = 4; // Default to 4, can be changed to 6
-
-        function showPinLockScreen(mode) {
-            pinMode = mode;
-            pinInput = '';
-            tempPin = '';
-            pinLength = 4; // Reset to default
-            
-            const screen = document.getElementById('pinLockScreen');
-            const title = document.getElementById('pinTitle');
-            const subtitle = document.getElementById('pinSubtitle');
-            const skipBtn = document.getElementById('pinSkipBtn');
-            const pinDot5 = document.getElementById('pinDot5');
-            const pinDot6 = document.getElementById('pinDot6');
-            
-            screen.classList.add('active');
-            
-            // Reset PIN dots
-            document.querySelectorAll('.pin-dot').forEach(dot => {
-                dot.classList.remove('filled', 'error');
-            });
-            
-            // Hide 5th and 6th dots initially
-            pinDot5.style.display = 'none';
-            pinDot6.style.display = 'none';
-            
-            if (mode === 'setup') {
-                title.textContent = 'Set Up PIN';
-                subtitle.textContent = 'Choose a 4 or 6 digit PIN (or skip)';
-                skipBtn.style.display = 'flex';
-            } else if (mode === 'confirm') {
-                title.textContent = 'Confirm PIN';
-                subtitle.textContent = 'Enter your PIN again to confirm';
-                skipBtn.style.display = 'none';
-            } else {
-                title.textContent = 'Enter PIN';
-                subtitle.textContent = 'Enter your PIN to unlock';
-                skipBtn.style.display = 'none';
-                
-                // Show correct number of dots for existing PIN
-                const existingPin = localStorage.getItem(`userPin_${currentUser.username}`);
-                if (existingPin && existingPin.length === 6) {
-                    pinDot5.style.display = 'block';
-                    pinDot6.style.display = 'block';
-                    pinLength = 6;
-                }
-            }
-            
-            updatePinDots();
-        }
-
-        function handlePinInput(digit) {
-            if (pinInput.length < pinLength) {
-                pinInput += digit;
-                
-                // Auto-switch to 6 digits if user enters 5th digit during setup
-                if (pinMode === 'setup' && pinInput.length === 5) {
-                    pinLength = 6;
-                    document.getElementById('pinDot5').style.display = 'block';
-                    document.getElementById('pinDot6').style.display = 'block';
-                }
-                
-                updatePinDots();
-                
-                if (pinInput.length === pinLength) {
-                    // PIN is complete
-                    setTimeout(() => processPinComplete(), 200);
-                }
-            }
-        }
-
-        function handlePinClear() {
-            pinInput = '';
-            document.querySelectorAll('.pin-dot').forEach(dot => {
-                dot.classList.remove('filled', 'error');
-            });
-            document.getElementById('pinError').textContent = '';
-        }
-
-        function handlePinSkip() {
-            if (pinMode === 'setup') {
-                // User chose to skip PIN setup
-                closePinLockScreen();
-                document.getElementById('authSection').classList.remove('active');
-                document.getElementById('appContent').classList.add('active');
-            }
-        }
-
-        function updatePinDots() {
-            const dots = document.querySelectorAll('.pin-dot');
-            dots.forEach((dot, index) => {
-                if (index < pinInput.length) {
-                    dot.classList.add('filled');
-                } else {
-                    dot.classList.remove('filled');
-                }
-            });
-        }
-
-        function processPinComplete() {
-            const errorEl = document.getElementById('pinError');
-            
-            if (pinMode === 'setup') {
-                // First entry - store temporarily and ask for confirmation
-                tempPin = pinInput;
-                pinInput = '';
-                document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.remove('filled'));
-                showPinLockScreen('confirm');
-                // Keep the same PIN length
-                pinLength = tempPin.length;
-                if (pinLength === 6) {
-                    document.getElementById('pinDot5').style.display = 'block';
-                    document.getElementById('pinDot6').style.display = 'block';
-                }
-                
-            } else if (pinMode === 'confirm') {
-                // Confirm the PIN
-                if (pinInput === tempPin) {
-                    // PINs match - save it
-                    localStorage.setItem(`userPin_${currentUser.username}`, pinInput);
-                    closePinLockScreen();
-                    document.getElementById('authSection').classList.remove('active');
-                    document.getElementById('appContent').classList.add('active');
-                    showNotification('PIN set successfully!');
-                } else {
-                    // PINs don't match
-                    errorEl.textContent = 'PINs do not match. Please try again.';
-                    document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.add('error'));
-                    setTimeout(() => {
-                        pinInput = '';
-                        document.querySelectorAll('.pin-dot').forEach(dot => {
-                            dot.classList.remove('filled', 'error');
-                        });
-                        errorEl.textContent = '';
-                        showPinLockScreen('setup');
-                    }, 1500);
-                }
-                
-            } else if (pinMode === 'enter') {
-                // Verify PIN
-                const storedPin = localStorage.getItem(`userPin_${currentUser.username}`);
-                if (pinInput === storedPin) {
-                    // PIN is correct
-                    closePinLockScreen();
-                    document.getElementById('authSection').classList.remove('active');
-                    document.getElementById('appContent').classList.add('active');
-                } else {
-                    // PIN is incorrect
-                    errorEl.textContent = 'Incorrect PIN. Please try again.';
-                    document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.add('error'));
-                    setTimeout(() => {
-                        pinInput = '';
-                        document.querySelectorAll('.pin-dot').forEach(dot => {
-                            dot.classList.remove('filled', 'error');
-                        });
-                        errorEl.textContent = '';
-                    }, 1500);
-                }
-            }
-        }
-
-        function closePinLockScreen() {
-            document.getElementById('pinLockScreen').classList.remove('active');
-            pinInput = '';
-            tempPin = '';
-        }
-
-        // PIN Management in Settings
-        window.changePin = function() {
-            if (!currentUser) return;
-            
-            // Clear existing PIN
-            localStorage.removeItem(`userPin_${currentUser.username}`);
-            localStorage.removeItem(`pinSetupAsked_${currentUser.username}`);
-            
-            // Show setup screen
-            showPinLockScreen('setup');
-            closeModal('settingsModal');
-        };
-
-        window.removePin = function() {
-            if (!currentUser) return;
-            
-            if (confirm('Are you sure you want to remove your PIN? This will make your app less secure.')) {
-                localStorage.removeItem(`userPin_${currentUser.username}`);
-                showNotification('PIN removed successfully');
-                closeModal('settingsModal');
-            }
-        };
-
-        // Paper Mission Scanner
-        let cameraStream = null;
-        let capturedImage = null;
-
-        window.openScanner = function() {
-            const cameraPreview = document.getElementById('cameraPreview');
-            const captureBtn = document.getElementById('captureBtn');
-            const scanStatus = document.getElementById('scanStatus');
-            const retakeBtn = document.getElementById('retakeBtn');
-            
-            cameraPreview.classList.add('active');
-            captureBtn.style.display = 'block';
-            scanStatus.style.display = 'none';
-            retakeBtn.classList.remove('show');
-            
-            startCamera();
-        };
-
-        async function startCamera() {
-            try {
-                const video = document.getElementById('cameraVideo');
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    } 
-                });
-                video.srcObject = cameraStream;
-            } catch (error) {
-                console.error('Camera access error:', error);
-                showScanStatus('error', 'Camera access denied. Please allow camera access to scan missions.');
-            }
-        }
-
-        window.capturePhoto = function() {
-            const video = document.getElementById('cameraVideo');
-            const canvas = document.createElement('canvas');
-            const captureBtn = document.getElementById('captureBtn');
-            const scanStatus = document.getElementById('scanStatus');
-            const retakeBtn = document.getElementById('retakeBtn');
-            
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            capturedImage = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // Stop camera
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-            
-            // Hide camera, show processing
-            document.getElementById('cameraPreview').classList.remove('active');
-            captureBtn.style.display = 'none';
-            retakeBtn.classList.add('show');
-            
-            // Start AI processing
-            processPaperMission(capturedImage);
-        };
-
-        window.retakePhoto = function() {
-            capturedImage = null;
-            document.getElementById('retakeBtn').classList.remove('show');
-            document.getElementById('scanStatus').style.display = 'none';
-            openScanner();
-        };
-
-        function showScanStatus(type, message) {
-            const statusEl = document.getElementById('scanStatus');
-            statusEl.textContent = message;
-            statusEl.className = 'scan-status ' + type;
-            statusEl.style.display = 'block';
-        }
-
-        async function processPaperMission(imageData) {
-            showScanStatus('processing', '🔍 Analyzing your paper missions...');
-            
-            try {
-                // Use AI to analyze the image
-                const analysisResult = await analyzePaperMissionWithAI(imageData);
-                
-                if (analysisResult.success) {
-                    showScanStatus('success', `✅ Found ${analysisResult.missions.length} missions!`);
-                    
-                    // Add the missions to today's missions
-                    addPaperMissionsToToday(analysisResult.missions);
-                    
-                    // Clear after a delay
-                    setTimeout(() => {
-                        document.getElementById('scanStatus').style.display = 'none';
-                        document.getElementById('retakeBtn').classList.remove('show');
-                    }, 3000);
-                    
-                } else {
-                    showScanStatus('error', analysisResult.message || 'Could not read missions clearly');
-                }
-                
-            } catch (error) {
-                console.error('Paper mission analysis error:', error);
-                showScanStatus('error', 'Error analyzing image. Please try again.');
-            }
-        }
-
-        async function analyzePaperMissionWithAI(imageData) {
-            // This function will use AI to analyze the paper mission
-            // For now, it's a placeholder - you'll need to integrate with an AI service
-            
-            // Check if online
-            if (!isOnline) {
-                return {
-                    success: false,
-                    message: 'You need to be online to scan paper missions'
-                };
-            }
-            
-            try {
-                // Create a prompt for the AI to analyze the paper
-                const prompt = `Analyze this image of a paper with missions written in boxed sections. 
-                The format should be:
-                - Boxed sections with subject names (like MATH, ENGLISH, SCIENCE, etc.)
-                - Each box contains missions/tasks for that subject
-                - Missions might be written as bullet points or lines
-                
-                Please extract all missions and return them in this exact JSON format:
-                {
-                    "success": true,
-                    "missions": [
-                        {
-                            "subject": "MATH",
-                            "tasks": ["Do homework", "Study chapter 3", "Solve problems"]
-                        },
-                        {
-                            "subject": "ENGLISH", 
-                            "tasks": ["Read pages 20-30", "Write essay"]
-                        }
-                    ]
-                }
-                
-                If the text is not clearly visible or handwriting is too unclear, return:
-                {
-                    "success": false,
-                    "message": "Text is not clearly visible. Please take another photo with better lighting and focus."
-                }
-                
-                Focus very hard on reading even messy handwriting. Look for subject headers and bullet points.`;
-                
-                // Call the AI API using the existing Groq AI integration
-                const messages = [
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: prompt
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: imageData
-                                }
-                            }
-                        ]
-                    }
-                ];
-                
-                // Try using a vision-capable model
-                const visionModels = ['llava-v1.5-7b-4096-preview', 'llava-v1.5-13b-4096-preview'];
-                let aiResponse = null;
-                
-                for (const model of visionModels) {
-                    try {
-                        const response = await fetch(`${GROQ_API_BASE}/chat/completions`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${GROQ_API_KEY}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                model: model,
-                                messages: messages,
-                                temperature: 0.1,
-                                max_tokens: 1000
-                            })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (data.choices && data.choices[0]) {
-                            aiResponse = data.choices[0].message.content;
-                            break;
-                        }
-                    } catch (modelError) {
-                        console.log(`Model ${model} failed, trying next...`);
-                        continue;
-                    }
-                }
-                
-                if (!aiResponse) {
-                    return {
-                        success: false,
-                        message: 'AI vision models not available. Please try again later.'
-                    };
-                }
-                
-                // Try to parse the JSON response
-                try {
-                    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        const result = JSON.parse(jsonMatch[0]);
-                        return result;
-                    } else {
-                        return {
-                            success: false,
-                            message: 'Could not understand the AI response. Please try again.'
-                        };
-                    }
-                } catch (parseError) {
-                    return {
-                        success: false,
-                        message: 'AI response format error. Please try again.'
-                    };
-                }
-                
-            } catch (error) {
-                console.error('AI analysis error:', error);
-                return {
-                    success: false,
-                    message: 'Failed to analyze image. Please check your connection and try again.'
-                };
-            }
-        }
-
-        function addPaperMissionsToToday(missionsData) {
-            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
-                showNotification('Missions are only available for Zezo', true);
-                return;
-            }
-            
-            const today = getTodayDateStr();
-            const missionsRef = ref(database, `users/${currentUser.username}/missions`);
-            
-            missionsData.forEach(subjectData => {
-                subjectData.tasks.forEach(task => {
-                    // Create a new mission for today only
-                    const newMission = {
-                        title: `${subjectData.subject}: ${task}`,
-                        time: null,
-                        days: [], // Empty days array means it's not recurring
-                        points: MISSION_POINTS_PER_TASK,
-                        order: missions.length,
-                        completedDates: [],
-                        createdAt: new Date().toISOString(),
-                        isPaperMission: true, // Mark as paper mission
-                        paperMissionDate: today // Only for this specific date
-                    };
-
-                    const newRef = push(missionsRef);
-                    set(newRef, newMission).then(() => {
-                        missions.push({ ...newMission, id: newRef.key });
-                    }).catch(err => {
-                        console.error('Failed to add paper mission:', err);
-                    });
-                });
-            });
-
-            // Refresh the missions UI after a short delay to ensure Firebase updates
-            setTimeout(() => {
-                renderMissions();
-                renderMissionPoints();
-                showNotification(`Added paper missions for today!`);
-            }, 500);
-        }
-
         // Login function
         window.login = function() {
             const username = document.getElementById('loginUsername').value;
@@ -7927,26 +7847,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                         currentUser = { username: username };
                         localStorage.setItem('moneyManagerUsername', username);
                         document.getElementById('userEmail').textContent = username;
+                        document.getElementById('authSection').classList.remove('active');
+                        document.getElementById('appContent').classList.add('active');
                         closeModal('loginModal');
-                        
-                        // Check if user has PIN set
-                        const userPin = localStorage.getItem(`userPin_${username}`);
-                        if (userPin) {
-                            // Show PIN lock screen
-                            showPinLockScreen('enter');
-                        } else {
-                            // Check if user has been asked to set up PIN before
-                            const pinSetupAsked = localStorage.getItem(`pinSetupAsked_${username}`);
-                            if (!pinSetupAsked) {
-                                // First time - ask to set up PIN with skip option
-                                showPinLockScreen('setup');
-                                localStorage.setItem(`pinSetupAsked_${username}`, 'true');
-                            } else {
-                                // User previously skipped, go straight to app
-                                document.getElementById('authSection').classList.remove('active');
-                                document.getElementById('appContent').classList.add('active');
-                            }
-                        }
                         
                         // Clear previous user data
                         balances = {
@@ -7992,6 +7895,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                         }
                         
                         loadUserData();
+                        checkPinAfterLogin();
                         showNotification('Login successful!');
                         document.getElementById('loginUsername').value = '';
                         document.getElementById('loginPassword').value = '';
@@ -8286,6 +8190,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             // Updates section (version display + Zezo's send-update controls)
             renderUpdatesSettingsUI();
+
+            // PIN lock status
+            renderPinSettingsStatus();
 
             document.getElementById('settingsModal').classList.add('active');
         };

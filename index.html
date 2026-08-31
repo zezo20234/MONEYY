@@ -7178,10 +7178,40 @@ Use the conversation history provided to you to remember what's already been sai
         // Vision-capable Groq models, tried in order. The bigger model goes first
         // since it's better at puzzling out messy handwriting; if it's ever
         // unavailable we fall back to the smaller (faster) vision model.
+        //
+        // Groq periodically renames/retires models without much notice, so these
+        // hardcoded IDs can go stale (that's why you might see a 404 "does not
+        // exist or you do not have access to it"). If ALL of these fail, we
+        // fall back to asking the Groq account itself what it has access to
+        // (see getFallbackVisionModels below) instead of just giving up.
         const GROQ_VISION_MODELS_TO_TRY = [
             "meta-llama/llama-4-maverick-17b-128e-instruct",
             "meta-llama/llama-4-scout-17b-16e-instruct"
         ];
+
+        // Ask Groq's /models endpoint what this account can actually see, and
+        // guess which ones are vision-capable by name (Groq doesn't expose a
+        // "supports images" flag in that list, so this is a heuristic). Used
+        // only as a last resort when every model in GROQ_VISION_MODELS_TO_TRY
+        // above has failed — e.g. because Groq renamed/retired them.
+        async function getFallbackVisionModels() {
+            try {
+                const res = await fetch(`${GROQ_API_BASE}/models`, {
+                    headers: { "Authorization": `Bearer ${getGroqApiKey()}` }
+                });
+                if (!res.ok) return [];
+                const data = await res.json().catch(() => null);
+                const ids = (data?.data || []).map(m => m.id);
+                const visionHints = ['vision', 'scout', 'maverick', 'llama-4', 'llava'];
+                return ids.filter(id =>
+                    visionHints.some(hint => id.toLowerCase().includes(hint)) &&
+                    !GROQ_VISION_MODELS_TO_TRY.includes(id)
+                );
+            } catch (err) {
+                console.log('Could not list Groq models for vision fallback:', err.message);
+                return [];
+            }
+        }
 
         let scanImageDataUrl = null;
         let scanDetectedMissions = []; // [{ title, selected }]
@@ -7367,7 +7397,14 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
             document.getElementById('scanLoadingSub').textContent = 'The AI is working hard on every line — this can take a moment.';
 
             let lastError = null;
-            for (const modelName of GROQ_VISION_MODELS_TO_TRY) {
+            let authFailed = false;
+            let modelsToTry = GROQ_VISION_MODELS_TO_TRY.slice();
+
+            // Try the hardcoded list first, then (only if every one of those was
+            // a "model not found" style failure, not an auth failure) ask Groq
+            // what vision-ish models this account can actually see and try those.
+            for (let i = 0; i < modelsToTry.length; i++) {
+                const modelName = modelsToTry[i];
                 try {
                     const rawText = await callGroqVision(modelName, scanImageDataUrl, MISSION_SCAN_PROMPT);
                     const titles = parseScannedMissionsJson(rawText);
@@ -7388,14 +7425,35 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
                 } catch (err) {
                     console.log(`Vision model ${modelName} failed: ${err.message}`);
                     lastError = err;
-                    // Keep trying the next model unless it's clearly an auth problem
-                    if (err.status === 401 || err.status === 403) break;
+                    if (err.status === 401 || err.status === 403) {
+                        authFailed = true;
+                        break;
+                    }
+                    // If we just finished the hardcoded list and haven't tried
+                    // account-discovered fallbacks yet, fetch and append them.
+                    if (i === modelsToTry.length - 1 && !authFailed) {
+                        const discovered = await getFallbackVisionModels();
+                        if (discovered.length > 0) {
+                            console.log('Trying account-discovered vision models as fallback:', discovered);
+                            modelsToTry = modelsToTry.concat(discovered);
+                        }
+                    }
                 }
             }
 
             document.getElementById('scanStepLoading').style.display = 'none';
             document.getElementById('scanStepUpload').style.display = 'block';
-            showNotification('Scan failed: ' + (lastError ? lastError.message : 'Unknown error'), true);
+
+            if (authFailed) {
+                showNotification('Scan failed: ' + (lastError ? lastError.message : 'Auth error') + ' — check your Groq API key in Settings', true);
+            } else {
+                showNotification(
+                    'Scan failed — Groq may have renamed/retired the vision models this app uses (' +
+                    (lastError ? lastError.message : 'unknown error') +
+                    '). Check console.groq.com/docs/models for current model IDs.',
+                    true
+                );
+            }
         };
 
         function renderScanDetectedList() {

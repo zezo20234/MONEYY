@@ -1435,6 +1435,299 @@
             box-shadow: 0 12px 35px rgba(239, 68, 68, 0.4);
         }
 
+        /* PIN Lock Screen */
+        .pin-lock-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .pin-lock-screen.active {
+            display: flex;
+        }
+
+        .pin-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .pin-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .pin-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 24px;
+        }
+
+        .pin-dots {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .pin-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .pin-dot.filled {
+            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            border-color: #00f5d4;
+            box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
+        }
+
+        .pin-dot.error {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .pin-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .pin-key {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 64px;
+        }
+
+        .pin-key:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .pin-key:active {
+            transform: scale(0.95);
+        }
+
+        .pin-key.clear {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: rgba(255, 107, 107, 0.4);
+            color: #ff6b6b;
+            font-size: 16px;
+        }
+
+        .pin-key.skip {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.4);
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .pin-error {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 16px;
+            min-height: 20px;
+        }
+
+        /* Paper Mission Scanner */
+        .scanner-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .scanner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .scanner-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .scan-btn {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
+            border: 1px solid rgba(0, 245, 212, 0.4);
+            color: #00f5d4;
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scan-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.4) 0%, rgba(0, 217, 245, 0.4) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 245, 212, 0.3);
+        }
+
+        .camera-preview {
+            width: 100%;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .camera-preview.active {
+            display: flex;
+        }
+
+        .camera-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 3px solid rgba(0, 245, 212, 0.5);
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+        .camera-overlay::before {
+            content: '📷 Align paper with boxes';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: white;
+            text-align: center;
+        }
+
+        .capture-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .capture-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .scan-status {
+            text-align: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-top: 16px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .scan-status.processing {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .scan-status.error {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+        }
+
+        .scan-status.success {
+            background: rgba(0, 245, 212, 0.1);
+            border: 1px solid rgba(0, 245, 212, 0.3);
+            color: #00f5d4;
+        }
+
+        .retake-btn {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.4);
+            color: #ff6b6b;
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 16px auto 0;
+            display: none;
+        }
+
+        .retake-btn.show {
+            display: block;
+        }
+
+        .retake-btn:hover {
+            background: rgba(255, 107, 107, 0.3);
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 480px) {
             .app-container {
                 padding: 15px;
@@ -2894,6 +3187,28 @@
                 ➕ Add Mission
             </button>
 
+            <!-- Paper Mission Scanner -->
+            <div class="scanner-container">
+                <div class="scanner-header">
+                    <div class="scanner-title">📷 Scan Paper Missions</div>
+                    <button class="scan-btn" onclick="openScanner()">
+                        <span>📸</span> Scan
+                    </button>
+                </div>
+                
+                <div class="camera-preview" id="cameraPreview">
+                    <video id="cameraVideo" autoplay playsinline></video>
+                    <div class="camera-overlay"></div>
+                </div>
+                
+                <button class="capture-btn" id="captureBtn" style="display: none;" onclick="capturePhoto()">
+                    📸 Capture
+                </button>
+                
+                <div class="scan-status" id="scanStatus" style="display: none;"></div>
+                <button class="retake-btn" id="retakeBtn" onclick="retakePhoto()">🔄 Retake Photo</button>
+            </div>
+
             <!-- Upcoming Missions -->
             <div class="missions-section-title">📅 Upcoming Missions</div>
             <div id="upcomingMissionsList">
@@ -3399,6 +3714,16 @@
                 <small style="color: rgba(255,255,255,0.5);">Reach this amount in Savings to earn your 1st rank. The 5th (top) rank is always 220 SAR.</small>
             </div>
 
+            <!-- PIN Settings -->
+            <div class="form-group" id="pinSettingsGroup" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; margin-top: 4px;">
+                <label class="form-label">🔐 PIN Lock</label>
+                <div id="pinStatus" style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 8px;">Loading...</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                    <button type="button" class="modal-btn confirm" onclick="changePin()" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%); font-size: 14px; padding: 12px;">Change PIN</button>
+                    <button type="button" class="modal-btn cancel" onclick="removePin()" style="background: rgba(255, 107, 107, 0.2); border-color: rgba(255, 107, 107, 0.4); color: #ff6b6b; font-size: 14px; padding: 12px;">Remove PIN</button>
+                </div>
+            </div>
+
             <!-- Updates section — always at the very bottom of Settings -->
             <div class="form-group" id="updatesSettingsSection" style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px; margin-top: 4px;">
                 <label class="form-label">📦 Updates</label>
@@ -3530,6 +3855,40 @@
             <div class="modal-actions">
                 <button class="modal-btn confirm" onclick="closeModal('weeklyScoreModal')">Got it! 🎯</button>
             </div>
+        </div>
+    </div>
+
+    <!-- PIN Lock Screen -->
+    <div class="pin-lock-screen" id="pinLockScreen">
+        <div class="pin-container">
+            <div class="pin-title" id="pinTitle">Enter PIN</div>
+            <div class="pin-subtitle" id="pinSubtitle">Enter your 4 or 6 digit PIN</div>
+            
+            <div class="pin-dots" id="pinDots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot" id="pinDot5" style="display: none;"></div>
+                <div class="pin-dot" id="pinDot6" style="display: none;"></div>
+            </div>
+            
+            <div class="pin-keypad">
+                <div class="pin-key" onclick="handlePinInput(1)">1</div>
+                <div class="pin-key" onclick="handlePinInput(2)">2</div>
+                <div class="pin-key" onclick="handlePinInput(3)">3</div>
+                <div class="pin-key" onclick="handlePinInput(4)">4</div>
+                <div class="pin-key" onclick="handlePinInput(5)">5</div>
+                <div class="pin-key" onclick="handlePinInput(6)">6</div>
+                <div class="pin-key" onclick="handlePinInput(7)">7</div>
+                <div class="pin-key" onclick="handlePinInput(8)">8</div>
+                <div class="pin-key" onclick="handlePinInput(9)">9</div>
+                <div class="pin-key clear" onclick="handlePinClear()">Clear</div>
+                <div class="pin-key" onclick="handlePinInput(0)">0</div>
+                <div class="pin-key skip" id="pinSkipBtn" onclick="handlePinSkip()" style="display: none;">Skip</div>
+            </div>
+            
+            <div class="pin-error" id="pinError"></div>
         </div>
     </div>
 
@@ -5871,6 +6230,11 @@ Use the conversation history provided to you to remember what's already been sai
         }
 
         function isMissionScheduledToday(mission) {
+            // Check if it's a paper mission for today
+            if (mission.isPaperMission && mission.paperMissionDate) {
+                return mission.paperMissionDate === getTodayDateStr();
+            }
+            
             const todayIndex = new Date().getDay(); // 0 = Sunday ... 6 = Saturday
             // No days chosen (optional) means the mission is available every day
             if (!Array.isArray(mission.days) || mission.days.length === 0) return true;
@@ -7039,6 +7403,18 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 showNotification('Please login first', true);
                 return;
             }
+            
+            // Update PIN status
+            const pinStatus = document.getElementById('pinStatus');
+            const userPin = localStorage.getItem(`userPin_${currentUser.username}`);
+            if (userPin) {
+                pinStatus.textContent = `PIN is set (${userPin.length} digits)`;
+                pinStatus.style.color = '#00f5d4';
+            } else {
+                pinStatus.textContent = 'No PIN set';
+                pinStatus.style.color = 'rgba(255,255,255,0.5)';
+            }
+            
             document.getElementById('settingsModal').classList.add('active');
         };
 
@@ -7061,6 +7437,476 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('signupModal').classList.add('active');
         };
 
+        // PIN Lock System
+        let pinInput = '';
+        let pinMode = 'enter'; // 'enter', 'setup', 'confirm'
+        let tempPin = '';
+        let pinLength = 4; // Default to 4, can be changed to 6
+
+        function showPinLockScreen(mode) {
+            pinMode = mode;
+            pinInput = '';
+            tempPin = '';
+            pinLength = 4; // Reset to default
+            
+            const screen = document.getElementById('pinLockScreen');
+            const title = document.getElementById('pinTitle');
+            const subtitle = document.getElementById('pinSubtitle');
+            const skipBtn = document.getElementById('pinSkipBtn');
+            const pinDot5 = document.getElementById('pinDot5');
+            const pinDot6 = document.getElementById('pinDot6');
+            
+            screen.classList.add('active');
+            
+            // Reset PIN dots
+            document.querySelectorAll('.pin-dot').forEach(dot => {
+                dot.classList.remove('filled', 'error');
+            });
+            
+            // Hide 5th and 6th dots initially
+            pinDot5.style.display = 'none';
+            pinDot6.style.display = 'none';
+            
+            if (mode === 'setup') {
+                title.textContent = 'Set Up PIN';
+                subtitle.textContent = 'Choose a 4 or 6 digit PIN (or skip)';
+                skipBtn.style.display = 'flex';
+            } else if (mode === 'confirm') {
+                title.textContent = 'Confirm PIN';
+                subtitle.textContent = 'Enter your PIN again to confirm';
+                skipBtn.style.display = 'none';
+            } else {
+                title.textContent = 'Enter PIN';
+                subtitle.textContent = 'Enter your PIN to unlock';
+                skipBtn.style.display = 'none';
+                
+                // Show correct number of dots for existing PIN
+                const existingPin = localStorage.getItem(`userPin_${currentUser.username}`);
+                if (existingPin && existingPin.length === 6) {
+                    pinDot5.style.display = 'block';
+                    pinDot6.style.display = 'block';
+                    pinLength = 6;
+                }
+            }
+            
+            updatePinDots();
+        }
+
+        function handlePinInput(digit) {
+            if (pinInput.length < pinLength) {
+                pinInput += digit;
+                
+                // Auto-switch to 6 digits if user enters 5th digit during setup
+                if (pinMode === 'setup' && pinInput.length === 5) {
+                    pinLength = 6;
+                    document.getElementById('pinDot5').style.display = 'block';
+                    document.getElementById('pinDot6').style.display = 'block';
+                }
+                
+                updatePinDots();
+                
+                if (pinInput.length === pinLength) {
+                    // PIN is complete
+                    setTimeout(() => processPinComplete(), 200);
+                }
+            }
+        }
+
+        function handlePinClear() {
+            pinInput = '';
+            document.querySelectorAll('.pin-dot').forEach(dot => {
+                dot.classList.remove('filled', 'error');
+            });
+            document.getElementById('pinError').textContent = '';
+        }
+
+        function handlePinSkip() {
+            if (pinMode === 'setup') {
+                // User chose to skip PIN setup
+                closePinLockScreen();
+                document.getElementById('authSection').classList.remove('active');
+                document.getElementById('appContent').classList.add('active');
+            }
+        }
+
+        function updatePinDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                if (index < pinInput.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        function processPinComplete() {
+            const errorEl = document.getElementById('pinError');
+            
+            if (pinMode === 'setup') {
+                // First entry - store temporarily and ask for confirmation
+                tempPin = pinInput;
+                pinInput = '';
+                document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.remove('filled'));
+                showPinLockScreen('confirm');
+                // Keep the same PIN length
+                pinLength = tempPin.length;
+                if (pinLength === 6) {
+                    document.getElementById('pinDot5').style.display = 'block';
+                    document.getElementById('pinDot6').style.display = 'block';
+                }
+                
+            } else if (pinMode === 'confirm') {
+                // Confirm the PIN
+                if (pinInput === tempPin) {
+                    // PINs match - save it
+                    localStorage.setItem(`userPin_${currentUser.username}`, pinInput);
+                    closePinLockScreen();
+                    document.getElementById('authSection').classList.remove('active');
+                    document.getElementById('appContent').classList.add('active');
+                    showNotification('PIN set successfully!');
+                } else {
+                    // PINs don't match
+                    errorEl.textContent = 'PINs do not match. Please try again.';
+                    document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.add('error'));
+                    setTimeout(() => {
+                        pinInput = '';
+                        document.querySelectorAll('.pin-dot').forEach(dot => {
+                            dot.classList.remove('filled', 'error');
+                        });
+                        errorEl.textContent = '';
+                        showPinLockScreen('setup');
+                    }, 1500);
+                }
+                
+            } else if (pinMode === 'enter') {
+                // Verify PIN
+                const storedPin = localStorage.getItem(`userPin_${currentUser.username}`);
+                if (pinInput === storedPin) {
+                    // PIN is correct
+                    closePinLockScreen();
+                    document.getElementById('authSection').classList.remove('active');
+                    document.getElementById('appContent').classList.add('active');
+                } else {
+                    // PIN is incorrect
+                    errorEl.textContent = 'Incorrect PIN. Please try again.';
+                    document.querySelectorAll('.pin-dot').forEach(dot => dot.classList.add('error'));
+                    setTimeout(() => {
+                        pinInput = '';
+                        document.querySelectorAll('.pin-dot').forEach(dot => {
+                            dot.classList.remove('filled', 'error');
+                        });
+                        errorEl.textContent = '';
+                    }, 1500);
+                }
+            }
+        }
+
+        function closePinLockScreen() {
+            document.getElementById('pinLockScreen').classList.remove('active');
+            pinInput = '';
+            tempPin = '';
+        }
+
+        // PIN Management in Settings
+        window.changePin = function() {
+            if (!currentUser) return;
+            
+            // Clear existing PIN
+            localStorage.removeItem(`userPin_${currentUser.username}`);
+            localStorage.removeItem(`pinSetupAsked_${currentUser.username}`);
+            
+            // Show setup screen
+            showPinLockScreen('setup');
+            closeModal('settingsModal');
+        };
+
+        window.removePin = function() {
+            if (!currentUser) return;
+            
+            if (confirm('Are you sure you want to remove your PIN? This will make your app less secure.')) {
+                localStorage.removeItem(`userPin_${currentUser.username}`);
+                showNotification('PIN removed successfully');
+                closeModal('settingsModal');
+            }
+        };
+
+        // Paper Mission Scanner
+        let cameraStream = null;
+        let capturedImage = null;
+
+        window.openScanner = function() {
+            const cameraPreview = document.getElementById('cameraPreview');
+            const captureBtn = document.getElementById('captureBtn');
+            const scanStatus = document.getElementById('scanStatus');
+            const retakeBtn = document.getElementById('retakeBtn');
+            
+            cameraPreview.classList.add('active');
+            captureBtn.style.display = 'block';
+            scanStatus.style.display = 'none';
+            retakeBtn.classList.remove('show');
+            
+            startCamera();
+        };
+
+        async function startCamera() {
+            try {
+                const video = document.getElementById('cameraVideo');
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                video.srcObject = cameraStream;
+            } catch (error) {
+                console.error('Camera access error:', error);
+                showScanStatus('error', 'Camera access denied. Please allow camera access to scan missions.');
+            }
+        }
+
+        window.capturePhoto = function() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.createElement('canvas');
+            const captureBtn = document.getElementById('captureBtn');
+            const scanStatus = document.getElementById('scanStatus');
+            const retakeBtn = document.getElementById('retakeBtn');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            capturedImage = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Stop camera
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            // Hide camera, show processing
+            document.getElementById('cameraPreview').classList.remove('active');
+            captureBtn.style.display = 'none';
+            retakeBtn.classList.add('show');
+            
+            // Start AI processing
+            processPaperMission(capturedImage);
+        };
+
+        window.retakePhoto = function() {
+            capturedImage = null;
+            document.getElementById('retakeBtn').classList.remove('show');
+            document.getElementById('scanStatus').style.display = 'none';
+            openScanner();
+        };
+
+        function showScanStatus(type, message) {
+            const statusEl = document.getElementById('scanStatus');
+            statusEl.textContent = message;
+            statusEl.className = 'scan-status ' + type;
+            statusEl.style.display = 'block';
+        }
+
+        async function processPaperMission(imageData) {
+            showScanStatus('processing', '🔍 Analyzing your paper missions...');
+            
+            try {
+                // Use AI to analyze the image
+                const analysisResult = await analyzePaperMissionWithAI(imageData);
+                
+                if (analysisResult.success) {
+                    showScanStatus('success', `✅ Found ${analysisResult.missions.length} missions!`);
+                    
+                    // Add the missions to today's missions
+                    addPaperMissionsToToday(analysisResult.missions);
+                    
+                    // Clear after a delay
+                    setTimeout(() => {
+                        document.getElementById('scanStatus').style.display = 'none';
+                        document.getElementById('retakeBtn').classList.remove('show');
+                    }, 3000);
+                    
+                } else {
+                    showScanStatus('error', analysisResult.message || 'Could not read missions clearly');
+                }
+                
+            } catch (error) {
+                console.error('Paper mission analysis error:', error);
+                showScanStatus('error', 'Error analyzing image. Please try again.');
+            }
+        }
+
+        async function analyzePaperMissionWithAI(imageData) {
+            // This function will use AI to analyze the paper mission
+            // For now, it's a placeholder - you'll need to integrate with an AI service
+            
+            // Check if online
+            if (!isOnline) {
+                return {
+                    success: false,
+                    message: 'You need to be online to scan paper missions'
+                };
+            }
+            
+            try {
+                // Create a prompt for the AI to analyze the paper
+                const prompt = `Analyze this image of a paper with missions written in boxed sections. 
+                The format should be:
+                - Boxed sections with subject names (like MATH, ENGLISH, SCIENCE, etc.)
+                - Each box contains missions/tasks for that subject
+                - Missions might be written as bullet points or lines
+                
+                Please extract all missions and return them in this exact JSON format:
+                {
+                    "success": true,
+                    "missions": [
+                        {
+                            "subject": "MATH",
+                            "tasks": ["Do homework", "Study chapter 3", "Solve problems"]
+                        },
+                        {
+                            "subject": "ENGLISH", 
+                            "tasks": ["Read pages 20-30", "Write essay"]
+                        }
+                    ]
+                }
+                
+                If the text is not clearly visible or handwriting is too unclear, return:
+                {
+                    "success": false,
+                    "message": "Text is not clearly visible. Please take another photo with better lighting and focus."
+                }
+                
+                Focus very hard on reading even messy handwriting. Look for subject headers and bullet points.`;
+                
+                // Call the AI API using the existing Groq AI integration
+                const messages = [
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: prompt
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: imageData
+                                }
+                            }
+                        ]
+                    }
+                ];
+                
+                // Try using a vision-capable model
+                const visionModels = ['llava-v1.5-7b-4096-preview', 'llava-v1.5-13b-4096-preview'];
+                let aiResponse = null;
+                
+                for (const model of visionModels) {
+                    try {
+                        const response = await fetch(`${GROQ_API_BASE}/chat/completions`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                model: model,
+                                messages: messages,
+                                temperature: 0.1,
+                                max_tokens: 1000
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.choices && data.choices[0]) {
+                            aiResponse = data.choices[0].message.content;
+                            break;
+                        }
+                    } catch (modelError) {
+                        console.log(`Model ${model} failed, trying next...`);
+                        continue;
+                    }
+                }
+                
+                if (!aiResponse) {
+                    return {
+                        success: false,
+                        message: 'AI vision models not available. Please try again later.'
+                    };
+                }
+                
+                // Try to parse the JSON response
+                try {
+                    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const result = JSON.parse(jsonMatch[0]);
+                        return result;
+                    } else {
+                        return {
+                            success: false,
+                            message: 'Could not understand the AI response. Please try again.'
+                        };
+                    }
+                } catch (parseError) {
+                    return {
+                        success: false,
+                        message: 'AI response format error. Please try again.'
+                    };
+                }
+                
+            } catch (error) {
+                console.error('AI analysis error:', error);
+                return {
+                    success: false,
+                    message: 'Failed to analyze image. Please check your connection and try again.'
+                };
+            }
+        }
+
+        function addPaperMissionsToToday(missionsData) {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Missions are only available for Zezo', true);
+                return;
+            }
+            
+            const today = getTodayDateStr();
+            const missionsRef = ref(database, `users/${currentUser.username}/missions`);
+            
+            missionsData.forEach(subjectData => {
+                subjectData.tasks.forEach(task => {
+                    // Create a new mission for today only
+                    const newMission = {
+                        title: `${subjectData.subject}: ${task}`,
+                        time: null,
+                        days: [], // Empty days array means it's not recurring
+                        points: MISSION_POINTS_PER_TASK,
+                        order: missions.length,
+                        completedDates: [],
+                        createdAt: new Date().toISOString(),
+                        isPaperMission: true, // Mark as paper mission
+                        paperMissionDate: today // Only for this specific date
+                    };
+
+                    const newRef = push(missionsRef);
+                    set(newRef, newMission).then(() => {
+                        missions.push({ ...newMission, id: newRef.key });
+                    }).catch(err => {
+                        console.error('Failed to add paper mission:', err);
+                    });
+                });
+            });
+
+            // Refresh the missions UI after a short delay to ensure Firebase updates
+            setTimeout(() => {
+                renderMissions();
+                renderMissionPoints();
+                showNotification(`Added paper missions for today!`);
+            }, 500);
+        }
+
         // Login function
         window.login = function() {
             const username = document.getElementById('loginUsername').value;
@@ -7081,9 +7927,26 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                         currentUser = { username: username };
                         localStorage.setItem('moneyManagerUsername', username);
                         document.getElementById('userEmail').textContent = username;
-                        document.getElementById('authSection').classList.remove('active');
-                        document.getElementById('appContent').classList.add('active');
                         closeModal('loginModal');
+                        
+                        // Check if user has PIN set
+                        const userPin = localStorage.getItem(`userPin_${username}`);
+                        if (userPin) {
+                            // Show PIN lock screen
+                            showPinLockScreen('enter');
+                        } else {
+                            // Check if user has been asked to set up PIN before
+                            const pinSetupAsked = localStorage.getItem(`pinSetupAsked_${username}`);
+                            if (!pinSetupAsked) {
+                                // First time - ask to set up PIN with skip option
+                                showPinLockScreen('setup');
+                                localStorage.setItem(`pinSetupAsked_${username}`, 'true');
+                            } else {
+                                // User previously skipped, go straight to app
+                                document.getElementById('authSection').classList.remove('active');
+                                document.getElementById('appContent').classList.add('active');
+                            }
+                        }
                         
                         // Clear previous user data
                         balances = {

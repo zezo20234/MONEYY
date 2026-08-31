@@ -758,57 +758,12 @@
             cursor: pointer;
         }
 
-        /* Mission Paper Scanner */
-        .mission-scan-btn {
+        /* Paper Mission (expiring mission) button */
+        .mission-paper-btn {
             width: 100%;
             margin-bottom: 16px;
             background: linear-gradient(135deg, rgba(0, 245, 212, 0.2) 0%, rgba(0, 217, 245, 0.2) 100%);
             border: 1px solid rgba(0, 245, 212, 0.35);
-        }
-
-        .scan-detected-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            transition: all 0.2s ease;
-        }
-
-        .scan-detected-item.unchecked {
-            opacity: 0.4;
-        }
-
-        .scan-detected-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: #00f5d4;
-            flex-shrink: 0;
-            cursor: pointer;
-        }
-
-        .scan-detected-item .scan-item-text {
-            flex: 1;
-            font-size: 15px;
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .scan-loading-spinner {
-            width: 44px;
-            height: 44px;
-            margin: 0 auto 18px;
-            border-radius: 50%;
-            border: 4px solid rgba(255, 255, 255, 0.15);
-            border-top-color: #00f5d4;
-            animation: scanSpin 0.9s linear infinite;
-        }
-
-        @keyframes scanSpin {
-            to { transform: rotate(360deg); }
         }
 
         .goals-grid {
@@ -3045,6 +3000,15 @@
             </div>
         </div>
 
+        <!-- Paper Mission - separate section, shown above regular Missions, no points awarded -->
+        <div class="section" id="paperMissionSection" style="display: none;">
+            <div class="section-title">📝 Paper Mission</div>
+            <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">A one-off mission with a due date. Doesn't earn points — just a reminder/checklist item.</p>
+            <button class="action-btn mission-paper-btn" style="margin-bottom: 0;" onclick="openPaperMissionModal()">
+                📝 Add Paper Mission
+            </button>
+        </div>
+
         <div class="section" id="missionsSection" style="display: none;">
             <div class="section-title">🎯 Missions</div>
 
@@ -3076,10 +3040,6 @@
 
             <button class="action-btn primary" style="width: 100%; margin-bottom: 12px;" onclick="openAddMissionModal()">
                 ➕ Add Mission
-            </button>
-
-            <button class="action-btn mission-scan-btn" onclick="openScanMissionsModal()">
-                📷 Scan Paper for Today's Missions
             </button>
 
             <!-- Upcoming Missions -->
@@ -3198,39 +3158,45 @@
         </div>
     </div>
 
-    <!-- Scan Paper for Missions Modal -->
-    <div class="modal" id="scanMissionsModal">
+    <!-- Paper Mission Modal (an expiring mission with a custom due date/time) -->
+    <div class="modal" id="paperMissionModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">📷 Scan Paper for Missions</div>
-                <button class="close-btn" onclick="closeScanMissionsModal()">&times;</button>
+                <div class="modal-title">📝 Paper Mission</div>
+                <button class="close-btn" onclick="closeModal('paperMissionModal')">&times;</button>
             </div>
-
-            <div id="scanStepUpload">
-                <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">Take a photo (or upload one) of your paper list of missions. The AI will carefully read every line — even messy handwriting — and add them as <strong>today's</strong> missions only.</p>
-                <label for="scanFileInput" class="everyday-btn" style="display:block; text-align:center; cursor:pointer; padding: 14px;">📸 Take Photo / Choose Image</label>
-                <input type="file" id="scanFileInput" accept="image/*" capture="environment" style="display:none;" onchange="handleScanFileSelect(event)">
-                <div id="scanImagePreviewWrap" style="display:none; margin-bottom: 16px;">
-                    <img id="scanImagePreview" style="width:100%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); max-height: 320px; object-fit: contain; background: rgba(255,255,255,0.03);" alt="Selected paper">
+            <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">Add a mission that expires on a date you pick. It shows as an <strong>upcoming</strong> mission until that day arrives, then moves into <strong>Today's Missions</strong> so you know it's due. After it expires it disappears on its own.</p>
+            <div class="form-group">
+                <label class="form-label">Mission Title</label>
+                <input type="text" class="form-input" id="paperMissionTitle" placeholder="e.g. Finish book report">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Expires On</label>
+                <div class="mode-options" style="margin-bottom: 10px;">
+                    <button type="button" class="mode-option-btn selected" id="paperMissionTodayBtn" onclick="setPaperMissionDateToday()">
+                        Today
+                    </button>
+                    <button type="button" class="mode-option-btn" id="paperMissionCustomBtn" onclick="document.getElementById('paperMissionDate').focus()">
+                        Pick a date
+                    </button>
                 </div>
-                <button type="button" class="modal-btn confirm" id="scanRunBtn" style="width:100%; opacity:0.5; pointer-events:none;" onclick="runMissionScan()">🔍 Scan for Missions</button>
+                <input type="date" class="form-input" id="paperMissionDate" oninput="updatePaperMissionQuickButtons()">
             </div>
-
-            <div id="scanStepLoading" style="display:none; text-align:center; padding: 30px 0;">
-                <div class="scan-loading-spinner"></div>
-                <div style="font-weight:700; margin-bottom: 6px;" id="scanLoadingTitle">Reading your handwriting...</div>
-                <div style="color: rgba(255,255,255,0.5); font-size: 13px;" id="scanLoadingSub">The AI is working hard on every line — this can take a moment.</div>
+            <div class="form-group">
+                <label class="form-label">Expires At (optional time)</label>
+                <div class="time-toggle-row">
+                    <input type="checkbox" id="paperMissionNoTimeCheck" checked onchange="togglePaperMissionTimeInput()">
+                    <label for="paperMissionNoTimeCheck" style="cursor:pointer;">No specific time (lasts all day)</label>
+                </div>
+                <input type="time" class="form-input" id="paperMissionTime" disabled>
             </div>
-
-            <div id="scanStepReview" style="display:none;">
-                <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 12px;">Here's what the AI found. Uncheck anything that's wrong, then add the rest as today's missions.</p>
-                <div id="scanDetectedList" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 16px; max-height: 320px; overflow-y:auto;"></div>
-                <button type="button" class="everyday-btn" style="width:100%;" onclick="rescanMissions()">↩️ Try a different photo</button>
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label class="form-label">Reward</label>
+                <div style="font-size: 14px; color: rgba(255,255,255,0.8);">🏅 10 points per completion</div>
             </div>
-
             <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="closeScanMissionsModal()">Cancel</button>
-                <button class="modal-btn confirm" id="scanAddBtn" style="display:none;" onclick="addScannedMissions()">Add Missions</button>
+                <button class="modal-btn cancel" onclick="closeModal('paperMissionModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="savePaperMission()">Add Mission</button>
             </div>
         </div>
     </div>
@@ -3632,7 +3598,7 @@
                     <button type="button" class="modal-btn confirm" style="flex:1; min-width:120px; padding:14px 16px; font-size:15px;" onclick="openApiKeyModal()">Manage API Key</button>
                     <button type="button" class="modal-btn cancel" id="apiKeyRemoveBtn" style="flex:1; min-width:120px; padding:14px 16px; font-size:15px; display:none;" onclick="removeGroqApiKey()">Remove Key</button>
                 </div>
-                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Powers the AI chat assistant and the mission paper scanner. Saved only on this device, never inside this file.</small>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Powers the AI chat assistant. Saved only on this device, never inside this file.</small>
             </div>
 
             <!-- App Lock (PIN) section -->
@@ -3688,7 +3654,7 @@
                 <div class="modal-title">🔑 AI API Key</div>
                 <button class="close-btn" onclick="closeModal('apiKeyModal')">&times;</button>
             </div>
-            <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">Your key is saved only on this device's local storage — never written into this app's file — and powers the AI chat assistant and the mission paper scanner.</p>
+            <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">Your key is saved only on this device's local storage — never written into this app's file — and powers the AI chat assistant.</p>
             <div class="form-group">
                 <label class="form-label">Groq API Key</label>
                 <input type="password" class="form-input" id="groqApiKeyInput" placeholder="gsk_...">
@@ -6409,6 +6375,8 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById('aiSection').style.display = tab === 'ai' ? 'block' : 'none';
             const missionsSectionEl = document.getElementById('missionsSection');
             if (missionsSectionEl) missionsSectionEl.style.display = tab === 'missions' ? 'block' : 'none';
+            const paperMissionSectionEl = document.getElementById('paperMissionSection');
+            if (paperMissionSectionEl) paperMissionSectionEl.style.display = tab === 'missions' ? 'block' : 'none';
 
             if (tab === 'transactions') {
                 updateTransactionsList();
@@ -6447,14 +6415,33 @@ Use the conversation history provided to you to remember what's already been sai
         }
 
         function isMissionScheduledToday(mission) {
-            // One-off missions (e.g. from the paper scanner) are scheduled for exactly one date
+            // One-off missions are scheduled for exactly one date
             if (mission.oneOff) {
                 return mission.date === getTodayDateStr();
+            }
+            // Paper missions (expiring missions) count as "today" once their expiry date arrives
+            if (mission.expiring) {
+                return mission.expiryDate === getTodayDateStr();
             }
             const todayIndex = new Date().getDay(); // 0 = Sunday ... 6 = Saturday
             // No days chosen (optional) means the mission is available every day
             if (!Array.isArray(mission.days) || mission.days.length === 0) return true;
             return mission.days.includes(todayIndex);
+        }
+
+        // A paper mission (expiring mission) is done for good once its expiry date/time has passed
+        function isMissionExpired(mission) {
+            if (!mission.expiring || !mission.expiryDate) return false;
+            const todayStr = getTodayDateStr();
+            if (mission.expiryDate < todayStr) return true;
+            if (mission.expiryDate === todayStr && mission.expiryTime) {
+                const now = new Date();
+                const [h, m] = mission.expiryTime.split(':').map(Number);
+                const expiry = new Date();
+                expiry.setHours(h, m, 0, 0);
+                return now > expiry;
+            }
+            return false;
         }
 
         function isMissionDoneToday(mission) {
@@ -6464,6 +6451,13 @@ Use the conversation history provided to you to remember what's already been sai
         const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         function formatMissionSchedule(mission) {
+            if (mission.expiring) {
+                const isToday = mission.expiryDate === getTodayDateStr();
+                const dateObj = new Date(mission.expiryDate + 'T00:00:00');
+                const dateText = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const timeText = mission.expiryTime ? ` • ⏰ ${formatTime12h(mission.expiryTime)}` : '';
+                return (isToday ? '📝 Finish today' : `📝 Expires ${dateText}`) + timeText;
+            }
             if (mission.oneOff) {
                 const timeText = mission.time ? ` • ⏰ ${formatTime12h(mission.time)}` : ' • Any time';
                 return '📷 Today only' + timeText;
@@ -6586,9 +6580,11 @@ Use the conversation history provided to you to remember what's already been sai
             const today = [];
             
             sorted.forEach((mission) => {
-                // Expired one-off missions (from a previous day's paper scan) just fade away —
-                // no need to clutter the upcoming list with tasks that will never be "today" again.
+                // Expired one-off missions just fade away — no need to clutter the
+                // upcoming list with tasks that will never be "today" again.
                 if (mission.oneOff && mission.date !== getTodayDateStr()) return;
+                // Paper missions (expiring missions) disappear once their expiry date/time has passed
+                if (mission.expiring && isMissionExpired(mission)) return;
                 const scheduledToday = isMissionScheduledToday(mission);
                 if (scheduledToday) {
                     today.push(mission);
@@ -6614,7 +6610,7 @@ Use the conversation history provided to you to remember what's already been sai
                                     <div class="mission-title">${escapeHtml(mission.title)}</div>
                                     <div class="mission-meta">${formatMissionSchedule(mission)}</div>
                                 </div>
-                                <div class="mission-points-badge">+${mission.points || MISSION_POINTS_PER_TASK} pts</div>
+                                <div class="mission-points-badge">${mission.isPaper ? "📝 No points" : `+${mission.points || MISSION_POINTS_PER_TASK} pts`}</div>
                             </div>
                             <div class="mission-actions">
                                 <button class="mission-btn edit" onclick="openAddMissionModal('${mission.id}')" title="Edit">✏️</button>
@@ -6644,7 +6640,7 @@ Use the conversation history provided to you to remember what's already been sai
                                     <div class="mission-title">${escapeHtml(mission.title)}</div>
                                     <div class="mission-meta">${formatMissionSchedule(mission)}</div>
                                 </div>
-                                <div class="mission-points-badge">+${mission.points || MISSION_POINTS_PER_TASK} pts</div>
+                                <div class="mission-points-badge">${mission.isPaper ? "📝 No points" : `+${mission.points || MISSION_POINTS_PER_TASK} pts`}</div>
                             </div>
                             <div class="mission-actions">
                                 <button class="mission-btn complete" ${canComplete ? '' : 'disabled'} onclick="completeMission('${mission.id}')">${btnLabel}</button>
@@ -7144,6 +7140,88 @@ Use the conversation history provided to you to remember what's already been sai
             });
         };
 
+        /* ---- Paper Missions (expiring missions with a custom due date/time) ---- */
+
+        window.openPaperMissionModal = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Missions are only available for Zezo', true);
+                return;
+            }
+            const todayStr = getTodayDateStr();
+            document.getElementById('paperMissionTitle').value = '';
+            const dateInput = document.getElementById('paperMissionDate');
+            dateInput.value = todayStr;
+            dateInput.min = todayStr;
+            document.getElementById('paperMissionNoTimeCheck').checked = true;
+            document.getElementById('paperMissionTime').value = '';
+            document.getElementById('paperMissionTime').disabled = true;
+            updatePaperMissionQuickButtons();
+            document.getElementById('paperMissionModal').classList.add('active');
+        };
+
+        window.setPaperMissionDateToday = function() {
+            document.getElementById('paperMissionDate').value = getTodayDateStr();
+            updatePaperMissionQuickButtons();
+        };
+
+        window.updatePaperMissionQuickButtons = function() {
+            const dateVal = document.getElementById('paperMissionDate').value;
+            const isToday = dateVal === getTodayDateStr();
+            const todayBtn = document.getElementById('paperMissionTodayBtn');
+            const customBtn = document.getElementById('paperMissionCustomBtn');
+            if (todayBtn) todayBtn.classList.toggle('selected', isToday);
+            if (customBtn) customBtn.classList.toggle('selected', !isToday);
+        };
+
+        window.togglePaperMissionTimeInput = function() {
+            const noTime = document.getElementById('paperMissionNoTimeCheck').checked;
+            const timeInput = document.getElementById('paperMissionTime');
+            timeInput.disabled = noTime;
+            if (noTime) timeInput.value = '';
+        };
+
+        window.savePaperMission = function() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Missions are only available for Zezo', true);
+                return;
+            }
+            const title = document.getElementById('paperMissionTitle').value.trim();
+            if (!title) {
+                showNotification('Please enter a mission title', true);
+                return;
+            }
+            const dateVal = document.getElementById('paperMissionDate').value;
+            if (!dateVal) {
+                showNotification('Please pick an expiry date', true);
+                return;
+            }
+            const noTime = document.getElementById('paperMissionNoTimeCheck').checked;
+            const timeVal = noTime ? null : (document.getElementById('paperMissionTime').value || null);
+
+            const newMission = {
+                title,
+                time: null,
+                days: [], // unused for paper missions, kept for shape consistency
+                expiring: true,
+                expiryDate: dateVal,
+                expiryTime: timeVal,
+                points: 0, // paper missions don't award points
+                isPaper: true,
+                order: missions.length, // new missions go to the bottom by default
+                completedDates: [],
+                createdAt: new Date().toISOString()
+            };
+
+            const missionsRef = ref(database, `users/${currentUser.username}/missions`);
+            const newRef = push(missionsRef);
+            set(newRef, newMission).then(() => {
+                closeModal('paperMissionModal');
+                showNotification('📝 Paper mission added!');
+            }).catch(err => {
+                showNotification('Failed to add paper mission: ' + err.message, true);
+            });
+        };
+
         window.completeMission = function(id) {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
             const mission = missions.find(m => m.id === id);
@@ -7156,14 +7234,18 @@ Use the conversation history provided to you to remember what's already been sai
             const missionRef = ref(database, `users/${currentUser.username}/missions/${id}/completedDates`);
             set(missionRef, updatedDates);
 
-            const newPoints = (missionPoints || 0) + (mission.points || MISSION_POINTS_PER_TASK);
-            const pointsRef = ref(database, `users/${currentUser.username}/points`);
-            set(pointsRef, newPoints);
+            // Paper missions never award points, regardless of what's stored in mission.points
+            const pointsAwarded = mission.isPaper ? 0 : (mission.points || MISSION_POINTS_PER_TASK);
+            if (pointsAwarded > 0) {
+                const newPoints = (missionPoints || 0) + pointsAwarded;
+                const pointsRef = ref(database, `users/${currentUser.username}/points`);
+                set(pointsRef, newPoints);
+            }
 
             playMoneySound();
             updateDailyScore();
             updateWeeklyScore();
-            showNotification(`+${mission.points || MISSION_POINTS_PER_TASK} points! Mission complete 🎉`);
+            showNotification(pointsAwarded > 0 ? `+${pointsAwarded} points! Mission complete 🎉` : `Mission complete 🎉`);
         };
 
         window.deleteMission = function(id) {

@@ -1829,16 +1829,6 @@
             margin-bottom: 10px;
         }
 
-        .notif-edit-btn {
-            flex: 0 0 44px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: white;
-            border-radius: 12px;
-            font-size: 15px;
-            cursor: pointer;
-        }
-
         .notif-settings-summary {
             font-size: 12px;
             color: rgba(255, 255, 255, 0.55);
@@ -1857,6 +1847,38 @@
             cursor: pointer;
             font-size: 14px;
             color: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Per-mission reminder options (count + time window), shown under the
+           🔔 checkbox in Add/Edit Mission when reminders are on for that mission */
+        .mission-notify-options {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .mission-notify-options .form-group {
+            margin-bottom: 10px;
+        }
+
+        .mission-notify-options .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .mission-notify-options-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mission-notify-options-row .form-group {
+            flex: 1;
+        }
+
+        .mission-notify-options .form-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .mission-card {
@@ -3229,10 +3251,9 @@
                         style="margin-bottom:0;">
                         🔔 Enable mission reminders
                     </button>
-                    <button class="notif-edit-btn" onclick="openNotifSettingsModal()"
-                        title="Edit reminder settings">✏️</button>
                 </div>
-                <div class="notif-settings-summary" id="notifSettingsSummary"></div>
+                <div class="notif-settings-summary">Reminders are set per mission — tap ✏️ on a mission, or
+                    ➕ Add Mission, to choose alerts on/off, how many per day, and the time window.</div>
 
                 <button class="action-btn primary" style="width: 100%; margin-bottom: 12px;"
                     onclick="openAddMissionModal()">
@@ -3358,44 +3379,29 @@
                 </div>
                 <div class="form-group" style="margin-bottom: 8px;">
                     <div class="mission-notify-row">
-                        <input type="checkbox" id="missionNotifyCheck" checked>
+                        <input type="checkbox" id="missionNotifyCheck" checked onchange="toggleMissionNotifyOptions()">
                         <label for="missionNotifyCheck">🔔 Send me reminders for this mission</label>
+                    </div>
+                    <div class="mission-notify-options" id="missionNotifyOptions">
+                        <div class="form-group">
+                            <label class="form-label">Reminders per day</label>
+                            <input type="number" class="form-input" id="missionNotifyCount" min="1" max="10" value="3">
+                        </div>
+                        <div class="mission-notify-options-row">
+                            <div class="form-group">
+                                <label class="form-label">From</label>
+                                <input type="time" class="form-input" id="missionNotifyFrom" value="14:00">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">To</label>
+                                <input type="time" class="form-input" id="missionNotifyTo" value="20:00">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-actions">
                     <button class="modal-btn cancel" onclick="closeModal('addMissionModal')">Cancel</button>
                     <button class="modal-btn confirm" onclick="saveMission()">Add Mission</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mission Reminder Settings Modal -->
-        <div class="modal" id="notifSettingsModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Reminder Settings</div>
-                    <button class="close-btn" onclick="closeModal('notifSettingsModal')">&times;</button>
-                </div>
-                <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 16px;">
-                    Choose which missions can send you reminders using the 🔔 checkbox on each mission (in Add/Edit
-                    Mission). These settings control how many reminders you get per day and the time window they're
-                    allowed in.
-                </p>
-                <div class="form-group">
-                    <label class="form-label">Reminders per day</label>
-                    <input type="number" class="form-input" id="notifCountInput" min="1" max="10" value="3">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">From</label>
-                    <input type="time" class="form-input" id="notifFromInput" value="14:00">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">To</label>
-                    <input type="time" class="form-input" id="notifToInput" value="20:00">
-                </div>
-                <div class="modal-actions">
-                    <button class="modal-btn cancel" onclick="closeModal('notifSettingsModal')">Cancel</button>
-                    <button class="modal-btn confirm" onclick="saveNotifSettings()">Save</button>
                 </div>
             </div>
         </div>
@@ -6125,15 +6131,6 @@ Use the conversation history provided to you to remember what's already been sai
                     renderMissionPoints();
                 });
 
-                const notifSettingsRef = ref(database, `users/${username}/notifSettings`);
-                onValue(notifSettingsRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        localStorage.setItem('mm_notif_settings', JSON.stringify(snapshot.val()));
-                        todayNotifSlots = null; // re-plan today's slots with synced settings
-                        renderNotifSettingsSummary();
-                    }
-                });
-
                 if ('Notification' in window && Notification.permission === 'granted') {
                     startMissionNotificationScheduler();
                 }
@@ -6779,8 +6776,10 @@ Use the conversation history provided to you to remember what's already been sai
                 daysText = 'Any day';
             }
             const timeText = mission.time ? ` • ⏰ ${formatTime12h(mission.time)}` : ' • Any time';
-            const muteText = mission.notify === false ? ' • 🔕' : '';
-            return daysText + timeText + muteText;
+            const notifyText = mission.notify === false
+                ? ' • 🔕'
+                : ` • 🔔 ${mission.notifyCount || DEFAULT_NOTIF_SETTINGS.count}x ${formatTimeLabel(mission.notifyFrom || DEFAULT_NOTIF_SETTINGS.from)}–${formatTimeLabel(mission.notifyTo || DEFAULT_NOTIF_SETTINGS.to)}`;
+            return daysText + timeText + notifyText;
         }
 
         function formatTime12h(hhmm) {
@@ -7357,6 +7356,9 @@ Use the conversation history provided to you to remember what's already been sai
                 document.getElementById('missionTime').disabled = !hasTime;
                 document.getElementById('missionNoTimeCheck').checked = !hasTime;
                 document.getElementById('missionNotifyCheck').checked = mission.notify !== false;
+                document.getElementById('missionNotifyCount').value = mission.notifyCount || DEFAULT_NOTIF_SETTINGS.count;
+                document.getElementById('missionNotifyFrom').value = mission.notifyFrom || DEFAULT_NOTIF_SETTINGS.from;
+                document.getElementById('missionNotifyTo').value = mission.notifyTo || DEFAULT_NOTIF_SETTINGS.to;
                 selectedMissionDays = Array.isArray(mission.days) ? mission.days.slice() : [];
             } else {
                 if (titleEl) titleEl.textContent = 'Add Mission';
@@ -7366,6 +7368,9 @@ Use the conversation history provided to you to remember what's already been sai
                 document.getElementById('missionTime').disabled = false;
                 document.getElementById('missionNoTimeCheck').checked = false;
                 document.getElementById('missionNotifyCheck').checked = true;
+                document.getElementById('missionNotifyCount').value = DEFAULT_NOTIF_SETTINGS.count;
+                document.getElementById('missionNotifyFrom').value = DEFAULT_NOTIF_SETTINGS.from;
+                document.getElementById('missionNotifyTo').value = DEFAULT_NOTIF_SETTINGS.to;
                 selectedMissionDays = [];
             }
 
@@ -7374,7 +7379,15 @@ Use the conversation history provided to you to remember what's already been sai
                 chip.classList.toggle('selected', selectedMissionDays.includes(day));
             });
 
+            toggleMissionNotifyOptions();
             document.getElementById('addMissionModal').classList.add('active');
+        };
+
+        // Shows/hides the per-mission count + time-window fields depending on
+        // whether reminders are on for this mission.
+        window.toggleMissionNotifyOptions = function () {
+            const on = document.getElementById('missionNotifyCheck').checked;
+            document.getElementById('missionNotifyOptions').style.display = on ? 'block' : 'none';
         };
 
         window.toggleMissionTimeInput = function () {
@@ -7415,6 +7428,19 @@ Use the conversation history provided to you to remember what's already been sai
             const timeVal = noTime ? null : (document.getElementById('missionTime').value || null);
             const notifyVal = document.getElementById('missionNotifyCheck').checked;
 
+            // Per-mission reminder settings (only meaningful while notifyVal is true,
+            // but we still validate/save them so they're ready if reminders get
+            // turned back on later without having to re-enter them).
+            let notifyCount = parseInt(document.getElementById('missionNotifyCount').value, 10);
+            const notifyFrom = document.getElementById('missionNotifyFrom').value || DEFAULT_NOTIF_SETTINGS.from;
+            const notifyTo = document.getElementById('missionNotifyTo').value || DEFAULT_NOTIF_SETTINGS.to;
+            if (!notifyCount || notifyCount < 1) notifyCount = 1;
+            if (notifyCount > 10) notifyCount = 10;
+            if (notifyVal && notifyFrom >= notifyTo) {
+                showNotification('"From" time must be before "To" time', true);
+                return;
+            }
+
             if (editingMissionId) {
                 // Update the existing mission in place — keep its history and order untouched
                 const missionRef = ref(database, `users/${currentUser.username}/missions/${editingMissionId}`);
@@ -7422,7 +7448,10 @@ Use the conversation history provided to you to remember what's already been sai
                     title,
                     time: timeVal,
                     days: selectedMissionDays.slice().sort(),
-                    notify: notifyVal
+                    notify: notifyVal,
+                    notifyCount,
+                    notifyFrom,
+                    notifyTo
                 }).then(() => {
                     closeModal('addMissionModal');
                     editingMissionId = null;
@@ -7438,6 +7467,9 @@ Use the conversation history provided to you to remember what's already been sai
                 time: timeVal,
                 days: selectedMissionDays.slice().sort(),
                 notify: notifyVal,
+                notifyCount,
+                notifyFrom,
+                notifyTo,
                 points: MISSION_POINTS_PER_TASK,
                 order: missions.length, // new missions go to the bottom by default
                 completedDates: [],
@@ -7960,32 +7992,9 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
         // the app is fully closed/swiped away, and never while the phone is
         // powered off. True "closed app" delivery needs a real server push.
 
+        // Fallback defaults used only for missions saved before per-mission
+        // reminder settings existed (or if a mission is missing a field).
         const DEFAULT_NOTIF_SETTINGS = { count: 3, from: '14:00', to: '20:00' };
-
-        function getNotifSettings() {
-            try {
-                const raw = localStorage.getItem('mm_notif_settings');
-                if (raw) return Object.assign({}, DEFAULT_NOTIF_SETTINGS, JSON.parse(raw));
-            } catch (e) { }
-            return Object.assign({}, DEFAULT_NOTIF_SETTINGS);
-        }
-
-        function setNotifSettings(settings) {
-            localStorage.setItem('mm_notif_settings', JSON.stringify(settings));
-            if (currentUser && database) {
-                try {
-                    const settingsRef = ref(database, `users/${currentUser.username}/notifSettings`);
-                    set(settingsRef, settings);
-                } catch (e) { }
-            }
-        }
-
-        function renderNotifSettingsSummary() {
-            const el = document.getElementById('notifSettingsSummary');
-            if (!el) return;
-            const s = getNotifSettings();
-            el.textContent = `${s.count}x/day, between ${formatTimeLabel(s.from)} – ${formatTimeLabel(s.to)}`;
-        }
 
         function formatTimeLabel(t) {
             if (!t) return '';
@@ -7995,35 +8004,8 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
             return `${h12}:${String(m).padStart(2, '0')} ${period}`;
         }
 
-        window.openNotifSettingsModal = function () {
-            const s = getNotifSettings();
-            document.getElementById('notifCountInput').value = s.count;
-            document.getElementById('notifFromInput').value = s.from;
-            document.getElementById('notifToInput').value = s.to;
-            document.getElementById('notifSettingsModal').classList.add('active');
-        };
-
-        window.saveNotifSettings = function () {
-            let count = parseInt(document.getElementById('notifCountInput').value, 10);
-            const from = document.getElementById('notifFromInput').value || DEFAULT_NOTIF_SETTINGS.from;
-            const to = document.getElementById('notifToInput').value || DEFAULT_NOTIF_SETTINGS.to;
-            if (!count || count < 1) count = 1;
-            if (count > 10) count = 10;
-            if (from >= to) {
-                showNotification('"From" time must be before "To" time', true);
-                return;
-            }
-            setNotifSettings({ count, from, to });
-            renderNotifSettingsSummary();
-            closeModal('notifSettingsModal');
-            // Re-plan today's reminder slots immediately with the new settings
-            todayNotifSlots = null;
-            showNotification('Reminder settings saved!');
-        };
-
         function updateNotifPermissionButton() {
             const btn = document.getElementById('notifPermissionBtn');
-            renderNotifSettingsSummary();
             if (!btn) return;
             if (!('Notification' in window)) {
                 btn.textContent = '🔕 Notifications not supported on this device';
@@ -8076,24 +8058,20 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
             localStorage.setItem(missionNotifiedKey(tag), '1');
         }
 
-        // Evenly spread `count` reminder slots (in minutes-since-midnight)
-        // across [from, to], recomputed once per day.
-        let todayNotifSlots = null;
-        let todayNotifSlotsDate = null;
-
-        function getTodaySlots() {
-            const todayStr = getTodayDateStr();
-            if (todayNotifSlots && todayNotifSlotsDate === todayStr) return todayNotifSlots;
-
-            const s = getNotifSettings();
-            const [fh, fm] = s.from.split(':').map(Number);
-            const [th, tm] = s.to.split(':').map(Number);
+        // Evenly spreads a mission's own `notifyCount` reminder slots (in
+        // minutes-since-midnight) across ITS OWN [notifyFrom, notifyTo] window —
+        // every mission plans its own schedule independently of the others.
+        function getMissionSlots(mission) {
+            const count = Math.max(1, Math.min(10, parseInt(mission.notifyCount, 10) || DEFAULT_NOTIF_SETTINGS.count));
+            const from = mission.notifyFrom || DEFAULT_NOTIF_SETTINGS.from;
+            const to = mission.notifyTo || DEFAULT_NOTIF_SETTINGS.to;
+            const [fh, fm] = from.split(':').map(Number);
+            const [th, tm] = to.split(':').map(Number);
             const fromMin = fh * 60 + fm;
             const toMin = th * 60 + tm;
-            const count = Math.max(1, s.count);
 
             const slots = [];
-            if (count === 1) {
+            if (count === 1 || toMin <= fromMin) {
                 slots.push(Math.round((fromMin + toMin) / 2));
             } else {
                 const step = (toMin - fromMin) / (count - 1);
@@ -8101,44 +8079,37 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
                     slots.push(Math.round(fromMin + step * i));
                 }
             }
-            todayNotifSlots = slots;
-            todayNotifSlotsDate = todayStr;
             return slots;
         }
 
-        // Fires once per reminder slot, listing whichever notify-enabled
-        // missions are still outstanding for today.
+        // Checks every notify-enabled mission against ITS OWN schedule and
+        // sends a separate notification per mission (never batched together) —
+        // each mission's alerts on/off, count-per-day, and time window are
+        // fully independent, set from the ✏️ Edit button on that mission.
         function checkMissionNotifications() {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') return;
             if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
             const now = new Date();
             const nowMinutes = now.getHours() * 60 + now.getMinutes();
-            const slots = getTodaySlots();
 
-            const slotIndex = slots.findIndex((slotMin, i) => nowMinutes >= slotMin && nowMinutes < slotMin + 5);
-            if (slotIndex === -1) return;
-
-            const tag = `slot${slotIndex}`;
-            if (alreadyNotified(tag)) return;
-
-            const outstanding = missions.filter(m =>
+            const candidates = missions.filter(m =>
                 m.notify !== false &&
                 isMissionScheduledToday(m) &&
                 !isMissionDoneToday(m)
             );
 
-            markNotified(tag); // mark regardless, so we don't re-check this slot again today
+            candidates.forEach(mission => {
+                const slots = getMissionSlots(mission);
+                const slotIndex = slots.findIndex(slotMin => nowMinutes >= slotMin && nowMinutes < slotMin + 5);
+                if (slotIndex === -1) return;
 
-            if (outstanding.length === 0) return;
+                const tag = `${mission.id}_slot${slotIndex}`;
+                if (alreadyNotified(tag)) return;
+                markNotified(tag); // mark regardless, so we don't re-check this slot again today
 
-            if (outstanding.length === 1) {
-                sendMissionNotification('🎯 Mission reminder', `Don't forget: "${outstanding[0].title}"`);
-            } else {
-                const titles = outstanding.slice(0, 3).map(m => m.title).join(', ');
-                const extra = outstanding.length > 3 ? ` +${outstanding.length - 3} more` : '';
-                sendMissionNotification('🎯 Mission reminder', `Still to do: ${titles}${extra}`);
-            }
+                sendMissionNotification('🎯 Mission reminder', `Don't forget: "${mission.title}"`);
+            });
         }
 
         function startMissionNotificationScheduler() {

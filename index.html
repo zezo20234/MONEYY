@@ -3,10 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-title" content="Zezo UI">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-touch-fullscreen" content="yes">
     <title id="appTitle">Zezo UI 1.0</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./money.jpeg">
@@ -1608,64 +1611,119 @@
 
         @media (max-width: 480px) {
             .app-container {
-                padding: 15px;
+                padding: 12px;
+            }
+
+            .header {
+                padding: 20px 16px;
+                margin-bottom: 16px;
+            }
+
+            .header-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 28px;
+                margin-bottom: 16px;
+            }
+
+            .header h1 {
+                font-size: 24px;
             }
 
             .total-balance {
-                font-size: 36px;
+                font-size: 32px;
+            }
+
+            .total-label {
+                font-size: 12px;
+            }
+
+            .balance-cards {
+                gap: 12px;
+            }
+
+            .balance-card {
+                padding: 16px;
+            }
+
+            .card-amount {
+                font-size: 24px;
             }
 
             .action-buttons {
                 grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .action-btn {
+                padding: 16px;
+                font-size: 15px;
+                min-height: 56px;
+            }
+
+            .section {
+                padding: 16px 12px;
+                padding-bottom: 100px;
+            }
+
+            .section-title {
+                font-size: 22px;
+                margin-bottom: 20px;
+            }
+
+            .chart-container {
+                height: 250px;
+                padding: 8px;
             }
 
             .bottom-nav-items {
-                padding: 12px 16px;
+                padding: 10px 12px;
+                gap: 8px;
             }
 
             .bottom-nav-item {
-                padding: 10px 16px;
-                min-width: 70px;
+                padding: 8px 12px;
+                min-width: 60px;
             }
 
             .bottom-nav-icon {
-                font-size: 20px;
+                font-size: 18px;
             }
 
             .bottom-nav-label {
-                font-size: 10px;
+                font-size: 9px;
             }
 
             .ai-chat-container {
-                padding: 14px;
+                padding: 12px;
                 border-radius: 16px;
-                max-height: 65vh;
+                max-height: 60vh;
             }
 
             .ai-chat-messages {
-                min-height: 200px;
-                max-height: 46vh;
-                padding-right: 6px;
+                min-height: 180px;
+                max-height: 42vh;
+                padding-right: 4px;
             }
 
             .ai-message-content {
-                max-width: 88%;
-                padding: 10px 12px;
+                max-width: 85%;
+                padding: 8px 10px;
                 font-size: 14px;
             }
 
             .ai-chat-input-container {
-                gap: 8px;
+                gap: 6px;
             }
 
             .ai-chat-input {
                 font-size: 16px;
-                padding: 10px 14px;
+                padding: 8px 12px;
             }
 
             .ai-chat-send-btn {
-                padding: 10px 16px;
-                font-size: 14px;
+                padding: 8px 12px;
+                font-size: 13px;
                 white-space: nowrap;
             }
 
@@ -1677,6 +1735,126 @@
             .ai-quick-btn {
                 font-size: 10px;
                 padding: 8px 4px;
+            }
+
+            .modal-content {
+                padding: 20px;
+                max-height: 85vh;
+            }
+
+            .modal-title {
+                font-size: 18px;
+            }
+
+            .form-input {
+                padding: 14px;
+                font-size: 16px;
+            }
+
+            .modal-btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+
+            .history-item {
+                padding: 14px 0;
+            }
+
+            .history-type {
+                font-size: 16px;
+            }
+
+            .history-amount {
+                font-size: 18px;
+            }
+
+            .filter-chips {
+                gap: 8px;
+            }
+
+            .filter-chip {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .category-pill {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .amount-grid-btn {
+                padding: 10px 4px;
+                font-size: 11px;
+                min-height: 38px;
+            }
+
+            .tabs {
+                gap: 8px;
+            }
+
+            .tab {
+                padding: 14px 24px;
+                font-size: 16px;
+                min-height: 44px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .app-container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 16px 12px;
+            }
+
+            .header-logo {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .total-balance {
+                font-size: 28px;
+            }
+
+            .balance-card {
+                padding: 14px;
+            }
+
+            .card-amount {
+                font-size: 22px;
+            }
+
+            .action-btn {
+                padding: 14px;
+                font-size: 14px;
+                min-height: 52px;
+            }
+
+            .section-title {
+                font-size: 20px;
+            }
+
+            .chart-container {
+                height: 220px;
+            }
+
+            .bottom-nav-item {
+                padding: 6px 10px;
+                min-width: 55px;
+            }
+
+            .bottom-nav-icon {
+                font-size: 16px;
+            }
+
+            .bottom-nav-label {
+                font-size: 8px;
             }
         }
 
@@ -2992,6 +3170,11 @@
                         <span class="bottom-nav-icon">🎯</span>
                         <span class="bottom-nav-label">Missions</span>
                     </div>
+                    <div class="bottom-nav-item" onclick="switchTab('users')" id="nav-users"
+                        style="display: none;">
+                        <span class="bottom-nav-icon">👥</span>
+                        <span class="bottom-nav-label">Users</span>
+                    </div>
                 </div>
             </div>
 
@@ -3031,6 +3214,18 @@
                         </div>
                         <div class="card-limit">Gaming & Mobile</div>
                     </div>
+                </div>
+
+                <!-- Budget Progress Card -->
+                <div class="balance-card" id="budgetProgressCard" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(46, 213, 115, 0.2)); border: 1px solid rgba(102, 126, 234, 0.3);">
+                    <div class="card-header">
+                        <div class="card-title">📊 Monthly Budget Progress</div>
+                        <div class="card-amount" id="budgetProgressAmount">0%</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 8px; height: 12px; margin: 12px 0; overflow: hidden;">
+                        <div id="budgetProgressBar" style="height: 100%; background: linear-gradient(90deg, #667eea, #2ed573); width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div class="card-limit" id="budgetProgressText">0 / 0 SAR spent this month</div>
                 </div>
 
                 <div class="action-buttons">
@@ -3172,6 +3367,15 @@
                 <div class="chart-container" id="balanceChartContainer" style="display: block;">
                     <canvas id="balanceTrendChart"></canvas>
                 </div>
+                <div class="chart-container" id="highestBalanceChartContainer" style="display: block;">
+                    <canvas id="highestBalanceChart"></canvas>
+                </div>
+                <div class="chart-container" id="dailySpendingChartContainer" style="display: block;">
+                    <canvas id="dailySpendingChart"></canvas>
+                </div>
+                <div class="chart-container" id="spendingPatternsChartContainer" style="display: block;">
+                    <canvas id="spendingPatternsChart"></canvas>
+                </div>
             </div>
 
             <div class="section" id="aiSection" style="display: none;">
@@ -3217,6 +3421,41 @@
                 <button class="action-btn mission-paper-export-btn" onclick="printPaperMissions()">
                     🖨️ Print / Export Checklist
                 </button>
+            </div>
+
+            <div class="section" id="usersSection" style="display: none;">
+                <div class="section-title">👥 Users</div>
+                <div id="usersList">
+                    <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">
+                        Loading users...
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Detail Modal -->
+            <div class="modal" id="userDetailModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">User Details</div>
+                        <button class="close-btn" onclick="closeModal('userDetailModal')">&times;</button>
+                    </div>
+                    <div id="userDetailContent">
+                        <!-- User details will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Report Modal -->
+            <div class="modal" id="monthlyReportModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">📊 Monthly Report</div>
+                        <button class="close-btn" onclick="closeModal('monthlyReportModal')">&times;</button>
+                    </div>
+                    <div id="monthlyReportContent">
+                        <!-- Monthly report will be populated here -->
+                    </div>
+                </div>
             </div>
 
             <div class="section" id="missionsSection" style="display: none;">
@@ -3891,6 +4130,40 @@
                 </div>
                 <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Require a 4-digit PIN every
                     time you open the app.</small>
+            </div>
+
+            <!-- Budget Planning section -->
+            <div class="form-group" id="budgetSettingsSection"
+                style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
+                <label class="form-label">📊 Monthly Budget Planning</label>
+                <div class="form-group">
+                    <label class="form-label">Monthly Budget Target (SAR)</label>
+                    <input type="number" class="form-input" id="monthlyBudgetTarget" placeholder="140">
+                    <small style="color: rgba(255,255,255,0.5);">Set your total monthly spending goal</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Budget Alert Threshold (%)</label>
+                    <input type="number" class="form-input" id="budgetAlertThreshold" placeholder="80" min="50" max="100">
+                    <small style="color: rgba(255,255,255,0.5);">Get notified when you've used this % of your budget</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Budget Category Breakdown</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
+                            <input type="number" class="form-input" id="budgetHangoutPercent" value="50" min="0" max="100">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
+                            <input type="number" class="form-input" id="budgetSavingsPercent" value="30" min="0" max="100">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
+                            <input type="number" class="form-input" id="budgetPlaystationPercent" value="20" min="0" max="100">
+                        </div>
+                    </div>
+                    <small style="color: rgba(255,255,255,0.5);">How to allocate your monthly budget across categories</small>
+                </div>
             </div>
 
             <!-- Updates section — always at the very bottom of Settings -->
@@ -5536,7 +5809,12 @@ Use the conversation history provided to you to remember what's already been sai
             hangoutBudgetPerDay: 15, // Target spending per hangout
             minimumSavings: 0, // Minimum savings requirement (0 for most users, 50 for Asser)
             allowanceSchedule: null, // Allowance schedule (for Asser)
-            rankFirstThreshold: 40 // Savings needed for 1st rank (non-Asser users choose this; 5th rank is fixed at 220)
+            rankFirstThreshold: 40, // Savings needed for 1st rank (non-Asser users choose this; 5th rank is fixed at 220)
+            monthlyBudgetTarget: 140, // Monthly budget target
+            budgetAlertThreshold: 80, // Alert when budget % reached
+            budgetHangoutPercent: 50, // Budget allocation for hangout
+            budgetSavingsPercent: 30, // Budget allocation for savings
+            budgetPlaystationPercent: 20 // Budget allocation for playstation
         };
         let balances = {
             hangout: 0,
@@ -5581,6 +5859,9 @@ Use the conversation history provided to you to remember what's already been sai
         let spendingChart = null;
         let allowanceChart = null;
         let balanceChart = null;
+        let highestBalanceChart = null;
+        let dailySpendingChart = null;
+        let spendingPatternsChart = null;
 
         // AI chat memory — kept in memory only (per user) for the current session.
         // It's NOT written to localStorage, so it resets automatically the moment
@@ -6147,6 +6428,9 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById('savingsBalance').textContent = `${balances.savings} SAR`;
             document.getElementById('playstationBalance').textContent = `${balances.playstation} SAR`;
 
+            // Update budget progress
+            updateBudgetProgress();
+
             // Check Hangout limit
             const hangoutLimit = document.getElementById('hangoutLimit');
             if (balances.hangout > userPreferences.hangoutLimit) {
@@ -6660,6 +6944,285 @@ Use the conversation history provided to you to remember what's already been sai
                     }
                 }
             });
+
+            // Highest Balance Chart
+            const highestBalanceCtx = document.getElementById('highestBalanceChart').getContext('2d');
+            if (highestBalanceChart) {
+                highestBalanceChart.destroy();
+            }
+
+            // Calculate highest balance ever
+            const highestBalance = Math.max(...balanceHistory.map(b => b.balance));
+            const highestBalanceDate = balanceHistory.find(b => b.balance === highestBalance)?.date || 'Unknown';
+
+            highestBalanceChart = new Chart(highestBalanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Highest Balance Ever'],
+                    datasets: [{
+                        label: 'Amount',
+                        data: [highestBalance],
+                        backgroundColor: 'rgba(0, 245, 212, 0.8)',
+                        borderColor: 'rgba(0, 245, 212, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barThickness: 60
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: `Highest Balance: ${highestBalance} SAR on ${highestBalanceDate}`,
+                            color: 'white',
+                            font: { size: 16, weight: 'bold' },
+                            padding: { bottom: 20 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function (context) {
+                                    return `Highest Balance: ${context.parsed.y} SAR`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Daily Spending Chart
+            const dailySpendingCtx = document.getElementById('dailySpendingChart').getContext('2d');
+            if (dailySpendingChart) {
+                dailySpendingChart.destroy();
+            }
+
+            // Calculate daily spending
+            const dailySpendingData = {};
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    const date = new Date(item.date).toLocaleDateString();
+                    const amount = Math.abs(item.amount);
+                    dailySpendingData[date] = (dailySpendingData[date] || 0) + amount;
+                }
+            });
+
+            // Find the day with highest spending
+            const sortedDailySpending = Object.entries(dailySpendingData)
+                .sort((a, b) => b[1] - a[1]);
+            const highestSpendingDay = sortedDailySpending.length > 0 ? sortedDailySpending[0] : ['No data', 0];
+            const top7Days = sortedDailySpending.slice(0, 7);
+
+            dailySpendingChart = new Chart(dailySpendingCtx, {
+                type: 'bar',
+                data: {
+                    labels: top7Days.map(d => d[0]),
+                    datasets: [{
+                        label: 'Spending (SAR)',
+                        data: top7Days.map(d => d[1]),
+                        backgroundColor: top7Days.map((d, i) => 
+                            i === 0 ? 'rgba(255, 107, 107, 0.8)' : 'rgba(102, 126, 234, 0.8)'
+                        ),
+                        borderColor: top7Days.map((d, i) => 
+                            i === 0 ? 'rgba(255, 107, 107, 1)' : 'rgba(102, 126, 234, 1)'
+                        ),
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: `Highest Spending Day: ${highestSpendingDay[0]} (${highestSpendingDay[1]} SAR)`,
+                            color: 'white',
+                            font: { size: 16, weight: 'bold' },
+                            padding: { bottom: 20 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function (context) {
+                                    return `Spending: ${context.parsed.y} SAR`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Spending Patterns Chart (Month-over-Month Comparison)
+            const spendingPatternsCtx = document.getElementById('spendingPatternsChart').getContext('2d');
+            if (spendingPatternsChart) {
+                spendingPatternsChart.destroy();
+            }
+
+            // Calculate spending by month for the last 6 months
+            const monthlySpendingData = {};
+            const now = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthKey = monthDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                monthlySpendingData[monthKey] = 0;
+            }
+
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    const itemDate = new Date(item.date);
+                    const monthDiff = (now.getFullYear() - itemDate.getFullYear()) * 12 + (now.getMonth() - itemDate.getMonth());
+                    if (monthDiff >= 0 && monthDiff < 6) {
+                        const monthKey = itemDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                        if (monthlySpendingData.hasOwnProperty(monthKey)) {
+                            monthlySpendingData[monthKey] += Math.abs(item.amount);
+                        }
+                    }
+                }
+            });
+
+            const monthLabels = Object.keys(monthlySpendingData);
+            const monthValues = Object.values(monthlySpendingData);
+
+            // Calculate month-over-month change
+            const momChanges = [];
+            for (let i = 1; i < monthValues.length; i++) {
+                const change = monthValues[i] - monthValues[i - 1];
+                const percentChange = monthValues[i - 1] > 0 ? ((change / monthValues[i - 1]) * 100).toFixed(1) : 0;
+                momChanges.push(percentChange);
+            }
+
+            spendingPatternsChart = new Chart(spendingPatternsCtx, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Monthly Spending (SAR)',
+                        data: monthValues,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Spending Patterns (Last 6 Months)',
+                            color: 'white',
+                            font: { size: 16, weight: 'bold' },
+                            padding: { bottom: 20 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.parsed.y;
+                                    const index = context.dataIndex;
+                                    let momText = '';
+                                    if (index > 0) {
+                                        const prevValue = monthValues[index - 1];
+                                        const change = value - prevValue;
+                                        const percentChange = prevValue > 0 ? ((change / prevValue) * 100).toFixed(1) : 0;
+                                        const trend = change >= 0 ? '📈' : '📉';
+                                        momText = `\n${trend} ${percentChange}% vs last month`;
+                                    }
+                                    return `Spending: ${value} SAR${momText}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.7)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         // Chart tab switching (removed - now showing all charts)
@@ -6682,6 +7245,12 @@ Use the conversation history provided to you to remember what's already been sai
             if (missionsSectionEl) missionsSectionEl.style.display = tab === 'missions' ? 'block' : 'none';
             const paperMissionSectionEl = document.getElementById('paperMissionSection');
             if (paperMissionSectionEl) paperMissionSectionEl.style.display = tab === 'missions' ? 'block' : 'none';
+            const usersSectionEl = document.getElementById('usersSection');
+            if (usersSectionEl) usersSectionEl.style.display = tab === 'users' ? 'block' : 'none';
+
+            if (tab === 'users') {
+                loadUsersList();
+            }
 
             if (tab === 'transactions') {
                 updateTransactionsList();
@@ -6700,11 +7269,17 @@ Use the conversation history provided to you to remember what's already been sai
         function applyZezoOnlyUI() {
             const isZezo = currentUser && currentUser.username.toLowerCase() === 'zezo';
             const navMissions = document.getElementById('nav-missions');
+            const navUsers = document.getElementById('nav-users');
             if (navMissions) navMissions.style.display = isZezo ? 'flex' : 'none';
+            if (navUsers) navUsers.style.display = isZezo ? 'flex' : 'none';
             if (!isZezo) {
-                // If the user is on the missions tab and switches accounts, bounce back home
+                // If the user is on the missions or users tab and switches accounts, bounce back home
                 const missionsSectionEl = document.getElementById('missionsSection');
+                const usersSectionEl = document.getElementById('usersSection');
                 if (missionsSectionEl && missionsSectionEl.style.display === 'block') {
+                    switchTab('home');
+                }
+                if (usersSectionEl && usersSectionEl.style.display === 'block') {
                     switchTab('home');
                 }
             }
@@ -8787,6 +9362,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('settingsHangoutLimit').value = userPreferences.hangoutLimit;
             document.getElementById('settingsEnablePlaystation').value = userPreferences.enablePlaystation.toString();
 
+            // Load budget settings
+            document.getElementById('monthlyBudgetTarget').value = userPreferences.monthlyBudgetTarget || 140;
+            document.getElementById('budgetAlertThreshold').value = userPreferences.budgetAlertThreshold || 80;
+            document.getElementById('budgetHangoutPercent').value = userPreferences.budgetHangoutPercent || 50;
+            document.getElementById('budgetSavingsPercent').value = userPreferences.budgetSavingsPercent || 30;
+            document.getElementById('budgetPlaystationPercent').value = userPreferences.budgetPlaystationPercent || 20;
+
             // Show appropriate settings based on fixed amounts vs percentages
             if (userPreferences.useFixedAmounts) {
                 document.getElementById('percentageSettings').style.display = 'none';
@@ -8861,7 +9443,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 hangoutBudgetPerDay: 15,
                 minimumSavings: userPreferences.minimumSavings || 0, // Preserve existing minimumSavings
                 allowanceSchedule: userPreferences.allowanceSchedule || null, // Preserve Asser's allowance schedule
-                rankFirstThreshold
+                rankFirstThreshold,
+                monthlyBudgetTarget: parseInt(document.getElementById('monthlyBudgetTarget').value) || 140,
+                budgetAlertThreshold: parseInt(document.getElementById('budgetAlertThreshold').value) || 80,
+                budgetHangoutPercent: parseInt(document.getElementById('budgetHangoutPercent').value) || 50,
+                budgetSavingsPercent: parseInt(document.getElementById('budgetSavingsPercent').value) || 30,
+                budgetPlaystationPercent: parseInt(document.getElementById('budgetPlaystationPercent').value) || 20
             };
 
             // Handle fixed amounts vs percentages
@@ -8903,6 +9490,42 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 showNotification('Failed to save settings: ' + error.message, true);
             });
         };
+
+        // Update budget progress
+        function updateBudgetProgress() {
+            const budgetTarget = userPreferences.monthlyBudgetTarget || 140;
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            // Calculate this month's spending
+            let monthlySpending = 0;
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    const itemDate = new Date(item.date);
+                    if (itemDate >= firstDayOfMonth) {
+                        monthlySpending += Math.abs(item.amount);
+                    }
+                }
+            });
+
+            const progressPercent = Math.min((monthlySpending / budgetTarget) * 100, 100);
+            const remaining = Math.max(budgetTarget - monthlySpending, 0);
+
+            document.getElementById('budgetProgressAmount').textContent = `${progressPercent.toFixed(0)}%`;
+            document.getElementById('budgetProgressBar').style.width = `${progressPercent}%`;
+            document.getElementById('budgetProgressText').textContent = `${monthlySpending} / ${budgetTarget} SAR spent this month (${remaining} SAR remaining)`;
+
+            // Change color based on threshold
+            const alertThreshold = userPreferences.budgetAlertThreshold || 80;
+            const progressBar = document.getElementById('budgetProgressBar');
+            if (progressPercent >= alertThreshold) {
+                progressBar.style.background = 'linear-gradient(90deg, #ff6b6b, #ee5a24)';
+            } else if (progressPercent >= alertThreshold * 0.8) {
+                progressBar.style.background = 'linear-gradient(90deg, #feca57, #ff9f43)';
+            } else {
+                progressBar.style.background = 'linear-gradient(90deg, #667eea, #2ed573)';
+            }
+        }
 
         // Update UI based on user preferences
         function updateUIForPreferences() {
@@ -9869,6 +10492,182 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 showNotification(message);
             }
         }
+
+        // Load users list (Zezo only)
+        function loadUsersList() {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                document.getElementById('usersList').innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">This feature is only available for Zezo</div>';
+                return;
+            }
+
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading users...</div>';
+
+            // Get all users from the auth database
+            const usersAuthRef = ref(database, 'users_auth');
+            get(usersAuthRef).then((snapshot) => {
+                if (!snapshot.exists()) {
+                    usersList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No users found</div>';
+                    return;
+                }
+
+                const users = Object.entries(snapshot.val()).map(([username, data]) => ({
+                    username,
+                    ...data
+                }));
+
+                usersList.innerHTML = users.map(user => `
+                    <div class="balance-card" style="cursor: pointer;" onclick="showUserDetails('${user.username}')">
+                        <div class="card-header">
+                            <div class="card-title">${user.username}</div>
+                            <div class="card-amount" style="font-size: 18px;">View Details →</div>
+                        </div>
+                        <div class="card-limit">Created: ${new Date(data.createdAt).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            }).catch(err => {
+                usersList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Failed to load users</div>';
+                console.error('Error loading users:', err);
+            });
+        }
+
+        // Show user details (Zezo only)
+        window.showUserDetails = function(username) {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('This feature is only available for Zezo', true);
+                return;
+            }
+
+            const modalContent = document.getElementById('userDetailContent');
+            modalContent.innerHTML = '<div style="text-align: center; padding: 20px;">Loading user data...</div>';
+            document.getElementById('userDetailModal').classList.add('active');
+
+            // Load user's balances
+            const balancesRef = ref(database, `users/${username}/balances`);
+            const historyRef = ref(database, `users/${username}/history`);
+            const goalsRef = ref(database, `users/${username}/goals`);
+
+            Promise.all([
+                get(balancesRef),
+                get(historyRef),
+                get(goalsRef)
+            ]).then(([balancesSnap, historySnap, goalsSnap]) => {
+                const userBalances = balancesSnap.exists() ? balancesSnap.val() : { hangout: 0, savings: 0, playstation: 0 };
+                const userHistory = historySnap.exists() ? Object.values(historySnap.val()).reverse() : [];
+                const userGoals = goalsSnap.exists() ? Object.values(goalsSnap.val()) : [];
+
+                const totalBalance = userBalances.hangout + userBalances.savings + userBalances.playstation;
+
+                // Calculate highest balance for this user
+                let highestBalance = 0;
+                let runningBalance = 0;
+                const reversedHistory = [...userHistory].reverse();
+                reversedHistory.forEach(item => {
+                    if (item.category) {
+                        runningBalance += item.amount;
+                    } else if (item.type === 'Allowance') {
+                        runningBalance += item.amount;
+                    }
+                    if (runningBalance > highestBalance) {
+                        highestBalance = runningBalance;
+                    }
+                });
+                highestBalance = Math.max(highestBalance, totalBalance);
+
+                // Calculate daily spending
+                const dailySpendingData = {};
+                userHistory.forEach(item => {
+                    if (item.type === 'Purchase') {
+                        const date = new Date(item.date).toLocaleDateString();
+                        const amount = Math.abs(item.amount);
+                        dailySpendingData[date] = (dailySpendingData[date] || 0) + amount;
+                    }
+                });
+
+                const sortedDailySpending = Object.entries(dailySpendingData)
+                    .sort((a, b) => b[1] - a[1]);
+                const highestSpendingDay = sortedDailySpending.length > 0 ? sortedDailySpending[0] : ['No data', 0];
+
+                modalContent.innerHTML = `
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px; color: rgba(255,255,255,0.95);">${username}</h3>
+                        
+                        <div class="balance-cards" style="margin-bottom: 20px;">
+                            <div class="balance-card">
+                                <div class="card-header">
+                                    <div class="card-title">Total Balance</div>
+                                    <div class="card-amount">${totalBalance} SAR</div>
+                                </div>
+                            </div>
+                            <div class="balance-card hangout">
+                                <div class="card-header">
+                                    <div class="card-title">Hangout</div>
+                                    <div class="card-amount">${userBalances.hangout} SAR</div>
+                                </div>
+                            </div>
+                            <div class="balance-card savings">
+                                <div class="card-header">
+                                    <div class="card-title">Savings</div>
+                                    <div class="card-amount">${userBalances.savings} SAR</div>
+                                </div>
+                            </div>
+                            <div class="balance-card playstation">
+                                <div class="card-header">
+                                    <div class="card-title">PlayStation</div>
+                                    <div class="card-amount">${userBalances.playstation} SAR</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(0, 245, 212, 0.1); border: 1px solid rgba(0, 245, 212, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">📈 Highest Balance Ever</div>
+                            <div style="font-size: 24px; font-weight: 700; color: #00f5d4;">${highestBalance} SAR</div>
+                        </div>
+
+                        <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                            <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">🔥 Highest Spending Day</div>
+                            <div style="font-size: 18px; font-weight: 700; color: #ff6b6b;">${highestSpendingDay[0]} (${highestSpendingDay[1]} SAR)</div>
+                        </div>
+
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: rgba(255,255,255,0.95);">Recent Transactions</h4>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            ${userHistory.slice(0, 10).map(item => `
+                                <div class="history-item">
+                                    <div class="history-info">
+                                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${item.type}</div>
+                                        <div class="history-date">${new Date(item.date).toLocaleDateString()}</div>
+                                        ${item.notes ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.notes}</div>` : ''}
+                                    </div>
+                                    <div class="history-amount ${item.amount >= 0 ? 'positive' : 'negative'}">
+                                        ${item.amount >= 0 ? '+' : ''}${item.amount} SAR
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <h4 style="font-size: 18px; font-weight: 700; margin: 20px 0 16px; color: rgba(255,255,255,0.95);">Goals</h4>
+                        ${userGoals.length > 0 ? userGoals.map(goal => {
+                            const progress = Math.min((userBalances.savings / goal.amount) * 100, 100);
+                            return `
+                                <div class="goal-card" style="margin-bottom: 12px;">
+                                    <div class="goal-header">
+                                        <div class="goal-name">${goal.name}</div>
+                                        <div class="goal-amount">${goal.amount} SAR</div>
+                                    </div>
+                                    <div class="goal-progress">
+                                        <div class="goal-progress-bar" style="width: ${progress}%"></div>
+                                    </div>
+                                    <div class="goal-status">${progress >= 100 ? '🎉 Goal reached!' : `${Math.max(goal.amount - userBalances.savings, 0)} SAR to go`}</div>
+                                </div>
+                            `;
+                        }).join('') : '<div style="color: rgba(255,255,255,0.5);">No goals</div>'}
+                    </div>
+                `;
+            }).catch(err => {
+                modalContent.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Failed to load user data</div>';
+                console.error('Error loading user details:', err);
+            });
+        };
 
         // Notification
         function showNotification(message, isError = false) {

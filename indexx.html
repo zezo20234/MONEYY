@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Tracker</title>
+<style>
+    /* --- SLEEK DARK THEME --- */
+    :root {
+        --bg-color: #101010;
+        --card-bg: #1e1e1e;
+        --text-main: #f0f0f0;
+        --text-muted: #888;
+        --accent: #4caf50; /* For the plant and plus buttons */
+    }
+    body {
+        background-color: var(--bg-color); color: var(--text-main);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
+    }
+    header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; font-size: 24px; }
+    
+    /* Buttons */
+    button { 
+        background: var(--card-bg); color: var(--text-main); border: 1px solid #333; 
+        padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s;
+    }
+    button:hover { background: #333; }
+    .btn-plus { font-size: 20px; background: var(--accent); color: #000; border: none; font-weight: bold;}
+    
+    /* Main Layout */
+    .container { width: 100%; max-width: 600px; margin-top: 20px; }
+    .card { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #2a2a2a; }
+    
+    /* Timer & Plant */
+    .timer-display { font-size: 48px; font-weight: bold; text-align: center; margin: 20px 0; }
+    .plant-visual { height: 100px; border: 2px dashed #333; border-radius: 8px; display: flex; justify-content: center; align-items: center; color: var(--accent); margin-bottom: 10px;}
+    
+    /* Tasks (Drag & Drop) */
+    .task-item { 
+        display: flex; align-items: center; background: #181818; padding: 12px; 
+        margin-bottom: 8px; border-radius: 6px; border: 1px solid #333; 
+    }
+    .drag-handle { cursor: grab; margin-right: 15px; color: var(--text-muted); font-size: 18px; user-select: none; }
+    .drag-handle:active { cursor: grabbing; }
+    .task-item.dragging { opacity: 0.5; border-color: var(--accent); }
+    
+    /* Fullscreen Focus Mode */
+    #fullscreen-view {
+        display: none; background: var(--bg-color); color: var(--text-main);
+        flex-direction: column; justify-content: center; align-items: center; height: 100vh; width: 100vw;
+    }
+    #fullscreen-view.active { display: flex; }
+    .fs-timer { font-size: 120px; font-weight: bold; }
+    .fs-task-current { font-size: 40px; margin-bottom: 10px; color: var(--accent); }
+    .fs-task-next { font-size: 20px; color: var(--text-muted); margin-bottom: 40px; }
+    .fs-controls { display: flex; gap: 15px; }
+
+</style>
+</head>
+<body>
+
+<header>
+    <h1>My Focus</h1>
+    <button class="btn-plus" onclick="createNewSession()">+</button>
+</header>
+
+<div class="container" id="main-view">
+    <!-- Timer & Plant Zone -->
+    <div class="card">
+        <div class="plant-visual">🌱 Plant grows only during active session...</div>
+        <div class="timer-display" id="main-timer">25:00</div>
+        <div style="display: flex; justify-content: space-between;">
+            <button onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            <span style="color: gold; font-weight: bold;">🪙 Coins: <span id="coin-count">0</span></span>
+        </div>
+    </div>
+
+    <!-- Tasks Tab -->
+    <div class="card">
+        <h3>Tasks (Drag ☰ to set priority)</h3>
+        <div id="task-list">
+            <!-- Tasks injected by JS -->
+        </div>
+        <button style="width: 100%; margin-top: 10px;" onclick="addTask()">+ Add Task</button>
+    </div>
+</div>
+
+<!-- Fullscreen Focus Container -->
+<div id="fullscreen-view">
+    <div class="fs-task-current" id="fs-current-task">Current: Read Chapter 1</div>
+    <div class="fs-task-next" id="fs-next-task">Next: Write Summary</div>
+    <div class="fs-timer" id="fs-timer">25:00</div>
+    <div class="fs-controls">
+        <button onclick="skipTask()">⏭ Skip (Do Later)</button>
+        <button onclick="exitFullscreen()">Exit Fullscreen</button>
+        <button onclick="testAudio()">Test 5s Alarm</button>
+    </div>
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    let tasks = ["Read Chapter 1", "Write Summary", "Math Homework"];
+    let coins = 0;
+    
+    // --- 1. FIREBASE REALTIME DB STRUCTURE (Placeholder) ---
+    /* 
+    import { initializeApp } from "firebase/app";
+    import { getDatabase, ref, push, set } from "firebase/database";
+    
+    const firebaseConfig = { ...your config... };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    */
+
+    function createNewSession() {
+        const sessionName = prompt("Name your new study session:");
+        if (!sessionName) return;
+        
+        // Firebase hook:
+        // const sessionRef = push(ref(db, 'sessions'));
+        // set(sessionRef, { name: sessionName, createdAt: Date.now(), coinsEarned: 0 });
+        
+        alert(`Session "${sessionName}" created and saved to Realtime Database!`);
+    }
+
+    // --- 2. TASK & DRAG/DROP LOGIC ---
+    const taskListEl = document.getElementById('task-list');
+
+    function renderTasks() {
+        taskListEl.innerHTML = '';
+        tasks.forEach((task, index) => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.draggable = true;
+            div.dataset.index = index;
+            div.innerHTML = `<span class="drag-handle">☰</span> <span class="task-name">${task}</span>`;
+            
+            // Drag Events
+            div.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', index);
+                div.classList.add('dragging');
+            });
+            div.addEventListener('dragend', () => div.classList.remove('dragging'));
+            div.addEventListener('dragover', (e) => e.preventDefault());
+            div.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const draggedIndex = e.dataTransfer.getData('text/plain');
+                const targetIndex = index;
+                
+                // Reorder array
+                const draggedItem = tasks.splice(draggedIndex, 1)[0];
+                tasks.splice(targetIndex, 0, draggedItem);
+                renderTasks();
+                updateFullscreenText();
+            });
+            
+            taskListEl.appendChild(div);
+        });
+    }
+
+    function addTask() {
+        const taskName = prompt("New task:");
+        if (taskName) { tasks.push(taskName); renderTasks(); updateFullscreenText(); }
+    }
+
+    // --- 3. FULLSCREEN & SKIP LOGIC ---
+    function toggleFullscreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) { elem.requestFullscreen(); }
+        
+        document.getElementById('main-view').style.display = 'none';
+        document.getElementById('fullscreen-view').classList.add('active');
+        updateFullscreenText();
+    }
+
+    function exitFullscreen() {
+        if (document.exitFullscreen) { document.exitFullscreen(); }
+        document.getElementById('main-view').style.display = 'block';
+        document.getElementById('fullscreen-view').classList.remove('active');
+    }
+
+    function updateFullscreenText() {
+        const currentEl = document.getElementById('fs-current-task');
+        const nextEl = document.getElementById('fs-next-task');
+        
+        if (tasks.length > 0) {
+            currentEl.innerText = `Current: ${tasks[0]}`;
+            nextEl.innerText = tasks.length > 1 ? `Next: ${tasks[1]}` : "Next: Done!";
+        } else {
+            currentEl.innerText = "No tasks left!";
+            nextEl.innerText = "";
+        }
+    }
+
+    function skipTask() {
+        if (tasks.length > 1) {
+            // Remove first task and push to end
+            const skipped = tasks.shift();
+            tasks.push(skipped);
+            renderTasks();
+            updateFullscreenText();
+        }
+    }
+
+    // --- 4. WEB AUDIO API (5 Second Synthetic Alarm) ---
+    function testAudio() {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create an oscillator (the sound source)
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain(); // For volume control
+        
+        osc.type = 'square'; // Sounds like an electronic alarm
+        osc.frequency.setValueAtTime(440, ctx.currentTime); // A4 note
+        
+        // Modulate volume to create a "beeping" effect
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        for(let i = 0; i < 5; i++) { // Beep for 5 seconds
+            gainNode.gain.setValueAtTime(0.5, ctx.currentTime + i);
+            gainNode.gain.setValueAtTime(0, ctx.currentTime + i + 0.5);
+        }
+
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 5); // Force stop after 5 seconds
+    }
+
+    // Initialize
+    renderTasks();
+</script>
+</body>
+</html>

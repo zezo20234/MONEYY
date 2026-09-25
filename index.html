@@ -3226,6 +3226,9 @@
                         <div id="budgetProgressBar" style="height: 100%; background: linear-gradient(90deg, #667eea, #2ed573); width: 0%; transition: width 0.3s ease;"></div>
                     </div>
                     <div class="card-limit" id="budgetProgressText">0 / 0 SAR spent this month</div>
+                    <button style="margin-top: 12px; width: 100%; padding: 10px; background: rgba(102, 126, 234, 0.3); border: 1px solid rgba(102, 126, 234, 0.5); border-radius: 8px; color: white; font-size: 14px; cursor: pointer;" onclick="showMonthlyReport()">
+                        📈 View Monthly Report
+                    </button>
                 </div>
 
                 <div class="action-buttons">
@@ -6202,6 +6205,9 @@ Use the conversation history provided to you to remember what's already been sai
 
             setupConnectivityMonitor();
 
+            // Check for monthly report notification
+            checkMonthlyReportNotification();
+
             // Check if user is logged in from localStorage
             const savedUsername = localStorage.getItem('moneyManagerUsername');
             if (savedUsername) {
@@ -6359,6 +6365,7 @@ Use the conversation history provided to you to remember what's already been sai
                     historyKeys = Object.keys(historyData).reverse();
                     updateTransactionsList();
                     updateCharts();
+                    checkMonthlyReportNotification();
                 } else {
                     history = [];
                     historyKeys = [];
@@ -10531,6 +10538,165 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             });
         }
 
+        // Generate and show monthly report
+        window.showMonthlyReport = function() {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+
+            const modalContent = document.getElementById('monthlyReportContent');
+            const now = new Date();
+            const currentMonth = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const lastDayOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+            modalContent.innerHTML = '<div style="text-align: center; padding: 20px;">Generating report...</div>';
+            document.getElementById('monthlyReportModal').classList.add('active');
+
+            // Calculate current month spending
+            let currentMonthSpending = 0;
+            let currentMonthByCategory = { hangout: 0, savings: 0, playstation: 0 };
+            let currentMonthTransactions = [];
+
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    const itemDate = new Date(item.date);
+                    if (itemDate >= firstDayOfMonth) {
+                        const amount = Math.abs(item.amount);
+                        currentMonthSpending += amount;
+                        if (currentMonthByCategory[item.category] !== undefined) {
+                            currentMonthByCategory[item.category] += amount;
+                        }
+                        currentMonthTransactions.push(item);
+                    }
+                }
+            });
+
+            // Calculate last month spending
+            let lastMonthSpending = 0;
+            let lastMonthByCategory = { hangout: 0, savings: 0, playstation: 0 };
+
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    const itemDate = new Date(item.date);
+                    if (itemDate >= firstDayOfLastMonth && itemDate <= lastDayOfLastMonth) {
+                        const amount = Math.abs(item.amount);
+                        lastMonthSpending += amount;
+                        if (lastMonthByCategory[item.category] !== undefined) {
+                            lastMonthByCategory[item.category] += amount;
+                        }
+                    }
+                }
+            });
+
+            // Calculate month-over-month change
+            const momChange = lastMonthSpending > 0 ? ((currentMonthSpending - lastMonthSpending) / lastMonthSpending) * 100 : 0;
+            const momText = momChange >= 0 ? `+${momChange.toFixed(1)}%` : `${momChange.toFixed(1)}%`;
+            const momIcon = momChange >= 0 ? '📈' : '📉';
+
+            // Budget comparison
+            const budgetTarget = userPreferences.monthlyBudgetTarget || 140;
+            const budgetProgress = (currentMonthSpending / budgetTarget) * 100;
+            const budgetRemaining = Math.max(budgetTarget - currentMonthSpending, 0);
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const daysPassed = now.getDate();
+            const daysRemaining = daysInMonth - daysPassed;
+            const dailyAverage = currentMonthSpending / daysPassed;
+            const projectedSpending = dailyAverage * daysInMonth;
+
+            // Find top spending categories
+            const sortedCategories = Object.entries(currentMonthByCategory)
+                .sort((a, b) => b[1] - a[1]);
+
+            // Find top purchases
+            const sortedPurchases = currentMonthTransactions
+                .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+                .slice(0, 5);
+
+            modalContent.innerHTML = `
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: rgba(255,255,255,0.95);">${currentMonth}</h3>
+                    <p style="color: rgba(255,255,255,0.6);">Your monthly spending summary</p>
+                </div>
+
+                <!-- Budget Overview -->
+                <div style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">📊 Budget Progress</div>
+                    <div style="font-size: 28px; font-weight: 700; color: #667eea;">${currentMonthSpending} SAR</div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 4px;">of ${budgetTarget} SAR (${budgetProgress.toFixed(0)}%)</div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; margin: 12px 0; overflow: hidden;">
+                        <div style="height: 100%; background: linear-gradient(90deg, #667eea, #2ed573); width: ${Math.min(budgetProgress, 100)}%;"></div>
+                    </div>
+                    <div style="font-size: 13px; color: ${budgetRemaining > 0 ? 'rgba(46, 213, 115, 0.9)' : 'rgba(255, 107, 107, 0.9)'};">
+                        ${budgetRemaining > 0 ? `✓ ${budgetRemaining} SAR remaining` : `⚠️ Over budget by ${Math.abs(budgetRemaining)} SAR`}
+                    </div>
+                </div>
+
+                <!-- Month-over-Month Comparison -->
+                <div style="background: rgba(46, 213, 115, 0.1); border: 1px solid rgba(46, 213, 115, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">📈 vs Last Month</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 24px; font-weight: 700; color: #2ed573;">${momIcon} ${momText}</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px;">Last month: ${lastMonthSpending} SAR</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.9);">${currentMonthSpending} SAR</div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.6);">This month</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spending by Category -->
+                <div style="margin-bottom: 20px;">
+                    <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.95);">Spending by Category</h4>
+                    ${sortedCategories.map(([category, amount]) => {
+                        const categoryNames = { hangout: 'Hangout', savings: 'Savings', playstation: 'PlayStation' };
+                        const categoryColors = { hangout: '#667eea', savings: '#2ed573', playstation: '#ff6b6b' };
+                        const percent = currentMonthSpending > 0 ? (amount / currentMonthSpending * 100).toFixed(0) : 0;
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background: ${categoryColors[category]};"></div>
+                                    <span style="color: rgba(255,255,255,0.9);">${categoryNames[category]}</span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: rgba(255,255,255,0.95);">${amount} SAR</div>
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.6);">${percent}%</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <!-- Top Purchases -->
+                <div style="margin-bottom: 20px;">
+                    <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.95);">Top 5 Purchases</h4>
+                    ${sortedPurchases.length > 0 ? sortedPurchases.map(item => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div>
+                                <div style="color: rgba(255,255,255,0.9);">${item.emoji ? item.emoji + ' ' : ''}${item.notes || 'Purchase'}</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.6);">${new Date(item.date).toLocaleDateString()}</div>
+                            </div>
+                            <div style="font-weight: 600; color: #ff6b6b;">-${Math.abs(item.amount)} SAR</div>
+                        </div>
+                    `).join('') : '<div style="color: rgba(255,255,255,0.5);">No purchases this month</div>'}
+                </div>
+
+                <!-- Projection -->
+                <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 12px; padding: 16px;">
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">🔮 Monthly Projection</div>
+                    <div style="font-size: 24px; font-weight: 700; color: #ff6b6b;">${projectedSpending.toFixed(0)} SAR</div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px;">
+                        Based on ${dailyAverage.toFixed(1)} SAR/day average • ${daysRemaining} days remaining
+                    </div>
+                </div>
+            `;
+        };
+
         // Show user details (Zezo only)
         window.showUserDetails = function(username) {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
@@ -10668,6 +10834,53 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 console.error('Error loading user details:', err);
             });
         };
+
+        // Check for monthly report notification
+        function checkMonthlyReportNotification() {
+            if (!currentUser) return;
+
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            const notificationKey = `monthlyReport_${currentYear}_${currentMonth}`;
+
+            // Check if we've already shown the report this month
+            if (localStorage.getItem(notificationKey) === 'shown') {
+                return;
+            }
+
+            // Calculate this month's spending
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+            let monthlySpending = 0;
+            history.forEach(item => {
+                if (item.type === 'Purchase') {
+                    const itemDate = new Date(item.date);
+                    if (itemDate >= firstDayOfMonth) {
+                        monthlySpending += Math.abs(item.amount);
+                    }
+                }
+            });
+
+            const budgetTarget = userPreferences.monthlyBudgetTarget || 140;
+            const budgetProgress = (monthlySpending / budgetTarget) * 100;
+            const alertThreshold = userPreferences.budgetAlertThreshold || 80;
+
+            // Show notification if budget threshold reached
+            if (budgetProgress >= alertThreshold) {
+                setTimeout(() => {
+                    showNotification(`📊 Budget Alert: You've used ${budgetProgress.toFixed(0)}% of your monthly budget`, true);
+                }, 2000);
+            }
+
+            // At end of month, show monthly report notification
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            if (now.getDate() === daysInMonth) {
+                setTimeout(() => {
+                    showNotification('📈 Your monthly report is ready! View it in the Home section.', false);
+                    localStorage.setItem(notificationKey, 'shown');
+                }, 3000);
+            }
+        }
 
         // Notification
         function showNotification(message, isError = false) {

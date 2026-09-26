@@ -7279,6 +7279,12 @@ Use the conversation history provided to you to remember what's already been sai
             const navUsers = document.getElementById('nav-users');
             if (navMissions) navMissions.style.display = isZezo ? 'flex' : 'none';
             if (navUsers) navUsers.style.display = isZezo ? 'flex' : 'none';
+
+            // Detach user listeners if Zezo logs out
+            if (!isZezo) {
+                detachSelectedUserListeners();
+            }
+
             if (!isZezo) {
                 // If the user is on the missions or users tab and switches accounts, bounce back home
                 const missionsSectionEl = document.getElementById('missionsSection');
@@ -9230,6 +9236,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
         // Logout function
         window.logout = function () {
+            // Detach any active user listeners
+            detachSelectedUserListeners();
+
             localStorage.removeItem('moneyManagerUsername');
             currentUser = null;
             userPreferences = {
@@ -9577,6 +9586,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById(modalId).classList.remove('active');
             if (modalId === 'addMissionModal') {
                 editingMissionId = null;
+            }
+            if (modalId === 'userDetailModal') {
+                detachSelectedUserListeners();
             }
         };
 
@@ -10510,17 +10522,16 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const usersList = document.getElementById('usersList');
             usersList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading users...</div>';
 
-            // Get all users from the auth database
-            const usersAuthRef = ref(database, 'users_auth');
-            get(usersAuthRef).then((snapshot) => {
+            // Get all users from the users database (not users_auth)
+            const usersRef = ref(database, 'users');
+            get(usersRef).then((snapshot) => {
                 if (!snapshot.exists()) {
                     usersList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No users found</div>';
                     return;
                 }
 
-                const users = Object.entries(snapshot.val()).map(([username, data]) => ({
-                    username,
-                    ...data
+                const users = Object.keys(snapshot.val()).map(username => ({
+                    username
                 }));
 
                 usersList.innerHTML = users.map(user => `
@@ -10529,7 +10540,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                             <div class="card-title">${user.username}</div>
                             <div class="card-amount" style="font-size: 18px;">View Details →</div>
                         </div>
-                        <div class="card-limit">Created: ${new Date(data.createdAt).toLocaleDateString()}</div>
+                        <div class="card-limit">Tap to view balances & transactions</div>
                     </div>
                 `).join('');
             }).catch(err => {
@@ -10697,6 +10708,21 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             `;
         };
 
+        // Real-time user data listeners for Zezo's user inspection
+        let selectedUserListeners = [];
+
+        // Detach all selected user listeners
+        function detachSelectedUserListeners() {
+            selectedUserListeners.forEach(unsubscribe => {
+                try {
+                    unsubscribe();
+                } catch (e) {
+                    console.error('Error detaching listener:', e);
+                }
+            });
+            selectedUserListeners = [];
+        }
+
         // Show user details (Zezo only)
         window.showUserDetails = function(username) {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
@@ -10704,24 +10730,23 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 return;
             }
 
+            // Detach previous listeners
+            detachSelectedUserListeners();
+
             const modalContent = document.getElementById('userDetailContent');
             modalContent.innerHTML = '<div style="text-align: center; padding: 20px;">Loading user data...</div>';
             document.getElementById('userDetailModal').classList.add('active');
 
-            // Load user's balances
+            // Initial load with get()
             const balancesRef = ref(database, `users/${username}/balances`);
             const historyRef = ref(database, `users/${username}/history`);
             const goalsRef = ref(database, `users/${username}/goals`);
 
-            Promise.all([
-                get(balancesRef),
-                get(historyRef),
-                get(goalsRef)
-            ]).then(([balancesSnap, historySnap, goalsSnap]) => {
-                const userBalances = balancesSnap.exists() ? balancesSnap.val() : { hangout: 0, savings: 0, playstation: 0 };
-                const userHistory = historySnap.exists() ? Object.values(historySnap.val()).reverse() : [];
-                const userGoals = goalsSnap.exists() ? Object.values(goalsSnap.val()) : [];
+            let userBalances = { hangout: 0, savings: 0, playstation: 0 };
+            let userHistory = [];
+            let userGoals = [];
 
+            const renderUserDetails = () => {
                 const totalBalance = userBalances.hangout + userBalances.savings + userBalances.playstation;
 
                 // Calculate highest balance for this user
@@ -10756,8 +10781,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
                 modalContent.innerHTML = `
                     <div style="margin-bottom: 24px;">
-                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px; color: rgba(255,255,255,0.95);">${username}</h3>
-                        
+                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px; color: rgba(255,255,255,0.95);">${username} <span style="font-size: 12px; color: rgba(0, 245, 212, 0.9);">● Live</span></h3>
+
                         <div class="balance-cards" style="margin-bottom: 20px;">
                             <div class="balance-card">
                                 <div class="card-header">
@@ -10797,7 +10822,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
                         <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: rgba(255,255,255,0.95);">Recent Transactions</h4>
                         <div style="max-height: 300px; overflow-y: auto;">
-                            ${userHistory.slice(0, 10).map(item => `
+                            ${userHistory.length > 0 ? userHistory.slice(0, 10).map(item => `
                                 <div class="history-item">
                                     <div class="history-info">
                                         <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${item.type}</div>
@@ -10808,7 +10833,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                                         ${item.amount >= 0 ? '+' : ''}${item.amount} SAR
                                     </div>
                                 </div>
-                            `).join('')}
+                            `).join('') : '<div style="color: rgba(255,255,255,0.5);">No transactions yet</div>'}
                         </div>
 
                         <h4 style="font-size: 18px; font-weight: 700; margin: 20px 0 16px; color: rgba(255,255,255,0.95);">Goals</h4>
@@ -10829,10 +10854,47 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                         }).join('') : '<div style="color: rgba(255,255,255,0.5);">No goals</div>'}
                     </div>
                 `;
+            };
+
+            // Initial load
+            Promise.all([
+                get(balancesRef),
+                get(historyRef),
+                get(goalsRef)
+            ]).then(([balancesSnap, historySnap, goalsSnap]) => {
+                userBalances = balancesSnap.exists() ? balancesSnap.val() : { hangout: 0, savings: 0, playstation: 0 };
+                userHistory = historySnap.exists() ? Object.values(historySnap.val()).reverse() : [];
+                userGoals = goalsSnap.exists() ? Object.values(goalsSnap.val()) : [];
+                renderUserDetails();
             }).catch(err => {
                 modalContent.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Failed to load user data</div>';
                 console.error('Error loading user details:', err);
             });
+
+            // Set up real-time listeners
+            const balancesUnsubscribe = onValue(balancesRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    userBalances = snapshot.val();
+                    renderUserDetails();
+                }
+            });
+            selectedUserListeners.push(balancesUnsubscribe);
+
+            const historyUnsubscribe = onValue(historyRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    userHistory = Object.values(snapshot.val()).reverse();
+                    renderUserDetails();
+                }
+            });
+            selectedUserListeners.push(historyUnsubscribe);
+
+            const goalsUnsubscribe = onValue(goalsRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    userGoals = Object.values(snapshot.val());
+                    renderUserDetails();
+                }
+            });
+            selectedUserListeners.push(goalsUnsubscribe);
         };
 
         // Check for monthly report notification
@@ -10872,9 +10934,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 }, 2000);
             }
 
-            // At end of month, show monthly report notification
+            // Day before next month, show monthly report notification
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            if (now.getDate() === daysInMonth) {
+            if (now.getDate() === daysInMonth - 1) {
                 setTimeout(() => {
                     showNotification('📈 Your monthly report is ready! View it in the Home section.', false);
                     localStorage.setItem(notificationKey, 'shown');

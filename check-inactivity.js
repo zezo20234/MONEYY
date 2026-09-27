@@ -35,6 +35,15 @@ function getApp() {
 }
 
 export default async function handler(req, res) {
+    // Allow this to be called from your app's domain (a different domain
+    // than Vercel's) — without this, the browser blocks the response even
+    // though the request technically went through.
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     try {
         // Zezo's "Send Test Notification to Everyone" button hits this with
         // ?test=1 — it ignores the time window and the 3-day inactivity check

@@ -5208,8 +5208,14 @@
             try {
                 messaging = getMessaging(app);
 
-                // Request permission and get token
-                getToken(messaging, { vapidKey: VAPID_KEY }).then((currentToken) => {
+                // Firebase's getToken() normally tries to auto-register its own
+                // separate file called firebase-messaging-sw.js — we don't have
+                // that file, we only have our own service-worker.js. So we
+                // register ours first and hand that registration to getToken
+                // instead of letting it hunt for a file that doesn't exist.
+                navigator.serviceWorker.register('./service-worker.js').then((swRegistration) => {
+                    return getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration });
+                }).then((currentToken) => {
                     if (currentToken) {
                         console.log('FCM Token:', currentToken);
                         localStorage.setItem('fcmToken', currentToken);
@@ -5270,11 +5276,15 @@
             if (Notification.permission !== 'granted') return;
 
             try {
+                let swRegistration = null;
                 if ('serviceWorker' in navigator) {
-                    await navigator.serviceWorker.register('./service-worker.js');
+                    swRegistration = await navigator.serviceWorker.register('./service-worker.js');
                 }
                 if (messaging) {
-                    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+                    const token = await getToken(messaging, {
+                        vapidKey: VAPID_KEY,
+                        serviceWorkerRegistration: swRegistration || undefined
+                    });
                     if (token) {
                         localStorage.setItem('fcmToken', token);
                         syncFcmTokenToServer();

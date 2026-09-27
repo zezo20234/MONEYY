@@ -5292,7 +5292,7 @@
         // 3 days), only during the 1pm-8pm Riyadh window. Safe to call every open;
         // it's cheap and self-rate-limiting server-side.
         // Replace this with your real Vercel URL after you deploy the /api folder.
-        const INACTIVITY_CHECK_URL = 'https://YOUR-VERCEL-PROJECT.vercel.app/api/check-inactivity';
+        const INACTIVITY_CHECK_URL = 'https://moneyy-sdwg.vercel.app/api/check-inactivity';
         function triggerInactivityCheck() {
             if (INACTIVITY_CHECK_URL.includes('YOUR-VERCEL-PROJECT')) return; // not deployed yet
             fetch(INACTIVITY_CHECK_URL).catch(() => { /* not critical if this fails */ });

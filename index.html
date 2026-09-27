@@ -14,6 +14,27 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./MONEY2.png">
     <link rel="icon" type="image/png" href="./MONEY2.png">
+    <script>
+        // Apply any saved custom theme colors BEFORE the page paints, so
+        // there's no flash of the default colors on load. Kept tiny and
+        // dependency-free since it has to run this early.
+        (function () {
+            try {
+                var saved = JSON.parse(localStorage.getItem('mm_theme_colors') || '{}');
+                var root = document.documentElement.style;
+                if (saved.bg) root.setProperty('--bg-color', saved.bg);
+                if (saved.bg2) root.setProperty('--bg-color-2', saved.bg2);
+                if (saved.accent1) root.setProperty('--accent-1', saved.accent1);
+                if (saved.accent2) root.setProperty('--accent-2', saved.accent2);
+                if (saved.accent3) root.setProperty('--accent-3', saved.accent3);
+                if (saved.accent4) root.setProperty('--accent-4', saved.accent4);
+                if (saved.bg2) {
+                    var m = document.querySelector('meta[name="theme-color"]');
+                    if (m) m.setAttribute('content', saved.bg2);
+                }
+            } catch (e) { /* ignore — falls back to default theme */ }
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <!-- Groq AI is called directly via REST fetch (OpenAI-compatible chat completions API) -->
@@ -32,10 +53,20 @@
             --sab: env(safe-area-inset-bottom, 0px);
             --sal: env(safe-area-inset-left, 0px);
             --popup-top: calc(10px + var(--sat));
+
+            /* Theme colors — customizable from Settings > Appearance.
+               These defaults match the original look; the app overrides
+               them inline (on <html>) once a user picks their own colors. */
+            --bg-color: #0a0a0a;
+            --bg-color-2: #1a1a2e;
+            --accent-1: #00f5d4;
+            --accent-2: #00d9f5;
+            --accent-3: #667eea;
+            --accent-4: #764ba2;
         }
 
         body {
-            background: #0a0a0a;
+            background: var(--bg-color, #0a0a0a);
             min-height: 100vh;
             color: white;
             overflow-x: hidden;
@@ -83,7 +114,7 @@
             width: 80px;
             height: 80px;
             margin: 0 auto 20px;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             border-radius: 24px;
             display: flex;
             align-items: center;
@@ -108,7 +139,7 @@
         .header h1 {
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -138,7 +169,7 @@
 
         .allowance-countdown #daysRemaining {
             font-weight: 700;
-            color: #667eea;
+            color: var(--accent-3, #667eea);
             font-size: 16px;
         }
 
@@ -155,7 +186,7 @@
             margin-top: 14px;
             font-size: 13px;
             font-weight: 700;
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
             max-width: 100%;
         }
 
@@ -423,7 +454,7 @@
         }
 
         .history-action-btn.edit {
-            color: #667eea;
+            color: var(--accent-3, #667eea);
         }
 
         .history-action-btn.delete {
@@ -606,7 +637,7 @@
         }
 
         .form-select option {
-            background: #0a0a0a;
+            background: var(--bg-color, #0a0a0a);
             color: white;
         }
 
@@ -634,7 +665,7 @@
             -webkit-appearance: none;
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             border-radius: 50%;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 245, 212, 0.5);
@@ -682,7 +713,7 @@
 
         .modal-btn.confirm {
             background: linear-gradient(135deg, rgba(0, 245, 212, 0.8) 0%, rgba(0, 217, 245, 0.8) 100%);
-            color: #0a0a0a;
+            color: var(--bg-color, #0a0a0a);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 0 20px rgba(0, 245, 212, 0.3);
         }
@@ -701,7 +732,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: #0a0a0a;
+            background: var(--bg-color, #0a0a0a);
             z-index: 3000;
             flex-direction: column;
             align-items: center;
@@ -717,7 +748,7 @@
             width: 64px;
             height: 64px;
             border-radius: 20px;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -757,7 +788,7 @@
         }
 
         .pin-dot.filled {
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             border-color: transparent;
             box-shadow: 0 0 12px rgba(0, 245, 212, 0.6);
         }
@@ -895,7 +926,7 @@
 
         .goal-progress-bar {
             height: 100%;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             border-radius: 4px;
             transition: width 0.5s ease;
             box-shadow: 0 0 10px rgba(0, 245, 212, 0.3);
@@ -1021,7 +1052,7 @@
         .rank-up-title {
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -1168,7 +1199,7 @@
             transform: translateX(-50%);
             width: 40px;
             height: 3px;
-            background: linear-gradient(90deg, #00f5d4, #00d9f5);
+            background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-2, #00d9f5));
             border-radius: 2px;
             box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
         }
@@ -1218,7 +1249,7 @@
         }
 
         .bottom-nav-item.active {
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
             background: rgba(0, 245, 212, 0.1);
         }
 
@@ -1230,7 +1261,7 @@
             transform: translateX(-50%);
             width: 30px;
             height: 3px;
-            background: linear-gradient(90deg, #00f5d4, #00d9f5);
+            background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-2, #00d9f5));
             border-radius: 2px;
             box-shadow: 0 0 15px rgba(0, 245, 212, 0.6);
         }
@@ -1514,7 +1545,7 @@
         .ai-advice-btn {
             background: linear-gradient(135deg, rgba(0, 245, 212, 0.2) 0%, rgba(0, 217, 245, 0.2) 100%);
             border: 1px solid rgba(0, 245, 212, 0.4);
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
             padding: 12px 20px;
             border-radius: 16px;
             font-size: 14px;
@@ -1603,7 +1634,7 @@
             font-size: 11px;
             font-weight: 900;
             color: #ff4757;
-            background: #1a1a2e;
+            background: var(--bg-color-2, #1a1a2e);
             border-radius: 50%;
             width: 15px;
             height: 15px;
@@ -1667,13 +1698,13 @@
         }
 
         a {
-            color: #667eea;
+            color: var(--accent-3, #667eea);
             text-decoration: none;
             transition: color 0.3s ease;
         }
 
         a:hover {
-            color: #764ba2;
+            color: var(--accent-4, #764ba2);
         }
 
         .notification {
@@ -1684,7 +1715,7 @@
             background: rgba(0, 245, 212, 0.96);
             backdrop-filter: blur(16px) saturate(160%);
             -webkit-backdrop-filter: blur(16px) saturate(160%);
-            color: #0a0a0a;
+            color: var(--bg-color, #0a0a0a);
             padding: 14px 20px;
             border-radius: 16px;
             font-weight: 700;
@@ -2027,7 +2058,7 @@
         .points-card .points-value {
             font-size: 36px;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -2093,7 +2124,7 @@
         .mission-rank-progress-fill {
             height: 100%;
             border-radius: 6px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, var(--accent-3, #667eea) 0%, var(--accent-4, #764ba2) 100%);
             transition: width 0.4s ease;
         }
 
@@ -2238,8 +2269,8 @@
         }
 
         .mission-btn.complete {
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
-            color: #0a0a0a;
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
+            color: var(--bg-color, #0a0a0a);
         }
 
         .mission-btn.complete:disabled {
@@ -2363,7 +2394,7 @@
         .score-value {
             font-size: 36px;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -2379,7 +2410,7 @@
         }
 
         .score-fill {
-            background: linear-gradient(90deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(90deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             height: 100%;
             border-radius: 8px;
             transition: width 0.5s ease;
@@ -2408,7 +2439,7 @@
         .streak-value {
             font-size: 16px;
             font-weight: 700;
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
         }
 
         .missions-section-title {
@@ -2644,7 +2675,7 @@
         .summary-amount {
             font-size: 18px;
             font-weight: 800;
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
             text-shadow: 0 0 10px rgba(0, 245, 212, 0.3);
         }
 
@@ -2664,7 +2695,7 @@
         }
 
         .milestone.reached {
-            background: linear-gradient(90deg, #00f5d4, #00d9f5);
+            background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-2, #00d9f5));
             box-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
         }
 
@@ -2686,7 +2717,7 @@
         }
 
         .goal-time-info .highlight {
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
             font-weight: 700;
         }
 
@@ -2918,7 +2949,7 @@
             line-height: 1.12;
             margin-bottom: 12px;
             color: #fff;
-            background: linear-gradient(135deg, #ffffff 0%, #00f5d4 50%, #8ab4ff 100%);
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-1, #00f5d4) 50%, #8ab4ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -2956,7 +2987,7 @@
             letter-spacing: 0.02em;
             line-height: 1.1;
             margin: 4px 0 18px;
-            background: linear-gradient(135deg, #fff 10%, #00f5d4 45%, #00d9f5 70%, #667eea 100%);
+            background: linear-gradient(135deg, #fff 10%, var(--accent-1, #00f5d4) 45%, var(--accent-2, #00d9f5) 70%, var(--accent-3, #667eea) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -3003,7 +3034,7 @@
 
         .update-dot.active {
             width: 28px;
-            background: linear-gradient(90deg, #00f5d4, #667eea);
+            background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-3, #667eea));
             box-shadow: 0 0 14px rgba(0, 245, 212, 0.5);
         }
 
@@ -3027,7 +3058,7 @@
             width: 100%;
             background: linear-gradient(135deg, rgba(0, 245, 212, 0.95) 0%, rgba(0, 217, 245, 0.95) 100%);
             border: 1px solid rgba(255, 255, 255, 0.25);
-            color: #0a0a0a;
+            color: var(--bg-color, #0a0a0a);
             padding: 18px 24px;
             border-radius: 18px;
             font-size: 18px;
@@ -3052,7 +3083,7 @@
         }
 
         .update-btn.continue-mode {
-            background: linear-gradient(135deg, #ffffff 0%, #00f5d4 100%);
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-1, #00f5d4) 100%);
             box-shadow: 0 10px 40px rgba(0, 245, 212, 0.55);
         }
 
@@ -3112,8 +3143,8 @@
             height: 100px;
             border-radius: 50%;
             border: 4px solid rgba(255, 255, 255, 0.08);
-            border-top-color: #00f5d4;
-            border-right-color: #667eea;
+            border-top-color: var(--accent-1, #00f5d4);
+            border-right-color: var(--accent-3, #667eea);
             animation: spin 0.85s linear infinite;
             margin-bottom: 24px;
             box-shadow: 0 0 40px rgba(0, 245, 212, 0.25);
@@ -3152,7 +3183,7 @@
         .weekly-score-large {
             font-size: 72px;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -3189,7 +3220,7 @@
         .stat-value {
             font-size: 24px;
             font-weight: 700;
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
         }
 
         .weekly-analysis {
@@ -3271,7 +3302,7 @@
 
         .mission-streak-value {
             font-weight: 700;
-            color: #00f5d4;
+            color: var(--accent-1, #00f5d4);
         }
 
         /* Daily Score Popup */
@@ -3287,7 +3318,7 @@
         .daily-score-large {
             font-size: 72px;
             font-weight: 800;
-            background: linear-gradient(135deg, #00f5d4 0%, #00d9f5 100%);
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -3474,7 +3505,7 @@
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="logout-btn" onclick="openSettingsModal()"
-                        style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.4); color: #667eea; position: relative;">⚙️
+                        style="background: rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.4); color: var(--accent-3, #667eea); position: relative;">⚙️
                         Settings<span id="settingsUpdateDot"
                             style="display:none; position:absolute; top:-4px; right:-4px; width:11px; height:11px; background:#ff4757; border-radius:50%; box-shadow:0 0 8px rgba(255,71,87,0.9); border:2px solid #0f0c29;"></span></button>
                     <button class="logout-btn" onclick="logout()">Logout</button>
@@ -3566,7 +3597,7 @@
                         <div class="card-amount" id="budgetProgressAmount">0%</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.1); border-radius: 8px; height: 12px; margin: 12px 0; overflow: hidden;">
-                        <div id="budgetProgressBar" style="height: 100%; background: linear-gradient(90deg, #667eea, #2ed573); width: 0%; transition: width 0.3s ease;"></div>
+                        <div id="budgetProgressBar" style="height: 100%; background: linear-gradient(90deg, var(--accent-3, #667eea), #2ed573); width: 0%; transition: width 0.3s ease;"></div>
                     </div>
                     <div class="card-limit" id="budgetProgressText">0 / 0 ⃁ spent this month</div>
                     <button style="margin-top: 12px; width: 100%; padding: 10px; background: rgba(102, 126, 234, 0.3); border: 1px solid rgba(102, 126, 234, 0.5); border-radius: 8px; color: white; font-size: 14px; cursor: pointer;" onclick="showMonthlyReport()">
@@ -4270,7 +4301,7 @@
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('rebirthModal')">Not yet</button>
                 <button class="modal-btn confirm" onclick="confirmRebirth()"
-                    style="background: linear-gradient(135deg, #ffd700 0%, #ff69b4 100%); color: #1a1a2e;">Rebirth
+                    style="background: linear-gradient(135deg, #ffd700 0%, #ff69b4 100%); color: var(--bg-color-2, #1a1a2e);">Rebirth
                     ✨</button>
             </div>
         </div>
@@ -4297,7 +4328,7 @@
             </div>
             <div style="text-align: center; margin-top: 15px;">
                 <span style="color: rgba(255,255,255,0.6);">Don't have an account? </span>
-                <a href="#" onclick="closeModal('loginModal'); openSignupModal();" style="color: #667eea;">Sign up</a>
+                <a href="#" onclick="closeModal('loginModal'); openSignupModal();" style="color: var(--accent-3, #667eea);">Sign up</a>
             </div>
         </div>
     </div>
@@ -4327,7 +4358,7 @@
             </div>
             <div style="text-align: center; margin-top: 15px;">
                 <span style="color: rgba(255,255,255,0.6);">Already have an account? </span>
-                <a href="#" onclick="closeModal('signupModal'); openLoginModal();" style="color: #667eea;">Login</a>
+                <a href="#" onclick="closeModal('signupModal'); openLoginModal();" style="color: var(--accent-3, #667eea);">Login</a>
             </div>
         </div>
     </div>
@@ -4413,6 +4444,74 @@
                 <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
             </div>
 
+            <!-- Appearance section -->
+            <div class="form-group" id="appearanceSettingsSection">
+                <label class="form-label">🎨 Appearance</label>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-bottom:12px;">Tap a theme to
+                    apply it instantly.</small>
+                <div id="themePresetGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+
+                <button type="button" id="toggleAdvancedThemeBtn" class="modal-btn cancel"
+                    style="width:100%; margin-top:14px; padding:10px; font-size:13px;"
+                    onclick="toggleAdvancedTheme()">🎛️ Customize Colors Manually</button>
+
+                <div id="advancedThemeSection" style="display:none; margin-top:14px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                <input type="color" id="themeBg" value="#0a0a0a"
+                                    oninput="saveThemeSetting('bg', this.value)"
+                                    style="width:36px; height:36px; padding:0; border:none; border-radius:8px; background:none; cursor:pointer;">
+                                Background
+                            </label>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                <input type="color" id="themeBg2" value="#1a1a2e"
+                                    oninput="saveThemeSetting('bg2', this.value)"
+                                    style="width:36px; height:36px; padding:0; border:none; border-radius:8px; background:none; cursor:pointer;">
+                                Cards / Panels
+                            </label>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                <input type="color" id="themeAccent1" value="#00f5d4"
+                                    oninput="saveThemeSetting('accent1', this.value)"
+                                    style="width:36px; height:36px; padding:0; border:none; border-radius:8px; background:none; cursor:pointer;">
+                                Accent 1
+                            </label>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                <input type="color" id="themeAccent2" value="#00d9f5"
+                                    oninput="saveThemeSetting('accent2', this.value)"
+                                    style="width:36px; height:36px; padding:0; border:none; border-radius:8px; background:none; cursor:pointer;">
+                                Accent 2
+                            </label>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                <input type="color" id="themeAccent3" value="#667eea"
+                                    oninput="saveThemeSetting('accent3', this.value)"
+                                    style="width:36px; height:36px; padding:0; border:none; border-radius:8px; background:none; cursor:pointer;">
+                                Accent 3
+                            </label>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                <input type="color" id="themeAccent4" value="#764ba2"
+                                    oninput="saveThemeSetting('accent4', this.value)"
+                                    style="width:36px; height:36px; padding:0; border:none; border-radius:8px; background:none; cursor:pointer;">
+                                Accent 4
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="modal-btn cancel" style="width:100%; margin-top:12px; padding:12px; font-size:14px;"
+                    onclick="resetThemeToDefault()">↺ Reset to Default Colors</button>
+            </div>
+
             <div class="form-group">
                 <label class="form-label">Hangout Limit (⃁)</label>
                 <input type="number" class="form-input" id="settingsHangoutLimit" placeholder="140">
@@ -4469,10 +4568,15 @@
                     (top) rank is always 220 ⃁.</small>
             </div>
 
-            <!-- AI Settings (Groq API key) -->
+            <!-- AI Settings (Groq or Google AI Studio / Gemini — user's own key) -->
             <div class="form-group" id="apiKeySettingsSection"
                 style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
                 <label class="form-label">🔑 AI Settings</label>
+                <label style="font-size: 12px; color: rgba(255,255,255,0.6);">AI Provider</label>
+                <select class="form-select" id="aiProviderSelect" onchange="setAIProvider(this.value)" style="margin-bottom: 10px;">
+                    <option value="groq">Groq</option>
+                    <option value="gemini">Google AI Studio (Gemini)</option>
+                </select>
                 <div id="apiKeySettingsStatus"
                     style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 12px;">⚠️ No API key set — AI
                     features are off</div>
@@ -4482,10 +4586,12 @@
                         onclick="openApiKeyModal()">Manage API Key</button>
                     <button type="button" class="modal-btn cancel" id="apiKeyRemoveBtn"
                         style="flex:1; min-width:120px; padding:14px 16px; font-size:15px; display:none;"
-                        onclick="removeGroqApiKey()">Remove Key</button>
+                        onclick="removeActiveProviderApiKey()">Remove Key</button>
                 </div>
                 <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Powers the AI chat
-                    assistant. Saved only on this device, never inside this file.</small>
+                    assistant. Each provider uses <strong>your own</strong> API key — nothing is bundled into this
+                    file, and nothing shares your usage with anyone else, so you get your own account's rate
+                    limit instead of sharing one. Saved only on this device.</small>
 
                 <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
                     <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
@@ -4561,7 +4667,7 @@
                     days early so those purchases still count toward the old month instead of the new one.</small>
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Current Month</div>
-                    <div id="cycleSettingsLabel" style="font-size: 19px; font-weight: 800; margin: 4px 0 2px; color: #00f5d4;">—</div>
+                    <div id="cycleSettingsLabel" style="font-size: 19px; font-weight: 800; margin: 4px 0 2px; color: var(--accent-1, #00f5d4);">—</div>
                     <div id="cycleSettingsStarted" style="font-size: 13px; color: rgba(255,255,255,0.6);"></div>
                     <div id="cycleSettingsNow" style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px;"></div>
                 </div>
@@ -4627,6 +4733,17 @@
                             style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);"
                             onclick="sendAppUpdate()">Send Update to Everyone</button>
                     </div>
+
+                    <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,0.18);">
+                        <label class="form-label" style="color:#ff6b6b;">🔔 Test Notification (Zezo only)</label>
+                        <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Sends a test
+                            push to every user's phone right now, ignoring the 1pm-8pm window and the 3-day
+                            inactivity check — just to confirm it's wired up.</small>
+                        <button type="button" class="modal-btn confirm"
+                            style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%); width:100%;"
+                            onclick="sendTestNotificationToAll()" id="testNotifBtn">Send Test Notification to
+                            Everyone</button>
+                    </div>
                 </div>
             </div>
 
@@ -4639,24 +4756,24 @@
 
 
 
-    <!-- Groq AI API Key Modal -->
+    <!-- AI API Key Modal (Groq or Gemini, whichever is selected as the provider) -->
     <div class="modal" id="apiKeyModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">🔑 AI API Key</div>
+                <div class="modal-title" id="apiKeyModalTitle">🔑 AI API Key</div>
                 <button class="close-btn" onclick="closeModal('apiKeyModal')">&times;</button>
             </div>
             <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 16px;">Your key is saved only on
                 this device's local storage — never written into this app's file — and powers the AI chat assistant.</p>
             <div class="form-group">
-                <label class="form-label">Groq API Key</label>
+                <label class="form-label" id="apiKeyInputLabel">Groq API Key</label>
                 <input type="password" class="form-input" id="groqApiKeyInput" placeholder="gsk_...">
                 <label
                     style="font-size:12px; color: rgba(255,255,255,0.6); display:flex; align-items:center; gap:6px; cursor:pointer; margin-top:8px;">
                     <input type="checkbox" id="groqApiKeyShowToggle" onchange="toggleGroqKeyVisibility()"> Show key
                 </label>
-                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Don't have one? Ask Zezo for
-                    one.</small>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;" id="apiKeyHelpText">Don't
+                    have one? Ask Zezo for one.</small>
             </div>
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="closeModal('apiKeyModal')">Cancel</button>
@@ -4904,6 +5021,188 @@
         const database = getDatabase(app);
         let messaging = null;
 
+        // ===== Custom theme colors (Settings > Appearance) =====
+        const THEME_STORAGE = 'mm_theme_colors';
+        const DEFAULT_THEME = {
+            bg: '#0a0a0a',
+            bg2: '#1a1a2e',
+            accent1: '#00f5d4',
+            accent2: '#00d9f5',
+            accent3: '#667eea',
+            accent4: '#764ba2'
+        };
+        // Ready-made presets shown as one-tap swatches in Settings > Appearance.
+        // Each is a full color set (id + name + the same fields as DEFAULT_THEME).
+        const THEME_PRESETS = [
+            { id: 'midnight', name: 'Midnight', bg: '#0a0a0a', bg2: '#1a1a2e', accent1: '#00f5d4', accent2: '#00d9f5', accent3: '#667eea', accent4: '#764ba2' },
+            { id: 'sunset', name: 'Sunset Blaze', bg: '#1a0a0f', bg2: '#2e1620', accent1: '#ff6b6b', accent2: '#ff9f43', accent3: '#f368e0', accent4: '#ee5253' },
+            { id: 'ocean', name: 'Ocean Breeze', bg: '#04121a', bg2: '#0d2436', accent1: '#00d2d3', accent2: '#54a0ff', accent3: '#48dbfb', accent4: '#0abde3' },
+            { id: 'forest', name: 'Forest', bg: '#0a140d', bg2: '#16261a', accent1: '#2ed573', accent2: '#7bed9f', accent3: '#1dd1a1', accent4: '#10ac84' },
+            { id: 'royal', name: 'Royal Purple', bg: '#100a1a', bg2: '#1f1530', accent1: '#a29bfe', accent2: '#c56cf0', accent3: '#8854d0', accent4: '#5f27cd' },
+            { id: 'rosegold', name: 'Rose Gold', bg: '#1a0e10', bg2: '#2e1c20', accent1: '#ffb8b8', accent2: '#f8a5c2', accent3: '#eab676', accent4: '#e17055' },
+            { id: 'cyberpunk', name: 'Cyberpunk', bg: '#0a0014', bg2: '#1a0530', accent1: '#ff2e63', accent2: '#f9f871', accent3: '#08d9d6', accent4: '#a100ff' },
+            { id: 'monoslate', name: 'Mono Slate', bg: '#0d0f12', bg2: '#1b1f24', accent1: '#8395a7', accent2: '#c8d6e5', accent3: '#576574', accent4: '#3f4b5b' },
+            { id: 'goldenhour', name: 'Golden Hour', bg: '#160f04', bg2: '#291d0c', accent1: '#feca57', accent2: '#ff9f1a', accent3: '#f6b93b', accent4: '#e58e26' },
+            { id: 'arctic', name: 'Arctic', bg: '#060c14', bg2: '#101c2c', accent1: '#a4f0ff', accent2: '#74b9ff', accent3: '#81ecec', accent4: '#55efc4' }
+        ];
+        function getSavedTheme() {
+            try {
+                return { ...DEFAULT_THEME, ...JSON.parse(localStorage.getItem(THEME_STORAGE) || '{}') };
+            } catch (e) {
+                return { ...DEFAULT_THEME };
+            }
+        }
+        function applyTheme(theme) {
+            const root = document.documentElement.style;
+            root.setProperty('--bg-color', theme.bg);
+            root.setProperty('--bg-color-2', theme.bg2);
+            root.setProperty('--accent-1', theme.accent1);
+            root.setProperty('--accent-2', theme.accent2);
+            root.setProperty('--accent-3', theme.accent3);
+            root.setProperty('--accent-4', theme.accent4);
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme) metaTheme.setAttribute('content', theme.bg2);
+        }
+        // Called live from the color pickers in Settings > Appearance — applies
+        // instantly and saves right away, no separate "Save" step needed.
+        window.saveThemeSetting = function (key, value) {
+            const theme = getSavedTheme();
+            theme[key] = value;
+            localStorage.setItem(THEME_STORAGE, JSON.stringify(theme));
+            applyTheme(theme);
+            renderThemePresets(); // manual tweak may no longer match any preset
+        };
+        // One-tap preset apply — sets every color at once and saves immediately.
+        window.applyThemePreset = function (presetId) {
+            const preset = THEME_PRESETS.find(p => p.id === presetId);
+            if (!preset) return;
+            const theme = { bg: preset.bg, bg2: preset.bg2, accent1: preset.accent1, accent2: preset.accent2, accent3: preset.accent3, accent4: preset.accent4 };
+            localStorage.setItem(THEME_STORAGE, JSON.stringify(theme));
+            applyTheme(theme);
+            populateAppearanceInputs();
+            renderThemePresets();
+            showNotification(`🎨 ${preset.name} theme applied`);
+        };
+        window.resetThemeToDefault = function () {
+            localStorage.removeItem(THEME_STORAGE);
+            applyTheme(DEFAULT_THEME);
+            populateAppearanceInputs();
+            renderThemePresets();
+            showNotification('Appearance reset to default');
+        };
+        function populateAppearanceInputs() {
+            const theme = getSavedTheme();
+            const map = { bg: 'themeBg', bg2: 'themeBg2', accent1: 'themeAccent1', accent2: 'themeAccent2', accent3: 'themeAccent3', accent4: 'themeAccent4' };
+            Object.keys(map).forEach(k => {
+                const el = document.getElementById(map[k]);
+                if (el) el.value = theme[k];
+            });
+        }
+        // Renders the 10 preset swatch cards and highlights whichever one
+        // matches the currently-applied theme (if any).
+        function renderThemePresets() {
+            const grid = document.getElementById('themePresetGrid');
+            if (!grid) return;
+            const current = getSavedTheme();
+            const matchesCurrent = (p) =>
+                p.bg === current.bg && p.bg2 === current.bg2 && p.accent1 === current.accent1 &&
+                p.accent2 === current.accent2 && p.accent3 === current.accent3 && p.accent4 === current.accent4;
+            grid.innerHTML = THEME_PRESETS.map(p => {
+                const active = matchesCurrent(p);
+                return `
+                    <button type="button" onclick="applyThemePreset('${p.id}')"
+                        style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; cursor:pointer; text-align:left;
+                               background:${active ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)'};
+                               border:1px solid ${active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'};">
+                        <span style="display:grid; grid-template-columns: 1fr 1fr; width:28px; height:28px; border-radius:8px; overflow:hidden; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+                            <span style="background:${p.bg2};"></span>
+                            <span style="background:${p.accent1};"></span>
+                            <span style="background:${p.accent3};"></span>
+                            <span style="background:${p.accent2};"></span>
+                        </span>
+                        <span style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.9);">${p.name}${active ? ' ✓' : ''}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+        window.toggleAdvancedTheme = function () {
+            const section = document.getElementById('advancedThemeSection');
+            const btn = document.getElementById('toggleAdvancedThemeBtn');
+            if (!section) return;
+            const showing = section.style.display !== 'none';
+            section.style.display = showing ? 'none' : 'block';
+            if (btn) btn.textContent = showing ? '🎛️ Customize Colors Manually' : '🎛️ Hide Manual Customization';
+            if (!showing) populateAppearanceInputs();
+        };
+        // Apply the saved theme again once this script runs (the tiny inline
+        // <head> script already did this before first paint — this just keeps
+        // things in sync in case that ran before documentElement was ready).
+        applyTheme(getSavedTheme());
+        renderThemePresets();
+
+        // ===== Saudi Riyal symbol (U+20C1) compatibility fallback =====
+        // The official Saudi Riyal sign was only added to Unicode in version
+        // 17.0 (Sept 2025). Most fonts — including the system fonts on older
+        // iOS versions — don't have a glyph for it yet, so it silently fails
+        // to render (shows as blank/missing). We detect that once at startup
+        // and, only when unsupported, swap it for the universally-supported
+        // "ر.س" text everywhere on the page — both what's already rendered
+        // and anything rendered dynamically afterwards.
+        (function () {
+            const RIYAL_CHAR = '\u20C1'; // ⃁
+            const RIYAL_FALLBACK = 'ر.س';
+
+            function supportsRiyalGlyph() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.font = '40px sans-serif';
+                    // A codepoint guaranteed to be unassigned in any real font,
+                    // so it always renders as the browser's ".notdef" box —
+                    // that gives us the width of a "missing glyph" to compare against.
+                    const missingWidth = ctx.measureText('\uFFFF').width;
+                    const riyalWidth = ctx.measureText(RIYAL_CHAR).width;
+                    return riyalWidth > 0 && Math.abs(riyalWidth - missingWidth) > 0.5;
+                } catch (e) {
+                    return true; // can't test — don't risk breaking anything
+                }
+            }
+
+            if (supportsRiyalGlyph()) return; // symbol renders fine, nothing to do
+
+            function fixText(node) {
+                if (!node) return;
+                if (node.nodeType === Node.TEXT_NODE) {
+                    if (node.nodeValue && node.nodeValue.indexOf(RIYAL_CHAR) !== -1) {
+                        node.nodeValue = node.nodeValue.split(RIYAL_CHAR).join(RIYAL_FALLBACK);
+                    }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    node.childNodes.forEach(fixText);
+                }
+            }
+
+            const runInitialPass = () => fixText(document.body);
+            if (document.body) runInitialPass();
+            else document.addEventListener('DOMContentLoaded', runInitialPass);
+
+            // Everything the app renders afterwards (balances, history, chat,
+            // modals, etc.) gets patched the moment it's added to the page.
+            const riyalObserver = new MutationObserver(mutations => {
+                for (const m of mutations) {
+                    if (m.type === 'childList') {
+                        m.addedNodes.forEach(fixText);
+                    } else if (m.type === 'characterData') {
+                        fixText(m.target);
+                    }
+                }
+            });
+            const startObserving = () => riyalObserver.observe(document.documentElement, {
+                childList: true, subtree: true, characterData: true
+            });
+            if (document.documentElement) startObserving();
+            else document.addEventListener('DOMContentLoaded', startObserving);
+        })();
+
         // Initialize Firebase Messaging
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             try {
@@ -4914,6 +5213,7 @@
                     if (currentToken) {
                         console.log('FCM Token:', currentToken);
                         localStorage.setItem('fcmToken', currentToken);
+                        syncFcmTokenToServer();
                     } else {
                         console.log('No registration token available');
                     }
@@ -4931,6 +5231,100 @@
                 });
             } catch (e) {
                 console.log('Firebase Messaging not available:', e);
+            }
+        }
+
+        // ===== Activity / purchase-logging tracking (powers the "don't forget
+        // to add your purchases" push notification, sent every ~3-4 days) =====
+        // We write a few small fields per user:
+        //   users/<name>/lastActive      — updated whenever the app is open/foregrounded
+        //   users/<name>/lastPurchaseAt  — updated whenever a Purchase is logged
+        //   users/<name>/fcmToken        — this device's push token, so a server-side
+        //                                  job (see the Cloud Function) can message it
+        // A client can't fire a push after days of being closed — iOS won't run
+        // this tab's JS in the background that long — so the actual "it's been
+        // 3-4 days since you logged a purchase" check has to run server-side on
+        // a schedule and call the Firebase Admin SDK to send the push. This
+        // just keeps the fields it needs up to date.
+        function markUserActive(username) {
+            if (!username) return;
+            set(ref(database, `users/${username}/lastActive`), Date.now()).catch(() => { });
+        }
+        function markPurchaseLogged(username) {
+            if (!username) return;
+            set(ref(database, `users/${username}/lastPurchaseAt`), Date.now()).catch(() => { });
+        }
+
+        // Explicitly asks for notification permission when someone opens/logs
+        // into the app (rather than only relying on the silent attempt that
+        // runs once at page load, before anyone's granted anything), and makes
+        // sure the background pipeline — service worker + a fresh FCM token —
+        // is actually in place right after. This is what lets a push arrive
+        // even when the app/tab is fully closed.
+        async function ensureNotificationsAndBackgroundReady() {
+            if (!('Notification' in window)) return;
+
+            if (Notification.permission === 'default') {
+                try { await Notification.requestPermission(); } catch (e) { /* ignore */ }
+            }
+            if (Notification.permission !== 'granted') return;
+
+            try {
+                if ('serviceWorker' in navigator) {
+                    await navigator.serviceWorker.register('./service-worker.js');
+                }
+                if (messaging) {
+                    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+                    if (token) {
+                        localStorage.setItem('fcmToken', token);
+                        syncFcmTokenToServer();
+                    }
+                }
+            } catch (e) {
+                console.log('Could not finish setting up background notifications:', e);
+            }
+        }
+        // Fire-and-forget ping to a free serverless endpoint (Vercel, not Firebase
+        // Cloud Functions — no Blaze, no card) whenever someone opens the app.
+        // That endpoint is the thing that actually notifies OTHER family members'
+        // phones: it checks every user's lastPurchaseAt, and sends a reminder to
+        // anyone 3+ days inactive (skipping anyone already reminded in the last
+        // 3 days), only during the 1pm-8pm Riyadh window. Safe to call every open;
+        // it's cheap and self-rate-limiting server-side.
+        // Replace this with your real Vercel URL after you deploy the /api folder.
+        const INACTIVITY_CHECK_URL = 'https://YOUR-VERCEL-PROJECT.vercel.app/api/check-inactivity';
+        function triggerInactivityCheck() {
+            if (INACTIVITY_CHECK_URL.includes('YOUR-VERCEL-PROJECT')) return; // not deployed yet
+            fetch(INACTIVITY_CHECK_URL).catch(() => { /* not critical if this fails */ });
+        }
+
+        // Zezo-only: sends a test push to every user right now, bypassing the
+        // 1pm-8pm window and the 3-day inactivity check (that logic lives in
+        // the serverless endpoint — see api/check-inactivity.js's `test` mode).
+        window.sendTestNotificationToAll = function () {
+            if (INACTIVITY_CHECK_URL.includes('YOUR-VERCEL-PROJECT')) {
+                showNotification('Deploy the Vercel endpoint first and paste its URL into index.html', true);
+                return;
+            }
+            const btn = document.getElementById('testNotifBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+            fetch(INACTIVITY_CHECK_URL + '?test=1')
+                .then(r => r.json())
+                .then(data => {
+                    showNotification(`Test sent to ${data.sent || 0} user(s)`);
+                })
+                .catch(() => {
+                    showNotification('Could not reach the notification server', true);
+                })
+                .finally(() => {
+                    if (btn) { btn.disabled = false; btn.textContent = 'Send Test Notification to Everyone'; }
+                });
+        };
+
+        function syncFcmTokenToServer() {
+            const token = localStorage.getItem('fcmToken');
+            if (token && currentUser && currentUser.username) {
+                set(ref(database, `users/${currentUser.username}/fcmToken`), token).catch(() => { });
             }
         }
 
@@ -5761,11 +6155,15 @@
             showFullScreenUpdate(latestUpdateInfo);
         };
 
-        // Groq AI Integration (direct REST calls to Groq's OpenAI-compatible API)
-        // The API key is NOT stored in this file — it lives only in this device's
-        // localStorage, entered once via Settings, so the key never ends up in
-        // the HTML file itself (e.g. if it's shared, uploaded, or committed somewhere).
+        // AI Integration — direct REST calls, no SDK. Two providers are
+        // supported: Groq, and Google AI Studio (Gemini). Whichever one is
+        // active, the API key is NEVER stored in this file — it lives only
+        // in this device's localStorage, entered once via Settings, using
+        // *your own* key against *your own* account, so you get your own
+        // rate limit instead of sharing one with anyone else.
         const GROQ_KEY_STORAGE = 'mm_groq_api_key';
+        const GEMINI_KEY_STORAGE = 'mm_gemini_api_key';
+        const AI_PROVIDER_STORAGE = 'mm_ai_provider';
 
         // ===== AI Actions permission toggle (per-device) =====
         // Controls whether the AI is allowed to PROPOSE actions at all. Even when
@@ -5781,6 +6179,16 @@
             showNotification(enabled ? 'AI can now propose actions (with your approval each time)' : 'AI actions turned off');
         };
 
+        // ---- Provider selection ----
+        function getAIProvider() {
+            return localStorage.getItem(AI_PROVIDER_STORAGE) || 'groq';
+        }
+        window.setAIProvider = function (provider) {
+            localStorage.setItem(AI_PROVIDER_STORAGE, provider);
+            renderApiKeySettingsStatus();
+        };
+
+        // ---- Key storage (per provider) ----
         function getGroqApiKey() {
             return (localStorage.getItem(GROQ_KEY_STORAGE) || '').trim();
         }
@@ -5790,12 +6198,51 @@
         function clearGroqApiKey() {
             localStorage.removeItem(GROQ_KEY_STORAGE);
         }
+        function getGeminiApiKey() {
+            return (localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
+        }
+        function setGeminiApiKey(key) {
+            localStorage.setItem(GEMINI_KEY_STORAGE, key.trim());
+        }
+        function clearGeminiApiKey() {
+            localStorage.removeItem(GEMINI_KEY_STORAGE);
+        }
+        // Convenience wrappers that always act on whichever provider is active
+        function getActiveApiKey() {
+            return getAIProvider() === 'gemini' ? getGeminiApiKey() : getGroqApiKey();
+        }
+        function setActiveApiKey(key) {
+            if (getAIProvider() === 'gemini') setGeminiApiKey(key); else setGroqApiKey(key);
+        }
+        function clearActiveApiKey() {
+            if (getAIProvider() === 'gemini') clearGeminiApiKey(); else clearGroqApiKey();
+        }
 
         window.openApiKeyModal = function () {
+            const provider = getAIProvider();
+            const select = document.getElementById('aiProviderSelect');
+            if (select) select.value = provider;
+
             const input = document.getElementById('groqApiKeyInput');
-            input.value = getGroqApiKey();
+            input.value = getActiveApiKey();
             input.type = 'password';
             document.getElementById('groqApiKeyShowToggle').checked = false;
+
+            const titleEl = document.getElementById('apiKeyModalTitle');
+            const labelEl = document.getElementById('apiKeyInputLabel');
+            const helpEl = document.getElementById('apiKeyHelpText');
+            if (provider === 'gemini') {
+                if (titleEl) titleEl.textContent = '🔑 Google AI Studio (Gemini) API Key';
+                if (labelEl) labelEl.textContent = 'Gemini API Key';
+                input.placeholder = 'AIza...';
+                if (helpEl) helpEl.innerHTML = 'Get a free key at <span style="color:#00f5d4;">aistudio.google.com/apikey</span> — it\'s your own key against your own quota.';
+            } else {
+                if (titleEl) titleEl.textContent = '🔑 Groq API Key';
+                if (labelEl) labelEl.textContent = 'Groq API Key';
+                input.placeholder = 'gsk_...';
+                if (helpEl) helpEl.textContent = "Don't have one? Ask Zezo for one.";
+            }
+
             document.getElementById('apiKeyModal').classList.add('active');
         };
 
@@ -5810,16 +6257,18 @@
                 showNotification('Enter a key, or use Remove Key in Settings to clear it', true);
                 return;
             }
-            setGroqApiKey(val);
+            setActiveApiKey(val);
             workingGroqModel = null; // force re-check against the new key next time AI is used
+            workingGeminiModel = null;
             closeModal('apiKeyModal');
             showNotification('API key saved on this device');
             renderApiKeySettingsStatus();
         };
 
-        window.removeGroqApiKey = function () {
-            clearGroqApiKey();
+        window.removeActiveProviderApiKey = function () {
+            clearActiveApiKey();
             workingGroqModel = null;
+            workingGeminiModel = null;
             showNotification('API key removed');
             renderApiKeySettingsStatus();
         };
@@ -5827,12 +6276,18 @@
         function renderApiKeySettingsStatus() {
             const statusEl = document.getElementById('apiKeySettingsStatus');
             const removeBtn = document.getElementById('apiKeyRemoveBtn');
+            const select = document.getElementById('aiProviderSelect');
+            if (select) select.value = getAIProvider();
             if (!statusEl) return;
-            const hasKey = !!getGroqApiKey();
-            statusEl.textContent = hasKey ? '🔑 API key is set on this device' : '⚠️ No API key set — AI features are off';
+            const hasKey = !!getActiveApiKey();
+            const providerName = getAIProvider() === 'gemini' ? 'Gemini' : 'Groq';
+            statusEl.textContent = hasKey
+                ? `🔑 ${providerName} API key is set on this device`
+                : `⚠️ No ${providerName} API key set — AI features are off`;
             if (removeBtn) removeBtn.style.display = hasKey ? 'inline-block' : 'none';
         }
         const GROQ_API_BASE = "https://api.groq.com/openai/v1";
+        const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
         // Models to try, in order. Update this list if Groq renames/retires models —
         // check https://console.groq.com/docs/models
@@ -5933,6 +6388,105 @@
             console.error("All models failed to initialize. Last error:", window.lastGroqError);
         }
 
+        // ===== Google AI Studio (Gemini) integration =====
+        // Models to try, in order — all "flash" models, chosen deliberately
+        // because they carry the highest free-tier request limits, so a
+        // personal API key doesn't run out quickly. "gemini-flash-latest" is
+        // Google's rolling alias for their current-best flash model; the
+        // rest are pinned fallbacks in case that alias or a specific model
+        // is ever unavailable for a given key.
+        const GEMINI_MODELS_TO_TRY = [
+            "gemini-flash-latest",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash"
+        ];
+
+        let workingGeminiModel = null; // set once we find a model that actually responds
+
+        // Low-level call to the Gemini REST API (generateContent).
+        // `input` can be a plain string (single-turn) or an array of
+        // { role, content } (OpenAI-style, from our shared message building)
+        // or { role, parts:[{text}] } (native Gemini shape).
+        async function callGemini(modelName, input, systemInstruction = null) {
+            const url = `${GEMINI_API_BASE}/models/${modelName}:generateContent?key=${encodeURIComponent(getGeminiApiKey())}`;
+
+            let contents;
+            if (typeof input === 'string') {
+                contents = [{ role: 'user', parts: [{ text: input }] }];
+            } else {
+                contents = input
+                    .filter(m => m.role !== 'system') // system goes in systemInstruction, not contents
+                    .map(m => ({
+                        role: m.role === 'assistant' ? 'model' : m.role,
+                        parts: m.parts || [{ text: m.content || '' }]
+                    }));
+            }
+
+            const body = { contents };
+            if (systemInstruction) {
+                body.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok) {
+                const geminiMessage = data?.error?.message || res.statusText;
+                const err = new Error(`HTTP ${res.status}: ${geminiMessage}`);
+                err.status = res.status;
+                throw err;
+            }
+
+            const parts = data?.candidates?.[0]?.content?.parts || [];
+            const text = parts.map(p => p.text || "").join("");
+            if (!text) {
+                // A common non-error case: the response was cut off by a safety
+                // filter or hit the token limit with no text produced yet.
+                const finishReason = data?.candidates?.[0]?.finishReason;
+                throw new Error(finishReason
+                    ? `Gemini returned no text (finishReason: ${finishReason}).`
+                    : "Gemini returned an empty response.");
+            }
+            return text;
+        }
+
+        // Initialize Gemini AI: find the first model in our list that actually works
+        window.initializeGeminiAI = async function () {
+            console.log("Attempting to initialize Gemini AI via REST...");
+
+            if (!getGeminiApiKey()) {
+                console.error("No Gemini API key set.");
+                return;
+            }
+
+            for (const modelName of GEMINI_MODELS_TO_TRY) {
+                try {
+                    console.log(`Trying Gemini model: ${modelName}`);
+                    await callGemini(modelName, "Hello");
+                    console.log(`Successfully connected using Gemini model: ${modelName}`);
+                    workingGeminiModel = modelName;
+                    return; // success
+                } catch (modelError) {
+                    console.log(`Gemini model ${modelName} failed: ${modelError.message}`);
+                    // Auth/permission error — the key itself is the problem, no
+                    // point trying other models.
+                    if (modelError.status === 400 || modelError.status === 401 || modelError.status === 403) {
+                        console.error("Auth/permission error from Gemini — likely a bad API key:", modelError.message);
+                        window.lastGeminiError = modelError.message;
+                        return;
+                    }
+                    window.lastGeminiError = modelError.message;
+                }
+            }
+
+            console.error("All Gemini models failed to initialize. Last error:", window.lastGeminiError);
+        }
+
         // Get AI context with user data
         window.getAIContext = function () {
             const now = new Date();
@@ -5991,17 +6545,32 @@
         window.generateAIResponse = async function (userMessage) {
             console.log("Generating AI response for:", userMessage);
 
-            if (!getGroqApiKey()) {
-                return `🔑 **No AI Key Set**\n\nYou don't have an API key set up. Ask Zezo for one, then add it in Settings → AI Settings.`;
+            const provider = getAIProvider();
+
+            if (!getActiveApiKey()) {
+                const providerName = provider === 'gemini' ? 'Gemini' : 'Groq';
+                return `🔑 **No AI Key Set**\n\nYou don't have a ${providerName} API key set up. Add your own key in Settings → AI Settings (you can also switch providers there).`;
             }
 
-            if (!workingGroqModel) {
-                console.log("AI model not initialized, attempting initialization...");
-                await initializeGroqAI();
+            if (provider === 'gemini') {
+                if (!workingGeminiModel) {
+                    console.log("Gemini model not initialized, attempting initialization...");
+                    await initializeGeminiAI();
+                    if (!workingGeminiModel) {
+                        console.error("Failed to initialize Gemini model");
+                        const detail = window.lastGeminiError ? `\n\n**Details from Gemini:** ${window.lastGeminiError}` : "";
+                        return `❌ **AI Connection Failed**\n\nGemini could not be initialized.${detail}\n\nCommon causes:\n\n• Invalid or revoked API key\n• The key or project has hit its rate limit\n• Network connectivity problem\n\nCheck your key at https://aistudio.google.com/apikey`;
+                    }
+                }
+            } else {
                 if (!workingGroqModel) {
-                    console.error("Failed to initialize AI model");
-                    const detail = window.lastGroqError ? `\n\n**Details from Groq:** ${window.lastGroqError}` : "";
-                    return `❌ **AI Connection Failed**\n\nThe Groq AI could not be initialized.${detail}\n\nCommon causes:\n\n• Invalid or revoked API key\n• The key or project has hit its rate limit\n• Network connectivity problem\n\nCheck your key at https://console.groq.com/keys`;
+                    console.log("AI model not initialized, attempting initialization...");
+                    await initializeGroqAI();
+                    if (!workingGroqModel) {
+                        console.error("Failed to initialize AI model");
+                        const detail = window.lastGroqError ? `\n\n**Details from Groq:** ${window.lastGroqError}` : "";
+                        return `❌ **AI Connection Failed**\n\nThe Groq AI could not be initialized.${detail}\n\nCommon causes:\n\n• Invalid or revoked API key\n• The key or project has hit its rate limit\n• Network connectivity problem\n\nCheck your key at https://console.groq.com/keys`;
+                    }
                 }
             }
 
@@ -6091,15 +6660,22 @@ Use the conversation history provided to you to remember what's already been sai
             const messages = turns.length > 0 ? turns : [{ role: 'user', content: userMessage }];
 
             try {
-                console.log(`Sending request to Groq model: ${workingGroqModel} with ${messages.length} turns of history...`);
-                const text = await callGroq(workingGroqModel, messages, systemPrompt);
-                console.log("AI response received:", text);
-                return text;
+                if (provider === 'gemini') {
+                    console.log(`Sending request to Gemini model: ${workingGeminiModel} with ${messages.length} turns of history...`);
+                    const text = await callGemini(workingGeminiModel, messages, systemPrompt);
+                    console.log("AI response received:", text);
+                    return text;
+                } else {
+                    console.log(`Sending request to Groq model: ${workingGroqModel} with ${messages.length} turns of history...`);
+                    const text = await callGroq(workingGroqModel, messages, systemPrompt);
+                    console.log("AI response received:", text);
+                    return text;
+                }
             } catch (error) {
                 console.error("AI generation error:", error);
                 // If this specific model started failing mid-session, clear it so the
                 // next request re-runs initialization and can fall back to another model.
-                workingGroqModel = null;
+                if (provider === 'gemini') workingGeminiModel = null; else workingGroqModel = null;
                 return `❌ **AI Request Failed**\n\nError: ${error.message}\n\nThis could be due to:\n• API rate limits\n• Network issues\n• Invalid request format\n\nPlease try again in a moment.`;
             }
         }
@@ -6967,6 +7543,17 @@ Use the conversation history provided to you to remember what's already been sai
 
             setupConnectivityMonitor();
 
+            // Keep lastActive fresh while the app is actually open — a
+            // one-time write on login isn't enough since someone could keep
+            // the PWA open for a while (or reopen it briefly) and we want
+            // "3 days inactive" to mean 3 days since they were truly last here.
+            setInterval(() => {
+                if (currentUser) markUserActive(currentUser.username);
+            }, 15 * 60 * 1000); // every 15 minutes while open
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && currentUser) markUserActive(currentUser.username);
+            });
+
             // Listen for the shared monthly cycle boundary (applies to everyone,
             // controlled by Zezo) — attach regardless of login so it's ready
             // the moment someone logs in.
@@ -6996,6 +7583,13 @@ Use the conversation history provided to you to remember what's already been sai
             if (!currentUser) return;
 
             const username = currentUser.username;
+
+            // Record this as activity (powers the 3-day-inactive push notification)
+            // and push this device's FCM token up so the server-side check can reach it.
+            markUserActive(username);
+            syncFcmTokenToServer();
+            triggerInactivityCheck();
+            ensureNotificationsAndBackgroundReady();
 
             // Show/hide the Missions tab and the allowance mode toggle — Zezo only
             applyZezoOnlyUI();
@@ -8186,7 +8780,7 @@ Use the conversation history provided to you to remember what's already been sai
                 const nearLimit = budget > 0 && pct >= alertThreshold;
                 const barColor = over
                     ? 'linear-gradient(90deg, #ff6b6b, #ee5a24)'
-                    : (nearLimit ? 'linear-gradient(90deg, #feca57, #ff9f43)' : 'linear-gradient(90deg, #667eea, #2ed573)');
+                    : (nearLimit ? 'linear-gradient(90deg, #feca57, #ff9f43)' : 'linear-gradient(90deg, var(--accent-3, #667eea), #2ed573)');
 
                 // One-time-per-day notification when crossing the threshold.
                 if (budget > 0 && nearLimit) {
@@ -10169,6 +10763,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             updateCharts();
             cacheUserDataLocally(username);
 
+            // Powers the "don't forget to add your purchases" reminder — only
+            // resets the clock on actual purchases, not allowance/transfers/etc.
+            if (type === 'Purchase') markPurchaseLogged(username);
+
             // Durably queue it, then try to sync immediately (no-ops instantly
             // if we're offline — it'll get picked up by flushPendingWrites()
             // the moment we're back online).
@@ -10465,18 +11063,18 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 const isBoolField = typeof val === 'boolean';
                 let inputHtml;
                 if (isBucketField) {
-                    inputHtml = `<select id="${subId}_field_${key}" style="width:100%; padding:6px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:#1a1a2e; color:white;">
+                    inputHtml = `<select id="${subId}_field_${key}" style="width:100%; padding:6px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:var(--bg-color-2, #1a1a2e); color:white;">
                         ${BUCKETS.map(b => `<option value="${b}" ${b === val ? 'selected' : ''}>${b}</option>`).join('')}
                     </select>`;
                 } else if (isBoolField) {
-                    inputHtml = `<select id="${subId}_field_${key}" style="width:100%; padding:6px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:#1a1a2e; color:white;">
+                    inputHtml = `<select id="${subId}_field_${key}" style="width:100%; padding:6px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:var(--bg-color-2, #1a1a2e); color:white;">
                         <option value="true" ${val ? 'selected' : ''}>true</option>
                         <option value="false" ${!val ? 'selected' : ''}>false</option>
                     </select>`;
                 } else {
                     const type = typeof val === 'number' ? 'number' : 'text';
                     const safeVal = String(val).replace(/"/g, '&quot;');
-                    inputHtml = `<input id="${subId}_field_${key}" type="${type}" value="${safeVal}" style="width:100%; padding:6px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:#1a1a2e; color:white;">`;
+                    inputHtml = `<input id="${subId}_field_${key}" type="${type}" value="${safeVal}" style="width:100%; padding:6px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:var(--bg-color-2, #1a1a2e); color:white;">`;
                 }
                 return `<div style="margin-bottom:8px;"><div style="font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:3px;">${key}</div>${inputHtml}</div>`;
             }).join('');
@@ -11264,6 +11862,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const aiActionsToggle = document.getElementById('aiActionsEnabledToggle');
             if (aiActionsToggle) aiActionsToggle.checked = isAIActionsEnabled();
 
+            // Appearance (custom theme colors)
+            populateAppearanceInputs();
+            renderThemePresets();
+
             document.getElementById('settingsModal').classList.add('active');
         };
 
@@ -11386,7 +11988,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             } else if (progressPercent >= alertThreshold * 0.8) {
                 progressBar.style.background = 'linear-gradient(90deg, #feca57, #ff9f43)';
             } else {
-                progressBar.style.background = 'linear-gradient(90deg, #667eea, #2ed573)';
+                progressBar.style.background = 'linear-gradient(90deg, var(--accent-3, #667eea), #2ed573)';
             }
         }
 
@@ -12567,10 +13169,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 <!-- Budget Overview -->
                 <div style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
                     <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">📊 Budget Progress</div>
-                    <div style="font-size: 28px; font-weight: 700; color: #667eea;">${currentMonthSpending} ⃁</div>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--accent-3, #667eea);">${currentMonthSpending} ⃁</div>
                     <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 4px;">of ${budgetTarget} ⃁ (${budgetProgress.toFixed(0)}%)</div>
                     <div style="background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; margin: 12px 0; overflow: hidden;">
-                        <div style="height: 100%; background: linear-gradient(90deg, #667eea, #2ed573); width: ${Math.min(budgetProgress, 100)}%;"></div>
+                        <div style="height: 100%; background: linear-gradient(90deg, var(--accent-3, #667eea), #2ed573); width: ${Math.min(budgetProgress, 100)}%;"></div>
                     </div>
                     <div style="font-size: 13px; color: ${budgetRemaining > 0 ? 'rgba(46, 213, 115, 0.9)' : 'rgba(255, 107, 107, 0.9)'};">
                         ${budgetRemaining > 0 ? `✓ ${budgetRemaining} ⃁ remaining` : `⚠️ Over budget by ${Math.abs(budgetRemaining)} ⃁`}
@@ -12603,7 +13205,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                     <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.95);">Spending by Category</h4>
                     ${sortedCategories.map(([category, amount]) => {
                         const categoryNames = { hangout: 'Hangout', savings: 'Savings', playstation: 'PlayStation' };
-                        const categoryColors = { hangout: '#667eea', savings: '#2ed573', playstation: '#ff6b6b' };
+                        const categoryColors = { hangout: 'var(--accent-3, #667eea)', savings: '#2ed573', playstation: '#ff6b6b' };
                         const percent = currentMonthSpending > 0 ? (amount / currentMonthSpending * 100).toFixed(0) : 0;
                         return `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -12785,7 +13387,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
                         <div style="background: rgba(0, 245, 212, 0.1); border: 1px solid rgba(0, 245, 212, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
                             <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">📈 Highest Balance Ever</div>
-                            <div style="font-size: 24px; font-weight: 700; color: #00f5d4;">${highestBalance} ⃁</div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--accent-1, #00f5d4);">${highestBalance} ⃁</div>
                         </div>
 
                         <div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
@@ -12794,8 +13396,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                         </div>
 
                         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                            <button type="button" onclick="setUserDetailPeriod('current')" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid ${userDetailPeriod === 'current' ? 'rgba(0, 245, 212, 0.5)' : 'rgba(255,255,255,0.15)'}; background: ${userDetailPeriod === 'current' ? 'rgba(0, 245, 212, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${userDetailPeriod === 'current' ? '#00f5d4' : 'rgba(255,255,255,0.7)'}; font-weight: 600; font-size: 13px; cursor: pointer;">This Month</button>
-                            <button type="button" onclick="setUserDetailPeriod('last')" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid ${userDetailPeriod === 'last' ? 'rgba(0, 245, 212, 0.5)' : 'rgba(255,255,255,0.15)'}; background: ${userDetailPeriod === 'last' ? 'rgba(0, 245, 212, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${userDetailPeriod === 'last' ? '#00f5d4' : 'rgba(255,255,255,0.7)'}; font-weight: 600; font-size: 13px; cursor: pointer;">Last Month</button>
+                            <button type="button" onclick="setUserDetailPeriod('current')" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid ${userDetailPeriod === 'current' ? 'rgba(0, 245, 212, 0.5)' : 'rgba(255,255,255,0.15)'}; background: ${userDetailPeriod === 'current' ? 'rgba(0, 245, 212, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${userDetailPeriod === 'current' ? 'var(--accent-1, #00f5d4)' : 'rgba(255,255,255,0.7)'}; font-weight: 600; font-size: 13px; cursor: pointer;">This Month</button>
+                            <button type="button" onclick="setUserDetailPeriod('last')" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid ${userDetailPeriod === 'last' ? 'rgba(0, 245, 212, 0.5)' : 'rgba(255,255,255,0.15)'}; background: ${userDetailPeriod === 'last' ? 'rgba(0, 245, 212, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${userDetailPeriod === 'last' ? 'var(--accent-1, #00f5d4)' : 'rgba(255,255,255,0.7)'}; font-weight: 600; font-size: 13px; cursor: pointer;">Last Month</button>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">

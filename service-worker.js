@@ -1,4 +1,4 @@
-const CACHE_NAME = 'money-manager-v9';
+const CACHE_NAME = 'money-manager-v10';
 const urlsToCache = [
     './',
     './index.html',

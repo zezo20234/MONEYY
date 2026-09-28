@@ -1494,6 +1494,18 @@
         }
 
         /* Rank Badge */
+        /* Savings goal ring (progress to the next rank) */
+        .savings-ring { display: none; align-items: center; gap: 14px; margin: 12px 0 4px; }
+        .savings-ring svg { width: 78px; height: 78px; flex-shrink: 0; transform: rotate(-90deg); }
+        .savings-ring .ring-bg { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 8; }
+        .savings-ring .ring-fg { fill: none; stroke: var(--accent-1, #00f5d4); stroke-width: 8; stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s ease; }
+        .savings-ring.done .ring-fg { stroke: #feca57; }
+        .savings-ring .ring-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 700; }
+        .savings-ring .ring-wrap { position: relative; width: 78px; height: 78px; flex-shrink: 0; }
+        .savings-ring .ring-info { font-size: 13px; line-height: 1.4; color: rgba(255,255,255,0.75); }
+        .savings-ring .ring-info b { display: block; color: #fff; font-size: 14px; }
         .rank-badge {
             margin-top: 10px;
             padding: 8px 12px;
@@ -4163,6 +4175,7 @@
                             <div class="card-amount" id="savingsBalance">0 ⃁</div>
                         </div>
                         <div class="card-limit" id="savingsLimit">Flexible savings</div>
+                        <div class="savings-ring" id="savingsRing"></div>
                         <div class="rank-badge" id="rankBadge" style="display: none;"></div>
                     </div>
 
@@ -4197,8 +4210,6 @@
                             <span id="categoryBudgetModeTag"
                                 style="font-size: 11px; font-weight: 600; margin-left: 6px; padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,0.12); vertical-align: middle;"></span>
                         </div>
-                        <button type="button" onclick="openBudgetSettings()"
-                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 10px; cursor: pointer;">Edit</button>
                     </div>
                     <div id="categoryAlertsList"></div>
                 </div>
@@ -5844,19 +5855,36 @@
         // and anything rendered dynamically afterwards.
         (function () {
             const RIYAL_CHAR = '\u20C1'; // ⃁
-            const RIYAL_FALLBACK = 'ر.س';
+            const RIYAL_FALLBACK = 'SAR';
 
+            // Draws the symbol on a canvas and compares the pixels with characters that
+            // are guaranteed to be missing. Comparing widths (the old way) isn't reliable:
+            // older iOS can draw a missing glyph blank or from a different fallback font.
+            // Add ?sar=1 to the URL to force the SAR text for testing.
             function supportsRiyalGlyph() {
                 try {
+                    if (/[?&]sar=1\b/.test(location.search)) return false;
                     const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    ctx.font = '40px sans-serif';
-                    // A codepoint guaranteed to be unassigned in any real font,
-                    // so it always renders as the browser's ".notdef" box —
-                    // that gives us the width of a "missing glyph" to compare against.
-                    const missingWidth = ctx.measureText('\uFFFF').width;
-                    const riyalWidth = ctx.measureText(RIYAL_CHAR).width;
-                    return riyalWidth > 0 && Math.abs(riyalWidth - missingWidth) > 0.5;
+                    canvas.width = 48; canvas.height = 48;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    ctx.font = '32px -apple-system, "Helvetica Neue", Arial, sans-serif';
+                    ctx.textBaseline = 'top';
+                    const draw = (ch) => {
+                        ctx.clearRect(0, 0, 48, 48);
+                        ctx.fillText(ch, 4, 4);
+                        return ctx.getImageData(0, 0, 48, 48).data;
+                    };
+                    const same = (x, y) => {
+                        for (let i = 3; i < x.length; i += 4) if (x[i] !== y[i]) return false;
+                        return true;
+                    };
+                    const riyal = draw(RIYAL_CHAR);
+                    let blank = true;
+                    for (let i = 3; i < riyal.length; i += 4) { if (riyal[i]) { blank = false; break; } }
+                    if (blank) return false; // nothing drawn at all
+                    // Unassigned codepoints: they render as the "missing glyph" box (or a blank).
+                    const missing = ['\uFFFF', '\u20C2', '\u20FF'];
+                    return !missing.some(ch => same(riyal, draw(ch)));
                 } catch (e) {
                     return true; // can't test — don't risk breaking anything
                 }
@@ -5868,9 +5896,15 @@
                 if (!node) return;
                 if (node.nodeType === Node.TEXT_NODE) {
                     if (node.nodeValue && node.nodeValue.indexOf(RIYAL_CHAR) !== -1) {
-                        node.nodeValue = node.nodeValue.split(RIYAL_CHAR).join(RIYAL_FALLBACK);
+                        node.nodeValue = node.nodeValue
+                            .replace(/\u20C1(?=[0-9])/g, RIYAL_FALLBACK + ' ')
+                            .split(RIYAL_CHAR).join(RIYAL_FALLBACK);
                     }
                 } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    ['placeholder', 'title', 'aria-label'].forEach(attr => {
+                        const v = node.getAttribute(attr);
+                        if (v && v.indexOf(RIYAL_CHAR) !== -1) node.setAttribute(attr, v.split(RIYAL_CHAR).join(RIYAL_FALLBACK));
+                    });
                     node.childNodes.forEach(fixText);
                 }
             }
@@ -5885,13 +5919,14 @@
                 for (const m of mutations) {
                     if (m.type === 'childList') {
                         m.addedNodes.forEach(fixText);
-                    } else if (m.type === 'characterData') {
+                    } else if (m.type === 'characterData' || m.type === 'attributes') {
                         fixText(m.target);
                     }
                 }
             });
             const startObserving = () => riyalObserver.observe(document.documentElement, {
-                childList: true, subtree: true, characterData: true
+                childList: true, subtree: true, characterData: true,
+                attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label']
             });
             if (document.documentElement) startObserving();
             else document.addEventListener('DOMContentLoaded', startObserving);
@@ -12520,7 +12555,32 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 `;
             }
 
+            updateSavingsRing(info);
             checkRankUp(info.level);
+        }
+
+        // Ring on the Savings card: progress from the previous rank line to the next one.
+        function updateSavingsRing(info) {
+            const el = document.getElementById('savingsRing');
+            if (!el) return;
+            const savings = balances.savings;
+            const done = info.level === 5;
+            const from = info.level > 0 ? info.thresholds[info.level - 1] : 0;
+            const to = done ? info.thresholds[4] : info.thresholds[info.level];
+            const pct = done ? 100 : Math.max(0, Math.min(100, Math.round((savings - from) / Math.max(1, to - from) * 100)));
+            const C = 2 * Math.PI * 34;
+            el.style.display = 'flex';
+            el.classList.toggle('done', done);
+            el.innerHTML = `
+                <div class="ring-wrap">
+                    <svg viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="34"></circle>
+                        <circle class="ring-fg" cx="40" cy="40" r="34" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct / 100)).toFixed(1)}"></circle></svg>
+                    <div class="ring-center">${done ? '🏆' : pct + '%'}</div>
+                </div>
+                <div class="ring-info">
+                    <b>${done ? 'Top rank reached!' : 'Goal: ' + RANK_TIERS[info.level].name}</b>
+                    ${done ? savings + ' \u20c1 saved' : savings + ' / ' + to + ' \u20c1'}
+                </div>`;
         }
 
         // Detect a rank-up by comparing against the last known rank stored per-user

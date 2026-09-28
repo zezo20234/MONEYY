@@ -1862,6 +1862,22 @@
             flex-direction: row-reverse;
         }
 
+        .ai-retry-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
+            color: #000;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .ai-retry-btn:disabled { opacity: 0.6; cursor: default; }
+
         .ai-message-content {
             background: rgba(255, 255, 255, 0.1);
             padding: 12px 16px;
@@ -7306,10 +7322,35 @@
         // rest are pinned fallbacks in case that alias or a specific model
         // is ever unavailable for a given key.
         const GEMINI_MODELS_TO_TRY = [
+            "gemini-3.8-flash",
             "gemini-flash-latest",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash"
+            "gemini-2.5-flash"
         ];
+
+        // Google retires models regularly (that's what caused the old
+        // "gemini-2.0-flash is no longer available" 404). If every model in
+        // the hardcoded list fails, ask the API which models this key can
+        // actually use and try the newest "flash" ones automatically.
+        async function discoverGeminiFlashModels() {
+            try {
+                const res = await fetch(`${GEMINI_API_BASE}/models?pageSize=200&key=${encodeURIComponent(getGeminiApiKey())}`);
+                if (!res.ok) return [];
+                const data = await res.json();
+                const versionOf = n => {
+                    const m = n.match(/gemini-(\d+(?:\.\d+)?)/);
+                    return m ? parseFloat(m[1]) : 0;
+                };
+                return (data.models || [])
+                    .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+                    .map(m => m.name.replace(/^models\//, ''))
+                    .filter(n => /flash/.test(n) && !/lite|image|tts|live|audio|exp|embedding|robotics|computer-use/.test(n))
+                    .sort((a, b) => versionOf(b) - versionOf(a))
+                    .slice(0, 4);
+            } catch (e) {
+                console.log("Gemini model discovery failed:", e.message);
+                return [];
+            }
+        }
 
         let workingGeminiModel = null; // set once we find a model that actually responds
 
@@ -7374,7 +7415,15 @@
                 return;
             }
 
-            for (const modelName of GEMINI_MODELS_TO_TRY) {
+            window.lastGeminiError = null;
+            const tried = new Set();
+            let candidates = [...GEMINI_MODELS_TO_TRY];
+            let discovered = false;
+
+            while (candidates.length) {
+                const modelName = candidates.shift();
+                if (tried.has(modelName)) continue;
+                tried.add(modelName);
                 try {
                     console.log(`Trying Gemini model: ${modelName}`);
                     await callGemini(modelName, "Hello");
@@ -7391,6 +7440,12 @@
                         return;
                     }
                     window.lastGeminiError = modelError.message;
+                }
+
+                // Hardcoded list exhausted — ask Google which models exist now.
+                if (!candidates.length && !discovered) {
+                    discovered = true;
+                    candidates = await discoverGeminiFlashModels();
                 }
             }
 
@@ -7737,6 +7792,9 @@ Use the conversation history provided to you to remember what's already been sai
 
             if (!message) return;
 
+            // A new message replaces any older Retry buttons
+            document.querySelectorAll('.ai-retry-btn').forEach(b => b.remove());
+
             // Add user message to chat
             addChatMessage(message, 'user');
             input.value = '';
@@ -7746,14 +7804,44 @@ Use the conversation history provided to you to remember what's already been sai
                 return;
             }
 
-            // Show typing indicator
+            await runAIRequest(message);
+        }
+
+        // Errors from generateAIResponse start with "❌ **AI ..." — detect them
+        // so they aren't saved into the conversation memory (which would be
+        // sent to the model on the next turn) and so we can offer Retry.
+        function isAIErrorResponse(text) {
+            return typeof text === 'string' && text.startsWith('❌ **AI');
+        }
+
+        // Runs one AI request for `message` (the user's message is already in
+        // the chat). On failure shows the error with a Retry button that
+        // re-sends the exact same prompt.
+        async function runAIRequest(message) {
             const typingIndicator = addTypingIndicator();
-
-            // Generate AI response
             const response = await generateAIResponse(message);
-
-            // Remove typing indicator and add response
             removeTypingIndicator(typingIndicator);
+
+            if (isAIErrorResponse(response)) {
+                const errorDiv = addChatMessage(response, 'assistant', false); // not saved to history
+                const btn = document.createElement('button');
+                btn.className = 'ai-retry-btn';
+                btn.textContent = '🔄 Retry';
+                btn.onclick = async () => {
+                    btn.disabled = true;
+                    errorDiv.remove();
+                    if (getAIProvider() === 'gemini') workingGeminiModel = null; else workingGroqModel = null;
+                    if (!isOnline) {
+                        addChatMessage("✕ Still offline — reconnect and tap Retry again.", 'assistant', false);
+                        return;
+                    }
+                    await runAIRequest(message);
+                };
+                errorDiv.querySelector('.ai-message-content').appendChild(document.createElement('br'));
+                errorDiv.querySelector('.ai-message-content').appendChild(btn);
+                document.getElementById('aiChatMessages').scrollTop = document.getElementById('aiChatMessages').scrollHeight;
+                return;
+            }
 
             const { cleanText, actions } = extractAIAction(response);
             addChatMessage(cleanText, 'assistant');
@@ -7788,6 +7876,7 @@ Use the conversation history provided to you to remember what's already been sai
                 chatHistory.push({ sender, content, ts: Date.now() });
                 saveChatHistory();
             }
+            return messageDiv;
         }
 
         // Add typing indicator

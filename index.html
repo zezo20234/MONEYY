@@ -4193,7 +4193,12 @@
                 <!-- Category-Specific Budget Alerts -->
                 <div class="balance-card" id="categoryAlertsCard" style="background: rgba(255,255,255,0.05); display: none;">
                     <div class="card-header">
-                        <div class="card-title">🔔 Category Budgets</div>
+                        <div class="card-title">🔔 Category Budgets
+                            <span id="categoryBudgetModeTag"
+                                style="font-size: 11px; font-weight: 600; margin-left: 6px; padding: 2px 8px; border-radius: 10px; background: rgba(255,255,255,0.12); vertical-align: middle;"></span>
+                        </div>
+                        <button type="button" onclick="openBudgetSettings()"
+                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 10px; cursor: pointer;">Edit</button>
                     </div>
                     <div id="categoryAlertsList"></div>
                 </div>
@@ -5280,33 +5285,48 @@
             <div class="form-group" id="budgetSettingsSection"
                 style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
                 <label class="form-label">📊 Monthly Budget Planning</label>
-                <div class="form-group">
-                    <label class="form-label">Monthly Budget Target (⃁)</label>
-                    <input type="number" class="form-input" id="monthlyBudgetTarget" placeholder="140">
-                    <small style="color: rgba(255,255,255,0.5);">Set your total monthly spending goal</small>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <button type="button" class="mode-option-btn selected" id="budgetModeAutoBtn" style="flex:1;"
+                        onclick="setBudgetMode('auto')">Auto<span class="mode-option-sub">From your allowance</span></button>
+                    <button type="button" class="mode-option-btn" id="budgetModeCustomBtn" style="flex:1;"
+                        onclick="setBudgetMode('custom')">Custom<span class="mode-option-sub">Set it yourself</span></button>
                 </div>
+                <small id="budgetModeNote" style="color: rgba(255,255,255,0.5); display:block; margin-bottom: 12px;"></small>
+
+                <!-- Auto: read-only, calculated from the monthly income + allowance split above -->
+                <div id="budgetAutoView" style="margin-bottom: 16px;"></div>
+
+                <!-- Custom: the user's own numbers -->
+                <div id="budgetCustomView" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">Monthly Budget Target (⃁)</label>
+                        <input type="number" class="form-input" id="monthlyBudgetTarget" placeholder="140" inputmode="numeric" oninput="updateBudgetCustomTotal()">
+                        <small style="color: rgba(255,255,255,0.5);">Your total monthly spending goal</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Budget Category Breakdown</label>
+                        <div id="budgetCategoryGrid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
+                                <input type="number" class="form-input" id="budgetHangoutPercent" value="50" min="0" max="100" oninput="updateBudgetCustomTotal()">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
+                                <input type="number" class="form-input" id="budgetSavingsPercent" value="30" min="0" max="100" oninput="updateBudgetCustomTotal()">
+                            </div>
+                            <div id="budgetPlaystationPercentGroup">
+                                <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
+                                <input type="number" class="form-input" id="budgetPlaystationPercent" value="20" min="0" max="100" oninput="updateBudgetCustomTotal()">
+                            </div>
+                        </div>
+                        <small id="budgetCustomTotal" style="display:block; margin-top: 8px; color: rgba(255,255,255,0.5);"></small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Budget Alert Threshold (%)</label>
                     <input type="number" class="form-input" id="budgetAlertThreshold" placeholder="80" min="50" max="100">
                     <small style="color: rgba(255,255,255,0.5);">Get notified when you've used this % of your budget</small>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Budget Category Breakdown</label>
-                    <div id="budgetCategoryGrid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
-                        <div>
-                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
-                            <input type="number" class="form-input" id="budgetHangoutPercent" value="50" min="0" max="100">
-                        </div>
-                        <div>
-                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
-                            <input type="number" class="form-input" id="budgetSavingsPercent" value="30" min="0" max="100">
-                        </div>
-                        <div id="budgetPlaystationPercentGroup">
-                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
-                            <input type="number" class="form-input" id="budgetPlaystationPercent" value="20" min="0" max="100">
-                        </div>
-                    </div>
-                    <small style="color: rgba(255,255,255,0.5);">How to allocate your monthly budget across categories</small>
                 </div>
             </div>
 
@@ -9842,25 +9862,108 @@ Use the conversation history provided to you to remember what's already been sai
             return totals;
         }
 
+        // ===== Budget breakdown: Auto (follows the allowance split) or Custom (edited by the user) =====
+        // Auto is the default for everyone: the monthly budget is the usual allowance and each
+        // category's budget is that category's share of it, so it updates by itself whenever the
+        // income or split changes. Custom keeps the numbers the user typed in Settings.
+        const BUDGET_LEGACY_DEFAULTS = { target: 140, hangout: 50, savings: 30, playstation: 20 };
+        const BUDGET_CATEGORY_LABELS = { hangout: 'Hangout', savings: 'Savings', playstation: 'PlayStation' };
+
+        function budgetNum(v, fallback) {
+            return (v === undefined || v === null || v === '' || isNaN(Number(v))) ? fallback : Number(v);
+        }
+
+        function isBudgetCustom(p) {
+            p = p || userPreferences || {};
+            if (p.budgetMode === 'custom') return true;
+            if (p.budgetMode === 'auto') return false;
+            // Accounts saved before this feature: every save wrote 140 / 50-30-20 whether or not the
+            // person changed it, so only treat the budget as custom if it differs from those defaults.
+            const d = BUDGET_LEGACY_DEFAULTS;
+            const differs = (v, def) => v !== undefined && v !== null && Number(v) !== def;
+            return differs(p.monthlyBudgetTarget, d.target)
+                || differs(p.budgetHangoutPercent, d.hangout)
+                || differs(p.budgetSavingsPercent, d.savings)
+                || differs(p.budgetPlaystationPercent, d.playstation);
+        }
+
+        function makeBudgetPlan(mode, target, amounts, psOn) {
+            const cats = ['hangout', 'savings', 'playstation'].map(key => {
+                const amount = Math.max(0, Math.round(amounts[key] || 0));
+                return {
+                    key,
+                    label: BUDGET_CATEGORY_LABELS[key],
+                    enabled: key !== 'playstation' || !!psOn,
+                    amount,
+                    pct: target > 0 ? Math.round(amount / target * 1000) / 10 : 0
+                };
+            });
+            return { mode, target, cats };
+        }
+
+        // Whole-number percentages that always add up to 100 (the last enabled bucket takes the rest).
+        function budgetWholePercents(plan) {
+            const h = Math.round(plan.cats[0].pct);
+            const psOn = plan.cats[2].enabled;
+            const s = psOn ? Math.round(plan.cats[1].pct) : Math.max(0, 100 - h);
+            const ps = psOn ? Math.max(0, 100 - h - s) : 0;
+            return { hangout: h, savings: Math.max(0, psOn ? Math.min(s, 100 - h) : s), playstation: ps };
+        }
+
+        function getAutoBudgetPlan() {
+            const total = getUsualAllowanceAmount();
+            const split = computeAllowanceSplit(total, 'normal');
+            return makeBudgetPlan('auto', total, split, userPreferences.enablePlaystation);
+        }
+
+        function getBudgetPlan() {
+            const p = userPreferences || {};
+            if (!isBudgetCustom(p)) return getAutoBudgetPlan();
+            const d = BUDGET_LEGACY_DEFAULTS;
+            const psOn = !!p.enablePlaystation;
+            const target = budgetNum(p.monthlyBudgetTarget, d.target) > 0 ? budgetNum(p.monthlyBudgetTarget, d.target) : d.target;
+            const pct = {
+                hangout: budgetNum(p.budgetHangoutPercent, d.hangout),
+                savings: budgetNum(p.budgetSavingsPercent, d.savings),
+                playstation: psOn ? budgetNum(p.budgetPlaystationPercent, d.playstation) : 0
+            };
+            return makeBudgetPlan('custom', target, {
+                hangout: target * pct.hangout / 100,
+                savings: target * pct.savings / 100,
+                playstation: target * pct.playstation / 100
+            }, psOn);
+        }
+
+        // Turn the current (auto) numbers into saved custom numbers, so a change to one of them
+        // (e.g. made by the AI assistant) doesn't wipe out the rest.
+        function seedCustomBudgetFromPlan() {
+            if (isBudgetCustom()) { userPreferences.budgetMode = 'custom'; return; }
+            const plan = getAutoBudgetPlan();
+            const w = budgetWholePercents(plan);
+            userPreferences.monthlyBudgetTarget = plan.target;
+            userPreferences.budgetHangoutPercent = w.hangout;
+            userPreferences.budgetSavingsPercent = w.savings;
+            userPreferences.budgetPlaystationPercent = w.playstation;
+            userPreferences.budgetMode = 'custom';
+        }
+
         function updateCategoryBudgetAlerts() {
             const card = document.getElementById('categoryAlertsCard');
             const list = document.getElementById('categoryAlertsList');
             if (!card || !list || !currentUser) return;
 
-            const monthlyTarget = userPreferences.monthlyBudgetTarget || 140;
+            const plan = getBudgetPlan();
             const alertThreshold = userPreferences.budgetAlertThreshold || 80;
-            const cats = [
-                { key: 'hangout', label: 'Hangout', pct: userPreferences.budgetHangoutPercent || 50, enabled: true },
-                { key: 'savings', label: 'Savings', pct: userPreferences.budgetSavingsPercent || 30, enabled: true },
-                { key: 'playstation', label: 'PlayStation', pct: userPreferences.budgetPlaystationPercent || 20, enabled: userPreferences.enablePlaystation }
-            ];
+            const cats = plan.cats;
             const spentByCategory = getMonthlySpendingByCategory();
+            const modeTag = document.getElementById('categoryBudgetModeTag');
+            if (modeTag) modeTag.textContent = plan.mode === 'auto' ? 'Auto' : 'Custom';
 
             card.style.display = 'block';
             const today = getTodayDateStr ? getTodayDateStr() : new Date().toDateString();
 
             list.innerHTML = cats.filter(c => c.enabled).map(c => {
-                const budget = Math.round((monthlyTarget * c.pct) / 100);
+                const budget = c.amount;
                 const spent = spentByCategory[c.key] || 0;
                 const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
                 const over = budget > 0 && spent > budget;
@@ -11984,6 +12087,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                     } else {
                         value = Number(value);
                     }
+                    if (['monthlyBudgetTarget', 'budgetHangoutPercent', 'budgetSavingsPercent', 'budgetPlaystationPercent'].includes(params.key)) {
+                        seedCustomBudgetFromPlan(); // editing a budget number means the user wants Custom
+                    }
                     userPreferences[params.key] = value;
                     const prefsRef = ref(database, `users/${currentUser.username}/preferences`);
                     set(prefsRef, userPreferences);
@@ -13045,12 +13151,18 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('settingsEnablePlaystation').value = userPreferences.enablePlaystation.toString();
             document.getElementById('settingsMonthlyIncome').value = userPreferences.monthlyIncome || userPreferences.defaultAllowanceAmount || '';
 
-            // Load budget settings
-            document.getElementById('monthlyBudgetTarget').value = userPreferences.monthlyBudgetTarget || 140;
+            // Load budget settings (Auto follows the allowance split; Custom uses the saved numbers)
             document.getElementById('budgetAlertThreshold').value = userPreferences.budgetAlertThreshold || 80;
-            document.getElementById('budgetHangoutPercent').value = userPreferences.budgetHangoutPercent || 50;
-            document.getElementById('budgetSavingsPercent').value = userPreferences.budgetSavingsPercent || 30;
-            document.getElementById('budgetPlaystationPercent').value = userPreferences.budgetPlaystationPercent || 20;
+            budgetDraftMode = isBudgetCustom() ? 'custom' : 'auto';
+            budgetCustomPrefilled = false;
+            if (budgetDraftMode === 'custom') {
+                const d = BUDGET_LEGACY_DEFAULTS;
+                document.getElementById('monthlyBudgetTarget').value = budgetNum(userPreferences.monthlyBudgetTarget, d.target);
+                document.getElementById('budgetHangoutPercent').value = budgetNum(userPreferences.budgetHangoutPercent, d.hangout);
+                document.getElementById('budgetSavingsPercent').value = budgetNum(userPreferences.budgetSavingsPercent, d.savings);
+                document.getElementById('budgetPlaystationPercent').value = budgetNum(userPreferences.budgetPlaystationPercent, d.playstation);
+                budgetCustomPrefilled = true;
+            }
 
             // Split is edited in ⃁ amounts. Older accounts that stored percentages
             // are converted using the monthly income.
@@ -13072,6 +13184,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             // Hide the PlayStation field in the split if the bucket is disabled
             toggleSettingsPlaystationVisibility();
+            renderBudgetSettings();
 
             // Rank threshold is only editable for non-Asser users — Asser's ranks
             // are fixed at 30/60/90/120/150 ⃁.
@@ -13150,6 +13263,105 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             note.textContent = over
                 ? 'These add up to more than your monthly income.'
                 : (ps ? 'PlayStation gets whatever is left of your monthly income.' : 'Savings gets whatever is left of your monthly income.');
+            renderBudgetSettings(); // keep the Auto budget preview in step with the split
+        };
+
+        // ----- Budget settings (Auto / Custom) -----
+        let budgetDraftMode = 'auto';
+        let budgetCustomPrefilled = false;
+
+        // What the Auto breakdown would be right now, based on what's typed in the income + split fields.
+        function getAutoBudgetPreviewFromForm() {
+            const incomeEl = document.getElementById('settingsMonthlyIncome');
+            const hEl = document.getElementById('settingsFixedHangout');
+            const sEl = document.getElementById('settingsFixedSavings');
+            const psSel = document.getElementById('settingsEnablePlaystation');
+            if (!incomeEl || !hEl || !sEl || !psSel) return getAutoBudgetPlan();
+            const psOn = psSel.value === 'true';
+            const income = Math.round(parseFloat(incomeEl.value) || 0);
+            if (!(income > 0)) return getAutoBudgetPlan();
+            const hangout = Math.min(Math.max(parseFloat(hEl.value) || 0, 0), income);
+            let savings, playstation;
+            if (psOn) {
+                savings = Math.min(Math.max(parseFloat(sEl.value) || 0, 0), income - hangout);
+                playstation = income - hangout - savings;
+            } else {
+                savings = income - hangout;
+                playstation = 0;
+            }
+            return makeBudgetPlan('auto', income, { hangout, savings, playstation }, psOn);
+        }
+
+        window.renderBudgetSettings = function () {
+            const autoView = document.getElementById('budgetAutoView');
+            const customView = document.getElementById('budgetCustomView');
+            if (!autoView || !customView) return;
+            const isAuto = budgetDraftMode !== 'custom';
+            document.getElementById('budgetModeAutoBtn').classList.toggle('selected', isAuto);
+            document.getElementById('budgetModeCustomBtn').classList.toggle('selected', !isAuto);
+            autoView.style.display = isAuto ? 'block' : 'none';
+            customView.style.display = isAuto ? 'none' : 'block';
+            document.getElementById('budgetModeNote').textContent = isAuto
+                ? 'Worked out from your monthly income and allowance split. It updates by itself when those change.'
+                : 'You choose the total and how it is shared. Switch back to Auto anytime.';
+
+            if (isAuto) {
+                const plan = getAutoBudgetPreviewFromForm();
+                autoView.innerHTML = `
+                    <div style="display:flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 10px;">
+                        <span>Monthly budget</span><span>${plan.target} \u20c1</span>
+                    </div>` + plan.cats.filter(c => c.enabled).map(c => `
+                    <div style="margin-bottom: 10px;">
+                        <div style="display:flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                            <span>${c.label}</span><span>${c.amount} \u20c1 \u00b7 ${c.pct}%</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); border-radius: 8px; height: 6px; overflow: hidden;">
+                            <div style="height:100%; width:${Math.min(c.pct, 100)}%; background: linear-gradient(90deg, var(--accent-3, #667eea), #2ed573);"></div>
+                        </div>
+                    </div>`).join('');
+            } else {
+                updateBudgetCustomTotal();
+            }
+        };
+
+        window.setBudgetMode = function (mode) {
+            budgetDraftMode = mode === 'custom' ? 'custom' : 'auto';
+            if (budgetDraftMode === 'custom' && !budgetCustomPrefilled) {
+                // First time in Custom: start from the current Auto numbers so nothing has to be typed from scratch.
+                const plan = getAutoBudgetPreviewFromForm();
+                const w = budgetWholePercents(plan);
+                document.getElementById('monthlyBudgetTarget').value = plan.target;
+                document.getElementById('budgetHangoutPercent').value = w.hangout;
+                document.getElementById('budgetSavingsPercent').value = w.savings;
+                document.getElementById('budgetPlaystationPercent').value = w.playstation;
+                budgetCustomPrefilled = true;
+            }
+            renderBudgetSettings();
+        };
+
+        window.updateBudgetCustomTotal = function () {
+            const note = document.getElementById('budgetCustomTotal');
+            if (!note) return;
+            const psOn = document.getElementById('settingsEnablePlaystation').value === 'true';
+            const target = parseFloat(document.getElementById('monthlyBudgetTarget').value) || 0;
+            const h = parseFloat(document.getElementById('budgetHangoutPercent').value) || 0;
+            const s = parseFloat(document.getElementById('budgetSavingsPercent').value) || 0;
+            const p = psOn ? (parseFloat(document.getElementById('budgetPlaystationPercent').value) || 0) : 0;
+            const total = Math.round((h + s + p) * 10) / 10;
+            const ok = Math.abs(total - 100) < 0.05;
+            note.style.color = ok ? '#2ed573' : '#ff6b7a';
+            const amt = (pct) => Math.round(target * pct / 100);
+            note.textContent = ok
+                ? `Adds up to 100% \u00b7 Hangout ${amt(h)}, Savings ${amt(s)}` + (psOn ? `, PlayStation ${amt(p)}` : '') + ' \u20c1'
+                : `Adds up to ${total}% \u2014 it needs to be 100%.`;
+        };
+
+        window.openBudgetSettings = function () {
+            openSettingsModal();
+            setTimeout(() => {
+                const el = document.getElementById('budgetSettingsSection');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 120);
         };
 
         window.saveSettings = function () {
@@ -13169,6 +13381,41 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 }
             }
 
+            // Budget breakdown: Auto stores nothing new (it is always calculated); Custom is validated and saved.
+            const bd = BUDGET_LEGACY_DEFAULTS;
+            const budgetVals = {
+                target: budgetNum(userPreferences.monthlyBudgetTarget, bd.target),
+                hangout: budgetNum(userPreferences.budgetHangoutPercent, bd.hangout),
+                savings: budgetNum(userPreferences.budgetSavingsPercent, bd.savings),
+                playstation: budgetNum(userPreferences.budgetPlaystationPercent, bd.playstation)
+            };
+            const budgetMode = budgetDraftMode === 'custom' ? 'custom' : 'auto';
+            if (budgetMode === 'custom') {
+                const t = parseFloat(document.getElementById('monthlyBudgetTarget').value);
+                const h = parseFloat(document.getElementById('budgetHangoutPercent').value);
+                const s = parseFloat(document.getElementById('budgetSavingsPercent').value);
+                const ps = enablePlaystation ? parseFloat(document.getElementById('budgetPlaystationPercent').value) : budgetVals.playstation;
+                if (!(t > 0)) {
+                    showNotification('Enter your monthly budget target', true);
+                    return;
+                }
+                if ([h, s, ps].some(v => isNaN(v) || v < 0)) {
+                    showNotification('Enter a percentage for each budget category (0 or more)', true);
+                    return;
+                }
+                const sum = h + s + (enablePlaystation ? ps : 0);
+                if (Math.abs(sum - 100) > 0.05) {
+                    showNotification(`Budget categories add up to ${Math.round(sum * 10) / 10}% \u2014 they need to be 100%`, true);
+                    return;
+                }
+                budgetVals.target = Math.round(t);
+                budgetVals.hangout = Math.round(h * 10) / 10;
+                budgetVals.savings = Math.round(s * 10) / 10;
+                budgetVals.playstation = Math.round(ps * 10) / 10;
+            }
+            const alertRaw = parseInt(document.getElementById('budgetAlertThreshold').value);
+            const budgetAlertThreshold = isNaN(alertRaw) ? 80 : Math.min(100, Math.max(50, alertRaw));
+
             let newPreferences = {
                 hangoutLimit,
                 enablePlaystation,
@@ -13177,11 +13424,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 minimumSavings: userPreferences.minimumSavings || 0, // Preserve existing minimumSavings
                 allowanceSchedule: userPreferences.allowanceSchedule || null, // Preserve Asser's allowance schedule
                 rankFirstThreshold,
-                monthlyBudgetTarget: parseInt(document.getElementById('monthlyBudgetTarget').value) || 140,
-                budgetAlertThreshold: parseInt(document.getElementById('budgetAlertThreshold').value) || 80,
-                budgetHangoutPercent: parseInt(document.getElementById('budgetHangoutPercent').value) || 50,
-                budgetSavingsPercent: parseInt(document.getElementById('budgetSavingsPercent').value) || 30,
-                budgetPlaystationPercent: parseInt(document.getElementById('budgetPlaystationPercent').value) || 20
+                budgetMode,
+                monthlyBudgetTarget: budgetVals.target,
+                budgetAlertThreshold,
+                budgetHangoutPercent: budgetVals.hangout,
+                budgetSavingsPercent: budgetVals.savings,
+                budgetPlaystationPercent: budgetVals.playstation
             };
 
             // Monthly income = the usual allowance used by the one-tap "Usual" option
@@ -13248,6 +13496,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 closeModal('settingsModal');
                 showNotification('Settings updated!');
                 updateUIForPreferences();
+                updateUI();
             }).catch((error) => {
                 showNotification('Failed to save settings: ' + error.message, true);
             });
@@ -13255,7 +13504,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
         // Update budget progress
         function updateBudgetProgress() {
-            const budgetTarget = userPreferences.monthlyBudgetTarget || 140;
+            const budgetTarget = getBudgetPlan().target;
             const firstDayOfMonth = getCurrentCycle().startDate;
 
             // Calculate this month's spending
@@ -14434,7 +14683,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const momIcon = momChange >= 0 ? '📈' : '📉';
 
             // Budget comparison
-            const budgetTarget = userPreferences.monthlyBudgetTarget || 140;
+            const budgetTarget = getBudgetPlan().target;
             const budgetProgress = (currentMonthSpending / budgetTarget) * 100;
             const budgetRemaining = Math.max(budgetTarget - currentMonthSpending, 0);
 
@@ -14803,7 +15052,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 }
             });
 
-            const budgetTarget = userPreferences.monthlyBudgetTarget || 140;
+            const budgetTarget = getBudgetPlan().target;
             const budgetProgress = (monthlySpending / budgetTarget) * 100;
             const alertThreshold = userPreferences.budgetAlertThreshold || 80;
 

@@ -196,6 +196,25 @@
             white-space: nowrap;
         }
 
+        /* 1-2-3-4 week tracker under the month pill */
+        .week-dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .week-dots i {
+            width: 26px;
+            height: 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .week-dots i.on {
+            background: var(--accent-1, #00f5d4);
+        }
+
         .total-label {
             font-size: 14px;
             color: rgba(255, 255, 255, 0.7);
@@ -727,7 +746,7 @@
             transform: scale(0.95);
         }
 
-        /* PIN Lock */
+        /* ===== PIN Lock ===== */
         .pin-lock-overlay {
             display: none;
             position: fixed;
@@ -737,66 +756,189 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
             padding: calc(20px + var(--sat)) max(20px, var(--sar)) calc(20px + var(--sab)) max(20px, var(--sal));
         }
 
         .pin-lock-overlay.active {
             display: flex;
+            animation: pinFadeIn 0.28s ease both;
         }
 
-        .pin-lock-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
+        .pin-lock-overlay.closing {
+            animation: pinFadeOut 0.24s ease both;
+        }
+
+        @keyframes pinFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pinFadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(1.03); }
+        }
+
+        .pin-glow {
+            position: absolute;
+            inset: -20%;
+            pointer-events: none;
+            background:
+                radial-gradient(38% 30% at 50% 22%, rgba(0, 245, 212, 0.22), transparent 70%),
+                radial-gradient(45% 35% at 85% 92%, rgba(102, 126, 234, 0.2), transparent 70%);
+            background:
+                radial-gradient(38% 30% at 50% 22%, color-mix(in srgb, var(--accent-1, #00f5d4) 24%, transparent), transparent 70%),
+                radial-gradient(45% 35% at 85% 92%, color-mix(in srgb, var(--accent-3, #667eea) 22%, transparent), transparent 70%);
+        }
+
+        .pin-shell {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pin-badge {
+            position: relative;
+            width: 76px;
+            height: 76px;
+            border-radius: 26px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+            margin-bottom: 18px;
+            color: var(--bg-color, #0a0a0a);
+            background: linear-gradient(145deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
+            box-shadow: 0 10px 34px rgba(0, 245, 212, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .pin-badge::after {
+            content: '';
+            position: absolute;
+            inset: -9px;
+            border-radius: 34px;
+            border: 1px solid rgba(0, 245, 212, 0.3);
+            animation: pinRing 2.8s ease-out infinite;
+        }
+
+        @keyframes pinRing {
+            0% { transform: scale(0.94); opacity: 0.9; }
+            100% { transform: scale(1.18); opacity: 0; }
+        }
+
+        .pin-badge svg {
+            width: 36px;
+            height: 36px;
+            overflow: visible;
+        }
+
+        .pin-badge .pin-shackle {
+            transform-box: fill-box;
+            transform-origin: 100% 100%;
+            transition: transform 0.35s cubic-bezier(0.22, 1.3, 0.36, 1);
+        }
+
+        .pin-badge.ok {
+            background: linear-gradient(145deg, #2ed573, #1fd1a1);
+            box-shadow: 0 10px 34px rgba(46, 213, 115, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .pin-badge.ok .pin-shackle {
+            transform: translateY(-3px) rotate(-16deg);
+        }
+
+        .pin-user {
+            display: none;
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 999px;
+            margin-bottom: 14px;
         }
 
         .pin-lock-title {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 700;
+            letter-spacing: -0.01em;
             margin-bottom: 6px;
             text-align: center;
         }
 
         .pin-lock-sub {
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 28px;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 22px;
             text-align: center;
-            max-width: 280px;
+            max-width: 270px;
+        }
+
+        .pin-steps {
+            display: none;
+            gap: 6px;
+            width: 64px;
+            margin: -8px 0 18px;
+        }
+
+        .pin-steps span {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.14);
+            transition: background 0.3s ease;
+        }
+
+        .pin-steps span.on {
+            background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-2, #00d9f5));
         }
 
         .pin-dots {
             display: flex;
-            gap: 16px;
-            margin-bottom: 36px;
+            gap: 18px;
+            padding: 16px 28px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
         }
 
         .pin-dot {
-            width: 18px;
-            height: 18px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.28);
             background: transparent;
-            transition: all 0.15s ease;
+            transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
         .pin-dot.filled {
             background: linear-gradient(135deg, var(--accent-1, #00f5d4) 0%, var(--accent-2, #00d9f5) 100%);
             border-color: transparent;
-            box-shadow: 0 0 12px rgba(0, 245, 212, 0.6);
+            box-shadow: 0 0 14px rgba(0, 245, 212, 0.7);
+            animation: pinPop 0.18s ease;
+        }
+
+        @keyframes pinPop {
+            0% { transform: scale(0.6); }
+            70% { transform: scale(1.25); }
+            100% { transform: scale(1); }
         }
 
         .pin-dot.error {
             background: #ff4757;
             border-color: #ff4757;
-            box-shadow: 0 0 12px rgba(255, 71, 87, 0.6);
+            box-shadow: 0 0 14px rgba(255, 71, 87, 0.7);
+        }
+
+        .pin-dots.ok .pin-dot {
+            background: #2ed573;
+            border-color: transparent;
+            box-shadow: 0 0 14px rgba(46, 213, 115, 0.7);
         }
 
         .pin-dots.pin-lock-shake {
@@ -804,70 +946,483 @@
         }
 
         @keyframes pinShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
 
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            20%,
-            60% {
-                transform: translateX(-10px);
-            }
-
-            40%,
-            80% {
-                transform: translateX(10px);
-            }
+        .pin-error {
+            min-height: 20px;
+            font-size: 13px;
+            color: #ff6b7a;
+            margin-bottom: 14px;
+            text-align: center;
         }
 
         .pin-keypad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            gap: 14px 18px;
             width: 100%;
-            max-width: 260px;
+            max-width: 280px;
         }
 
         .pin-key {
             aspect-ratio: 1;
+            padding: 0;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: white;
-            font-size: 24px;
-            font-weight: 600;
+            font-family: inherit;
+            font-size: 28px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.15s ease;
+            transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .pin-key:active {
-            background: rgba(0, 245, 212, 0.25);
-            border-color: rgba(0, 245, 212, 0.4);
-            transform: scale(0.92);
+            background: rgba(0, 245, 212, 0.28);
+            border-color: rgba(0, 245, 212, 0.55);
+            box-shadow: 0 0 22px rgba(0, 245, 212, 0.35);
+            transform: scale(0.9);
+        }
+
+        .pin-key:focus-visible {
+            outline: 2px solid var(--accent-1, #00f5d4);
+            outline-offset: 3px;
         }
 
         .pin-key.action {
             font-size: 15px;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.65);
             background: transparent;
-            border: none;
+            border-color: transparent;
+        }
+
+        .pin-key.action svg {
+            width: 26px;
+            height: 26px;
         }
 
         .pin-lock-forgot {
-            margin-top: 26px;
+            margin-top: 22px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            align-items: center;
+        }
+
+        @media (max-height: 700px) {
+            .pin-badge { width: 60px; height: 60px; border-radius: 20px; margin-bottom: 12px; }
+            .pin-badge svg { width: 28px; height: 28px; }
+            .pin-lock-title { font-size: 21px; }
+            .pin-lock-sub { margin-bottom: 14px; }
+            .pin-dots { padding: 12px 24px; }
+            .pin-keypad { max-width: 236px; gap: 10px 14px; }
+            .pin-key { font-size: 24px; }
+            .pin-lock-forgot { margin-top: 12px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .pin-badge::after, .pin-dot.filled, .pin-lock-overlay.active { animation: none; }
+        }
+
+        /* PIN prompt (first-time) + Settings status pill */
+        .pin-prompt {
+            text-align: center;
+        }
+
+        .pin-prompt-badge {
+            width: 68px;
+            height: 68px;
+            border-radius: 24px;
+            margin: 4px auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-color, #0a0a0a);
+            background: linear-gradient(145deg, var(--accent-1, #00f5d4), var(--accent-2, #00d9f5));
+            box-shadow: 0 8px 28px rgba(0, 245, 212, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .pin-prompt-badge svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .pin-prompt-title {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .pin-prompt-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14.5px;
+            line-height: 1.5;
+            margin: 0 auto 22px;
+            max-width: 300px;
+        }
+
+        .pin-status-pill {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.65);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .pin-status-pill.on {
+            color: #2ed573;
+            background: rgba(46, 213, 115, 0.12);
+            border-color: rgba(46, 213, 115, 0.35);
+        }
+
+        /* ===== Setup wizard ===== */
+        #setupModal { z-index: 1100; }
+
+        .setup-wizard {
+            padding: 20px 22px 24px;
+            overflow-x: hidden;
+        }
+
+        .sw-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .sw-back,
+        .sw-skip {
             background: none;
             border: none;
+            padding: 8px 4px;
+            min-width: 48px;
+            color: rgba(255, 255, 255, 0.6);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .sw-back {
+            font-size: 28px;
+            line-height: 1;
+            text-align: left;
+        }
+
+        .sw-skip { text-align: right; }
+
+        .sw-progress {
+            display: flex;
+            gap: 6px;
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .sw-progress span {
+            flex: 1;
+            height: 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.14);
+            transition: background 0.3s ease;
+        }
+
+        .sw-progress span.on {
+            background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-2, #00d9f5));
+        }
+
+        .sw-step { display: none; }
+
+        .sw-step.active {
+            display: block;
+            animation: swIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .sw-step[data-dir="back"].active { animation-name: swInBack; }
+
+        @keyframes swIn {
+            from { opacity: 0; transform: translateX(18px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        @keyframes swInBack {
+            from { opacity: 0; transform: translateX(-18px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .sw-title {
+            font-size: 27px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 8px;
+        }
+
+        .sw-sub {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 15px;
+            line-height: 1.45;
+            margin-bottom: 22px;
+        }
+
+        .sw-income {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .sw-income:focus-within {
+            border-color: var(--accent-1, #00f5d4);
+            box-shadow: 0 0 0 4px rgba(0, 245, 212, 0.12);
+        }
+
+        .sw-income input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 0;
+            background: none;
+            border: none;
+            outline: none;
+            color: white;
+            font-family: inherit;
+            font-size: 38px;
+            font-weight: 700;
+        }
+
+        .sw-income span {
+            font-size: 22px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .sw-hint {
+            margin-top: 10px;
+            font-size: 13px;
             color: rgba(255, 255, 255, 0.45);
+        }
+
+        .sw-error {
+            min-height: 18px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #ff6b7a;
+        }
+
+        .sw-next {
+            width: 100%;
+            margin-top: 14px;
+        }
+
+        .sw-choices {
+            display: grid;
+            gap: 12px;
+        }
+
+        .sw-choice {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 18px;
+            text-align: left;
+            border-radius: 20px;
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+        }
+
+        .sw-choice:active { transform: scale(0.98); }
+
+        .sw-choice.selected {
+            border-color: var(--accent-1, #00f5d4);
+            background: rgba(0, 245, 212, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 245, 212, 0.1);
+        }
+
+        .sw-choice .sw-ico { font-size: 28px; }
+
+        .sw-choice b {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .sw-choice small {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .sw-bar {
+            display: flex;
+            height: 14px;
+            margin: 4px 0 22px;
+            border-radius: 7px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .sw-bar i {
+            display: block;
+            height: 100%;
+            transition: width 0.15s ease;
+        }
+
+        .sw-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            margin-right: 7px;
+            border-radius: 50%;
+        }
+
+        .sw-c-h { background: #feca57; }
+        .sw-c-s { background: var(--accent-1, #00f5d4); }
+        .sw-c-p { background: var(--accent-3, #667eea); }
+
+        .sw-remainder {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.16);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .sw-note {
+            margin-top: 10px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        /* ===== "I Got Allowance" chooser ===== */
+        .ac-sub {
+            margin: -8px 0 16px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .ac-card {
+            display: block;
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 18px;
+            text-align: left;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.2s ease;
+        }
+
+        .ac-card:active { transform: scale(0.98); }
+
+        .ac-card.usual {
+            border-color: rgba(0, 245, 212, 0.45);
+            background: linear-gradient(135deg, rgba(0, 245, 212, 0.16), rgba(0, 217, 245, 0.06));
+            box-shadow: 0 0 24px rgba(0, 245, 212, 0.12);
+        }
+
+        .ac-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+
+        .ac-name { font-size: 18px; font-weight: 700; }
+
+        .ac-amount {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--accent-1, #00f5d4);
+        }
+
+        .ac-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .ac-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ac-chip i {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .ac-cta {
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-1, #00f5d4);
+        }
+
+        .ac-desc {
+            font-size: 14px;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .ac-link {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.55);
+            font-family: inherit;
             font-size: 13px;
             text-decoration: underline;
             cursor: pointer;
+        }
+
+        .allowance-note {
+            margin: -8px 0 16px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.55);
         }
 
         /* Paper Mission (expiring mission) button */
@@ -3559,8 +4114,9 @@
                         📅 Next allowance in <span id="daysRemaining">0</span> days (4-week schedule)
                     </div>
                     <div class="month-cycle-badge" id="monthCycleBadge" style="display: none;">
-                        📅 <span id="monthCycleLabel">This Month</span>
+                        📅 <span id="monthCycleLabel">This Month</span><span id="monthCycleWeek"></span>
                     </div>
+                    <div class="week-dots" id="weekDots" style="display: none;"><i></i><i></i><i></i><i></i></div>
                 </div>
 
                 <div class="balance-cards">
@@ -3622,7 +4178,7 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button class="action-btn primary" onclick="openAllowanceModal()">
+                    <button class="action-btn primary" onclick="startAllowanceFlow()">
                         💰 I Got Allowance
                     </button>
                     <button class="action-btn success" onclick="openAddMoneyModal()">
@@ -3924,9 +4480,10 @@
         <div class="modal" id="allowanceModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="modal-title">Add Allowance</div>
+                    <div class="modal-title">Different this time</div>
                     <button class="close-btn" onclick="closeModal('allowanceModal')">&times;</button>
                 </div>
+                <div class="allowance-note">Changes here apply to this allowance only. Your usual stays the same.</div>
                 <div class="form-group" id="allowanceModeGroup" style="display:none;">
                     <label class="form-label">Mode</label>
                     <div class="mode-options">
@@ -3944,13 +4501,8 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Total Amount (⃁)</label>
-                    <div class="amount-options">
-                        <button class="amount-option-btn" id="amount60" onclick="selectAllowanceAmount(60)">60
-                            ⃁</button>
-                        <button class="amount-option-btn" id="amount120" onclick="selectAllowanceAmount(120)">120
-                            ⃁</button>
-                    </div>
-                    <input type="hidden" id="allowanceAmount" value="60">
+                    <input type="number" class="form-input" id="allowanceAmount" inputmode="numeric" min="1" step="1"
+                        value="60" placeholder="60" oninput="autoCalculateSplit()">
                 </div>
                 <div class="slider-container">
                     <div class="slider-label">
@@ -4363,76 +4915,129 @@
         </div>
     </div>
 
-    <!-- Account Setup Modal -->
+    <!-- Setup wizard: shown on open until monthly income + split are set -->
     <div class="modal" id="setupModal">
+        <div class="modal-content setup-wizard">
+            <div class="sw-top">
+                <button type="button" class="sw-back" id="swBack" onclick="setupBack()" aria-label="Back"
+                    style="visibility:hidden;">&#8249;</button>
+                <div class="sw-progress" id="swProgress"><span></span><span></span><span></span></div>
+                <button type="button" class="sw-skip" onclick="skipSetupWizard()">Later</button>
+            </div>
+
+            <!-- 1. Get started -->
+            <section class="sw-step active" data-step="1">
+                <div class="sw-title">Get started</div>
+                <div class="sw-sub">What's your monthly income?</div>
+                <div class="sw-income">
+                    <input type="number" id="swIncome" inputmode="numeric" min="1" placeholder="Type here"
+                        oninput="document.getElementById('swError').textContent=''"
+                        onkeydown="if(event.key==='Enter'){setupNext();}">
+                    <span>⃁</span>
+                </div>
+                <div class="sw-hint">This is the allowance you get each month. You can change it later in Settings.</div>
+                <div class="sw-error" id="swError" aria-live="polite"></div>
+                <button type="button" class="modal-btn confirm sw-next" onclick="setupNext()">Next</button>
+            </section>
+
+            <!-- 2. PlayStation / Mobily bucket -->
+            <section class="sw-step" data-step="2">
+                <div class="sw-title">Do you want a PlayStation bucket?</div>
+                <div class="sw-sub">A separate pot for PlayStation or Mobily bills, so it doesn't mix with your hangout money.</div>
+                <div class="sw-choices">
+                    <button type="button" class="sw-choice" id="swPsYes" onclick="swChoosePs(true)">
+                        <span class="sw-ico">🎮</span>
+                        <span><b>Yes</b><small>Add the PlayStation / Mobily bucket</small></span>
+                    </button>
+                    <button type="button" class="sw-choice" id="swPsNo" onclick="swChoosePs(false)">
+                        <span class="sw-ico">🙅</span>
+                        <span><b>No</b><small>Only Hangout and Savings</small></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 3. Split -->
+            <section class="sw-step" data-step="3">
+                <div class="sw-title">Split</div>
+                <div class="sw-sub">Choose how each allowance is divided. <span id="swIncomeEcho"></span></div>
+                <div class="sw-bar" id="swBar"><i class="sw-c-h" id="swBarH"></i><i class="sw-c-s" id="swBarS"></i><i class="sw-c-p" id="swBarP"></i></div>
+
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span><span class="sw-dot sw-c-h"></span>Hang</span>
+                        <span id="swHangText">30%</span>
+                    </div>
+                    <input type="range" class="slider" id="swHangSlider" min="0" max="100" step="1" value="50"
+                        oninput="swSplitInput('hang')">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span><span class="sw-dot sw-c-s"></span>Save</span>
+                        <span id="swSaveText">30%</span>
+                    </div>
+                    <input type="range" class="slider" id="swSaveSlider" min="0" max="100" step="1" value="38"
+                        oninput="swSplitInput('save')">
+                </div>
+                <div class="sw-remainder" id="swPsRow">
+                    <span><span class="sw-dot sw-c-p"></span>PlayStation gets the rest</span>
+                    <span id="swPsText">20%</span>
+                </div>
+                <div class="sw-note" id="swNote"></div>
+                <button type="button" class="modal-btn confirm sw-next" id="swFinishBtn" onclick="swFinish()">Finish setup</button>
+            </section>
+        </div>
+    </div>
+
+    <!-- Discord webhook pop-up (shown on open until set) -->
+    <div class="modal" id="discordPromptModal" style="z-index: 1150;">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Setup Your Account</div>
-                <button class="close-btn" onclick="closeModal('setupModal')">&times;</button>
+                <div class="modal-title">💬 Connect Discord</div>
+                <button class="close-btn" onclick="dismissDiscordPrompt()">&times;</button>
             </div>
-            <p style="margin-bottom: 20px; color: rgba(255,255,255,0.7);">Customize your money manager settings:</p>
-
-            <div class="form-group">
-                <label class="form-label">Hangout Limit (⃁)</label>
-                <input type="number" class="form-input" id="setupHangoutLimit" placeholder="140" value="140">
-                <small style="color: rgba(255,255,255,0.5);">Maximum amount before excess moves to Savings</small>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Enable PlayStation/Mobily Bucket</label>
-                <select class="form-select" id="setupEnablePlaystation" onchange="toggleSetupPlaystationVisibility()">
-                    <option value="true">Yes, I need this bucket</option>
-                    <option value="false">No, I don't use this</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Allowance Type</label>
-                <select class="form-select" id="setupAllowanceType" onchange="toggleSetupAllowanceType()">
-                    <option value="percentage">Use Percentages</option>
-                    <option value="fixed">Use Fixed Amounts</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="setupPercentageSettings">
-                <label class="form-label">Default Allowance Split</label>
-                <div id="setupPercentSplitGrid"
-                    style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
-                    <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
-                        <input type="number" class="form-input" id="setupHangoutPercent" value="50" min="0" max="100">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
-                        <input type="number" class="form-input" id="setupSavingsPercent" value="37.5" min="0" max="100">
-                    </div>
-                    <div id="setupPlaystationPercentGroup">
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
-                        <input type="number" class="form-input" id="setupPlaystationPercent" value="12.5" min="0"
-                            max="100">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group" id="setupFixedAmountSettings" style="display: none;">
-                <label class="form-label">Fixed Allowance Amounts (⃁)</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                    <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout</label>
-                        <input type="number" class="form-input" id="setupFixedHangout" placeholder="35">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings</label>
-                        <input type="number" class="form-input" id="setupFixedSavings" placeholder="25">
-                    </div>
-                </div>
-                <small style="color: rgba(255,255,255,0.5);">Remaining amount goes to Savings</small>
-            </div>
-
+            <div class="ac-sub" style="margin-bottom: 14px;">Ask Zezo for the webhook URL, then paste it here.</div>
+            <input type="url" class="form-input" id="discordPromptInput" autocomplete="off" autocapitalize="off"
+                spellcheck="false" placeholder="https://discord.com/api/webhooks/..."
+                oninput="document.getElementById('discordPromptError').textContent=''"
+                onkeydown="if(event.key==='Enter'){connectDiscordFromPrompt();}">
+            <div class="sw-error" id="discordPromptError" aria-live="polite"></div>
             <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="closeModal('setupModal')">Skip for Now</button>
-                <button class="modal-btn confirm" onclick="completeSetup()">Save & Continue</button>
+                <button class="modal-btn cancel" onclick="dismissDiscordPrompt()">Not now</button>
+                <button class="modal-btn confirm" id="discordPromptBtn" onclick="connectDiscordFromPrompt()">Connect</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Allowance day pop-up (4th Friday of the 4-week cycle) -->
+    <div class="modal" id="allowanceDayModal" style="z-index: 1150;">
+        <div class="modal-content" style="text-align:center;">
+            <div class="modal-title" style="font-size:24px; margin-bottom:8px;">💰 Allowance day</div>
+            <div class="ac-sub" style="margin-bottom:18px;">It's the 4th Friday — time to add your allowance.</div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="allowanceDayLater()">Later</button>
+                <button class="modal-btn confirm" onclick="allowanceDayAdd()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- "I Got Allowance" chooser: Usual (one tap) or Different (this time only) -->
+    <div class="modal" id="allowanceChoiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">💰 Got your allowance</div>
+                <button class="close-btn" onclick="closeModal('allowanceChoiceModal')">&times;</button>
+            </div>
+            <div class="ac-sub">Add it the usual way, or change it just for this time.</div>
+            <button type="button" class="ac-card usual" onclick="addUsualAllowance()">
+                <div class="ac-head"><span class="ac-name">Usual</span><span class="ac-amount" id="acUsualAmount"></span></div>
+                <div class="ac-chips" id="acUsualChips"></div>
+                <div class="ac-cta">Tap to add it now</div>
+            </button>
+            <button type="button" class="ac-card different" onclick="openDifferentAllowance()">
+                <div class="ac-head"><span class="ac-name">Different</span></div>
+                <div class="ac-desc">Change the amount or the split for this allowance only. Your usual stays the same.</div>
+            </button>
+            <button type="button" class="ac-link" onclick="closeModal('allowanceChoiceModal'); openSettingsModal();">Change my usual in Settings</button>
         </div>
     </div>
 
@@ -4513,6 +5118,15 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label">💵 Monthly Income (⃁)</label>
+                <input type="number" class="form-input" id="settingsMonthlyIncome" inputmode="numeric" placeholder="e.g. 120" oninput="updateSettingsSplitRemainder()">
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:6px;">This is your usual allowance. "I Got Allowance" can add it in one tap using the split below.</small>
+                <button type="button" class="modal-btn cancel"
+                    style="width:100%; margin-top:10px; padding:12px; font-size:14px;"
+                    onclick="closeModal('settingsModal'); openSetupWizard(true);">Run the setup guide again</button>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label">Hangout Limit (⃁)</label>
                 <input type="number" class="form-input" id="settingsHangoutLimit" placeholder="140">
                 <small style="color: rgba(255,255,255,0.5);">Maximum amount before excess moves to Savings</small>
@@ -4527,38 +5141,26 @@
                 </select>
             </div>
 
-            <div class="form-group" id="percentageSettings">
-                <label class="form-label">Default Allowance Split</label>
-                <div id="settingsPercentSplitGrid"
+            <div class="form-group" id="fixedAmountSettings">
+                <label class="form-label">Default Allowance Split (⃁)</label>
+                <div id="settingsAmountSplitGrid"
                     style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
-                        <input type="number" class="form-input" id="settingsHangoutPercent" min="0" max="100">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
-                        <input type="number" class="form-input" id="settingsSavingsPercent" min="0" max="100">
-                    </div>
-                    <div id="settingsPlaystationPercentGroup">
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
-                        <input type="number" class="form-input" id="settingsPlaystationPercent" min="0" max="100">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group" id="fixedAmountSettings" style="display: none;">
-                <label class="form-label">Fixed Allowance Amounts (⃁)</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-                    <div>
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout</label>
-                        <input type="number" class="form-input" id="settingsFixedHangout" placeholder="35">
+                        <input type="number" class="form-input" id="settingsFixedHangout" inputmode="numeric" min="0"
+                            placeholder="35" oninput="updateSettingsSplitRemainder()">
                     </div>
                     <div>
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings</label>
-                        <input type="number" class="form-input" id="settingsFixedSavings" placeholder="25">
+                        <input type="number" class="form-input" id="settingsFixedSavings" inputmode="numeric" min="0"
+                            placeholder="25" oninput="updateSettingsSplitRemainder()">
+                    </div>
+                    <div id="settingsPlaystationAmountGroup">
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation</label>
+                        <input type="number" class="form-input" id="settingsPlaystationAmount" disabled>
                     </div>
                 </div>
-                <small style="color: rgba(255,255,255,0.5);">Remaining amount goes to Savings</small>
+                <small id="settingsSplitNote" style="color: rgba(255,255,255,0.5); display:block; margin-top:6px;"></small>
             </div>
 
             <div class="form-group" id="rankThresholdSettingsGroup" style="display: none;">
@@ -4610,8 +5212,7 @@
             <div class="form-group" id="pinSettingsSection"
                 style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
                 <label class="form-label">🔒 App Lock (PIN)</label>
-                <div id="pinSettingsStatus" style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 12px;">
-                    🔓 PIN lock is OFF</div>
+                <div id="pinSettingsStatus" style="margin-bottom: 12px;"><span class="pin-status-pill">○ PIN lock is off</span></div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button type="button" class="modal-btn confirm" id="pinChangeBtn"
                         style="flex:1; min-width:120px; padding:14px 16px; font-size:15px;"
@@ -4622,6 +5223,28 @@
                 </div>
                 <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Require a 4-digit PIN every
                     time you open the app.</small>
+            </div>
+
+            <!-- Discord section -->
+            <div class="form-group" id="discordSettingsSection"
+                style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
+                <label class="form-label">💬 Discord Notifications</label>
+                <div id="discordSettingsStatus"
+                    style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 12px;">⚠️ Discord is not connected</div>
+                <input type="url" class="form-input" id="discordWebhookInput" autocomplete="off" autocapitalize="off"
+                    spellcheck="false" placeholder="https://discord.com/api/webhooks/..." style="margin-bottom: 10px;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="modal-btn confirm" id="discordSaveBtn"
+                        style="flex:1; min-width:120px; padding:14px 16px; font-size:15px;"
+                        onclick="connectDiscordFromSettings()">Connect Discord</button>
+                    <button type="button" class="modal-btn cancel" id="discordTestBtn"
+                        style="flex:1; min-width:120px; padding:14px 16px; font-size:15px; display:none;"
+                        onclick="testDiscordFromSettings()">Send test</button>
+                    <button type="button" class="modal-btn cancel" id="discordDisconnectBtn"
+                        style="flex:1; min-width:120px; padding:14px 16px; font-size:15px; display:none;"
+                        onclick="disconnectDiscordFromSettings()">Disconnect</button>
+                </div>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Ask Zezo for the webhook URL.</small>
             </div>
 
             <!-- Budget Planning section -->
@@ -4670,6 +5293,18 @@
                     <div id="cycleSettingsLabel" style="font-size: 19px; font-weight: 800; margin: 4px 0 2px; color: var(--accent-1, #00f5d4);">—</div>
                     <div id="cycleSettingsStarted" style="font-size: 13px; color: rgba(255,255,255,0.6);"></div>
                     <div id="cycleSettingsNow" style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px;"></div>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Current Week</div>
+                    <div id="weekSettingsCurrent" style="font-size: 19px; font-weight: 800; margin: 4px 0 10px; color: var(--accent-1, #00f5d4);">—</div>
+                    <div id="weekPickerBtns" style="display:flex; gap:8px;">
+                        <button type="button" class="modal-btn cancel" data-week="1" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(1)">1</button>
+                        <button type="button" class="modal-btn cancel" data-week="2" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(2)">2</button>
+                        <button type="button" class="modal-btn cancel" data-week="3" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(3)">3</button>
+                        <button type="button" class="modal-btn cancel" data-week="4" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(4)">4</button>
+                    </div>
+                    <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Sets the week for everyone.
+                        It then moves on by itself every Friday; the 4th Friday is Allowance day.</small>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button type="button" class="modal-btn confirm" style="flex:1; min-width:140px;"
@@ -4732,17 +5367,15 @@
                         <button type="button" class="modal-btn confirm"
                             style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);"
                             onclick="sendAppUpdate()">Send Update to Everyone</button>
-                    </div>
 
                     <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,0.18);">
-                        <label class="form-label" style="color:#ff6b6b;">🔔 Test Notification (Zezo only)</label>
-                        <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Sends a test
-                            push to every user's phone right now, ignoring the 1pm-8pm window and the 3-day
-                            inactivity check — just to confirm it's wired up.</small>
-                        <button type="button" class="modal-btn confirm"
+                        <label class="form-label" style="color:#ff6b6b;">🧹 Hard Refresh (Zezo only)</label>
+                        <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Clears this
+                            device's cached app files and reloads. You stay logged in and your data is kept.</small>
+                        <button type="button" class="modal-btn confirm" id="hardRefreshBtn"
                             style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%); width:100%;"
-                            onclick="sendTestNotificationToAll()" id="testNotifBtn">Send Test Notification to
-                            Everyone</button>
+                            onclick="hardRefreshApp()">Hard Refresh &amp; Clear Cache</button>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -4811,11 +5444,15 @@
 
     <!-- First-time PIN setup prompt -->
     <div class="modal" id="pinPromptModal">
-        <div class="modal-content" style="text-align:center;">
-            <div class="pin-lock-icon" style="margin: 0 auto 16px;">🔒</div>
-            <div class="modal-title" style="display:block;">Protect your app with a PIN?</div>
-            <p style="color:rgba(255,255,255,0.6); font-size:14px; margin:12px 0 24px;">Add a 4-digit PIN so only you
-                can open Money Manager. You can always turn this on later in Settings.</p>
+        <div class="modal-content pin-prompt">
+            <div class="pin-prompt-badge"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path class="pin-shackle" d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+                    <rect x="5" y="11" width="14" height="10" rx="3.2" fill="currentColor" />
+                    <circle cx="12" cy="15.2" r="1.35" fill="rgba(255,255,255,0.85)" />
+                    <rect x="11.25" y="15.6" width="1.5" height="2.6" rx="0.75" fill="rgba(255,255,255,0.85)" />
+                </svg></div>
+            <div class="pin-prompt-title">Lock your money with a PIN</div>
+            <p class="pin-prompt-text">Add a 4-digit PIN so only you can open Money Manager. It takes a few seconds, and you can turn it off anytime in Settings.</p>
             <div class="modal-actions">
                 <button class="modal-btn cancel" onclick="skipPinPrompt()">Not now</button>
                 <button class="modal-btn confirm" onclick="startPinSetupFromPrompt()">Set a PIN</button>
@@ -4824,33 +5461,46 @@
     </div>
 
     <!-- PIN lock / entry overlay (used for unlocking, creating, and changing the PIN) -->
-    <div class="pin-lock-overlay" id="pinLockOverlay">
-        <div class="pin-lock-icon">🔒</div>
-        <div class="pin-lock-title" id="pinLockTitle">Enter your PIN</div>
-        <div class="pin-lock-sub" id="pinLockSub">Enter your 4-digit PIN to continue</div>
-        <div class="pin-dots" id="pinDots">
-            <div class="pin-dot"></div>
-            <div class="pin-dot"></div>
-            <div class="pin-dot"></div>
-            <div class="pin-dot"></div>
+    <div class="pin-lock-overlay" id="pinLockOverlay" role="dialog" aria-modal="true" aria-labelledby="pinLockTitle">
+        <div class="pin-glow" aria-hidden="true"></div>
+        <div class="pin-shell">
+            <div class="pin-badge" id="pinBadge"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path class="pin-shackle" d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+                    <rect x="5" y="11" width="14" height="10" rx="3.2" fill="currentColor" />
+                    <circle cx="12" cy="15.2" r="1.35" fill="rgba(255,255,255,0.85)" />
+                    <rect x="11.25" y="15.6" width="1.5" height="2.6" rx="0.75" fill="rgba(255,255,255,0.85)" />
+                </svg></div>
+            <div class="pin-user" id="pinLockUser"></div>
+            <div class="pin-lock-title" id="pinLockTitle">Enter your PIN</div>
+            <div class="pin-lock-sub" id="pinLockSub">Enter your 4-digit PIN to unlock</div>
+            <div class="pin-steps" id="pinSteps" aria-hidden="true"><span></span><span></span></div>
+            <div class="pin-dots" id="pinDots" aria-hidden="true">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+            <div class="pin-error" id="pinError" role="alert" aria-live="polite"></div>
+            <div class="pin-keypad">
+                <button type="button" class="pin-key" onclick="pinKeyPress('1')">1</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('2')">2</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('3')">3</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('4')">4</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('5')">5</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('6')">6</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('7')">7</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('8')">8</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('9')">9</button>
+                <button type="button" class="pin-key action" id="pinCancelKey" onclick="cancelPinFlow()"
+                    style="visibility:hidden;">Cancel</button>
+                <button type="button" class="pin-key" onclick="pinKeyPress('0')">0</button>
+                <button type="button" class="pin-key action" onclick="pinKeyBackspace()" aria-label="Delete">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6-7 6-7z"/><path d="M13 10l4 4M17 10l-4 4"/></svg>
+                </button>
+            </div>
+            <button type="button" class="pin-lock-forgot" id="pinLockForgot" onclick="forgotPin()"
+                style="display:none;">Forgot PIN?</button>
         </div>
-        <div class="pin-keypad">
-            <button type="button" class="pin-key" onclick="pinKeyPress('1')">1</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('2')">2</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('3')">3</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('4')">4</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('5')">5</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('6')">6</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('7')">7</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('8')">8</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('9')">9</button>
-            <button type="button" class="pin-key action" id="pinCancelKey" onclick="cancelPinFlow()"
-                style="display:none;">Cancel</button>
-            <button type="button" class="pin-key" onclick="pinKeyPress('0')">0</button>
-            <button type="button" class="pin-key action" onclick="pinKeyBackspace()">⌫</button>
-        </div>
-        <button type="button" class="pin-lock-forgot" id="pinLockForgot" onclick="forgotPin()"
-            style="display:none;">Forgot PIN?</button>
     </div>
 
     <!-- Edit Goal Modal -->
@@ -5001,7 +5651,6 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, set, get, update, onValue, push, remove, query, orderByChild, equalTo } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-        import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyCugS0qHKstGZArd5vEBzm-DaLZAIDugo",
@@ -5014,12 +5663,8 @@
             measurementId: "G-YYQD2E5J7J"
         };
 
-        // VAPID key for Firebase Cloud Messaging
-        const VAPID_KEY = "BL7rsvWz4BsL0CnbBLrrLUoWtNO4r5TMLygYl8A_YT1qVCfVr8ZjBW7OLjbBswac1fHs74-Aw6Wl1gxG6ipyf78";
-
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        let messaging = null;
 
         // ===== Custom theme colors (Settings > Appearance) =====
         const THEME_STORAGE = 'mm_theme_colors';
@@ -5203,57 +5848,17 @@
             else document.addEventListener('DOMContentLoaded', startObserving);
         })();
 
-        // Initialize Firebase Messaging
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            try {
-                messaging = getMessaging(app);
-
-                // Firebase's getToken() normally tries to auto-register its own
-                // separate file called firebase-messaging-sw.js — we don't have
-                // that file, we only have our own service-worker.js. So we
-                // register ours first and hand that registration to getToken
-                // instead of letting it hunt for a file that doesn't exist.
-                navigator.serviceWorker.register('./service-worker.js').then(() => {
-                    return navigator.serviceWorker.ready; // wait until it's actually active
-                }).then((swRegistration) => {
-                    return getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration });
-                }).then((currentToken) => {
-                    if (currentToken) {
-                        console.log('FCM Token:', currentToken);
-                        localStorage.setItem('fcmToken', currentToken);
-                        syncFcmTokenToServer();
-                    } else {
-                        console.log('No registration token available');
-                    }
-                }).catch((err) => {
-                    console.log('An error occurred while retrieving token:', err);
-                });
-
-                // Handle incoming messages
-                onMessage(messaging, (payload) => {
-                    console.log('Message received:', payload);
-                    new Notification(payload.notification.title, {
-                        body: payload.notification.body,
-                        icon: payload.notification.icon || './money.jpeg'
-                    });
-                });
-            } catch (e) {
-                console.log('Firebase Messaging not available:', e);
-            }
+        // Service worker: offline caching for the installed app.
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+                console.log('Service worker registration failed:', err);
+            });
         }
 
-        // ===== Activity / purchase-logging tracking (powers the "don't forget
-        // to add your purchases" push notification, sent every ~3-4 days) =====
-        // We write a few small fields per user:
-        //   users/<name>/lastActive      — updated whenever the app is open/foregrounded
-        //   users/<name>/lastPurchaseAt  — updated whenever a Purchase is logged
-        //   users/<name>/fcmToken        — this device's push token, so a server-side
-        //                                  job (see the Cloud Function) can message it
-        // A client can't fire a push after days of being closed — iOS won't run
-        // this tab's JS in the background that long — so the actual "it's been
-        // 3-4 days since you logged a purchase" check has to run server-side on
-        // a schedule and call the Firebase Admin SDK to send the push. This
-        // just keeps the fields it needs up to date.
+        // ===== Activity tracking =====
+        // Small per-user fields kept up to date in Firebase:
+        //   users/<name>/lastActive      — app was open/foregrounded
+        //   users/<name>/lastPurchaseAt  — a Purchase was logged
         function markUserActive(username) {
             if (!username) return;
             set(ref(database, `users/${username}/lastActive`), Date.now()).catch(() => { });
@@ -5263,83 +5868,332 @@
             set(ref(database, `users/${username}/lastPurchaseAt`), Date.now()).catch(() => { });
         }
 
-        // Explicitly asks for notification permission when someone opens/logs
-        // into the app (rather than only relying on the silent attempt that
-        // runs once at page load, before anyone's granted anything), and makes
-        // sure the background pipeline — service worker + a fresh FCM token —
-        // is actually in place right after. This is what lets a push arrive
-        // even when the app/tab is fully closed.
-        async function ensureNotificationsAndBackgroundReady() {
-            if (!('Notification' in window)) return;
+        // ===== Discord webhook =====
+        // The webhook URL is asked for during setup (and can be changed in
+        // Settings). It's cached on this device and also stored at
+        // users/<name>/discordWebhook so it follows the user to a new phone.
+        const DISCORD_WEBHOOK_RE = /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 
-            if (Notification.permission === 'default') {
-                try { await Notification.requestPermission(); } catch (e) { /* ignore */ }
-            }
-            if (Notification.permission !== 'granted') return;
-
-            try {
-                let swRegistration = null;
-                if ('serviceWorker' in navigator) {
-                    await navigator.serviceWorker.register('./service-worker.js');
-                    swRegistration = await navigator.serviceWorker.ready; // wait until active
-                }
-                if (messaging) {
-                    const token = await getToken(messaging, {
-                        vapidKey: VAPID_KEY,
-                        serviceWorkerRegistration: swRegistration || undefined
-                    });
-                    if (token) {
-                        localStorage.setItem('fcmToken', token);
-                        syncFcmTokenToServer();
-                    }
-                }
-            } catch (e) {
-                console.log('Could not finish setting up background notifications:', e);
-            }
+        function isValidDiscordWebhook(url) {
+            return DISCORD_WEBHOOK_RE.test((url || '').trim());
         }
-        // Fire-and-forget ping to a free serverless endpoint (Vercel, not Firebase
-        // Cloud Functions — no Blaze, no card) whenever someone opens the app.
-        // That endpoint is the thing that actually notifies OTHER family members'
-        // phones: it checks every user's lastPurchaseAt, and sends a reminder to
-        // anyone 3+ days inactive (skipping anyone already reminded in the last
-        // 3 days), only during the 1pm-8pm Riyadh window. Safe to call every open;
-        // it's cheap and self-rate-limiting server-side.
-        // Replace this with your real Vercel URL after you deploy the /api folder.
-        const INACTIVITY_CHECK_URL = 'https://moneyy-sdwg.vercel.app/api/check-inactivity';
-        function triggerInactivityCheck() {
-            if (INACTIVITY_CHECK_URL.includes('YOUR-VERCEL-PROJECT')) return; // not deployed yet
-            fetch(INACTIVITY_CHECK_URL).catch(() => { /* not critical if this fails */ });
+        function discordStorageKey() {
+            return currentUser ? `moneyDiscordWebhook:${currentUser.username}` : null;
+        }
+        function getDiscordWebhook() {
+            const k = discordStorageKey();
+            try { return k ? (localStorage.getItem(k) || '') : ''; } catch (e) { return ''; }
+        }
+        async function postToDiscord(url, content) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'Money', content })
+            });
+            if (!res.ok) throw new Error(res.status === 404 ? 'Webhook not found (was it deleted?)' : `Discord replied ${res.status}`);
+        }
+        // Use this anywhere in the app to message the user's Discord.
+        // Resolves true if sent, false if no webhook is set or sending failed.
+        window.sendDiscordMessage = function (content) {
+            const url = getDiscordWebhook();
+            if (!url) return Promise.resolve(false);
+            return postToDiscord(url, content).then(() => true).catch(() => false);
+        };
+        // Sends the welcome message first, so a wrong/deleted webhook is
+        // caught before it gets saved. Throws on failure.
+        async function connectDiscordWebhook(url) {
+            url = (url || '').trim();
+            if (!isValidDiscordWebhook(url)) throw new Error("That doesn't look like a Discord webhook URL");
+            if (!currentUser) throw new Error('Please log in first');
+            await postToDiscord(url, `💰 **Welcome to Money!**\nHey ${currentUser.username}, your Discord is now connected.`);
+            try { localStorage.setItem(discordStorageKey(), url); } catch (e) { }
+            set(ref(database, `users/${currentUser.username}/discordWebhook`), url).catch(() => { });
+        }
+        function disconnectDiscordWebhook() {
+            if (!currentUser) return;
+            try { localStorage.removeItem(discordStorageKey()); } catch (e) { }
+            set(ref(database, `users/${currentUser.username}/discordWebhook`), null).catch(() => { });
+        }
+        // On login: if this device has no webhook cached, pull it from Firebase.
+        function syncDiscordWebhookFromServer() {
+            if (!currentUser) return Promise.resolve();
+            if (getDiscordWebhook()) return Promise.resolve();
+            const username = currentUser.username;
+            return get(ref(database, `users/${username}/discordWebhook`)).then((snap) => {
+                if (snap.exists() && currentUser && currentUser.username === username) {
+                    try { localStorage.setItem(discordStorageKey(), snap.val()); } catch (e) { }
+                    renderDiscordSettingsStatus();
+                }
+            }).catch(() => { });
         }
 
-        // Zezo-only: sends a test push to every user right now, bypassing the
-        // 1pm-8pm window and the 3-day inactivity check (that logic lives in
-        // the serverless endpoint — see api/check-inactivity.js's `test` mode).
-        window.sendTestNotificationToAll = function () {
-            if (INACTIVITY_CHECK_URL.includes('YOUR-VERCEL-PROJECT')) {
-                showNotification('Deploy the Vercel endpoint first and paste its URL into index.html', true);
-                return;
+        // ===== Discord spending reminders =====
+        // One message per day at most, sent to the user's own webhook, 1pm-8pm Riyadh time:
+        //   1) Allowance day (accounts with an allowance schedule)
+        //   2) Every Thursday
+        //   3) 3+ days since the last logged purchase (and 3+ days since the last reminder)
+        // This runs whenever the app is open. For reminders while the app is closed,
+        // use the optional GitHub Action in .github/workflows (same rules, same dedupe fields).
+        const RIYADH_OFFSET_MS = 3 * 60 * 60 * 1000; // Saudi Arabia: UTC+3, no DST
+        const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+        function riyadhNow() { return new Date(Date.now() + RIYADH_OFFSET_MS); } // read with getUTC*()
+        function riyadhDayString(shifted) { return shifted.toISOString().slice(0, 10); }
+
+        // ===== Week counter + Allowance day =====
+        // A 4-week cycle that ticks over every Friday (Riyadh time), the same for everyone:
+        //   Week 1 until the 1st Friday, then Week 2, Week 3, Week 4. The 4th Friday is
+        //   Allowance day and a new cycle (Week 1) starts. Only Zezo can set which week it is.
+        // Shared anchor = the month cycle's start, or the day Zezo last set the week
+        // (whichever happened later). Stored at financialCycle/weekAnchor.
+        let weekAnchorGlobal = null;       // { day: 'YYYY-MM-DD', week, setAt }
+        let allowanceDoneFriday = '';      // per user: the allowance Friday already handled
+        let allowanceDoneLoaded = false;
+        let allowancePopupLater = false;   // "Later" hides it until the app is opened again
+
+        function riyadhDayOf(dateLike) {
+            return riyadhDayString(new Date(new Date(dateLike).getTime() + RIYADH_OFFSET_MS));
+        }
+        function getWeekInfo() {
+            const today = riyadhDayString(riyadhNow());
+            const cycle = getCurrentCycle();
+            let anchor = riyadhDayOf(cycle.startDate);
+            if (weekAnchorGlobal && weekAnchorGlobal.day && weekAnchorGlobal.setAt >= cycle.startDate.getTime()) {
+                anchor = weekAnchorGlobal.day;
             }
-            const btn = document.getElementById('testNotifBtn');
-            if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
-            fetch(INACTIVITY_CHECK_URL + '?test=1')
-                .then(r => r.json())
-                .then(data => {
-                    showNotification(`Test sent to ${data.sent || 0} user(s)`);
-                })
-                .catch(() => {
-                    showNotification('Could not reach the notification server', true);
-                })
-                .finally(() => {
-                    if (btn) { btn.disabled = false; btn.textContent = 'Send Test Notification to Everyone'; }
-                });
+            const fridays = [];
+            const d = new Date(anchor + 'T00:00:00Z');
+            for (let i = 0; i < 800; i++) {
+                d.setUTCDate(d.getUTCDate() + 1);
+                const s = d.toISOString().slice(0, 10);
+                if (s > today) break;
+                if (d.getUTCDay() === 5) fridays.push(s);
+            }
+            const n = fridays.length;
+            const m = Math.floor(n / 4) * 4; // Fridays that were allowance days so far
+            const allowanceFriday = m >= 4 ? fridays[m - 1] : null;
+            return { today, anchor, week: (n % 4) + 1, allowanceFriday };
+        }
+        function isAllowanceDue() {
+            const w = getWeekInfo();
+            return !!w.allowanceFriday && allowanceDoneFriday !== w.allowanceFriday;
+        }
+        function doneKey() { return currentUser ? `moneyAllowanceDone:${currentUser.username}` : null; }
+        function loadAllowanceDone() {
+            if (!currentUser) return;
+            const username = currentUser.username;
+            allowanceDoneLoaded = false;
+            allowancePopupLater = false;
+            try { allowanceDoneFriday = localStorage.getItem(doneKey()) || ''; } catch (e) { allowanceDoneFriday = ''; }
+            get(ref(database, `users/${username}/allowanceDoneFriday`)).then((snap) => {
+                if (currentUser && currentUser.username === username && snap.exists() && snap.val() > allowanceDoneFriday) {
+                    allowanceDoneFriday = snap.val();
+                    try { localStorage.setItem(doneKey(), allowanceDoneFriday); } catch (e) { }
+                }
+            }).catch(() => { }).finally(() => {
+                allowanceDoneLoaded = true;
+                renderMonthCycleUI();
+            });
+        }
+        // Called whenever an allowance is added: this user's pop-up is handled for this allowance Friday.
+        function markAllowanceDone() {
+            if (!currentUser) return;
+            const w = getWeekInfo();
+            if (!w.allowanceFriday) return;
+            allowanceDoneFriday = w.allowanceFriday;
+            try { localStorage.setItem(doneKey(), allowanceDoneFriday); } catch (e) { }
+            set(ref(database, `users/${currentUser.username}/allowanceDoneFriday`), allowanceDoneFriday).catch(() => { });
+            renderMonthCycleUI();
+        }
+        function renderWeekBadge() {
+            const weekEl = document.getElementById('monthCycleWeek');
+            const dots = document.getElementById('weekDots');
+            if (!weekEl || !dots) return;
+            const w = getWeekInfo();
+            weekEl.textContent = ` · Week ${w.week}`;
+            dots.style.display = 'flex';
+            dots.querySelectorAll('i').forEach((el, i) => el.classList.toggle('on', i < w.week));
+
+            // Zezo-only control in Settings
+            const cur = document.getElementById('weekSettingsCurrent');
+            if (cur) cur.textContent = `Week ${w.week}`;
+            document.querySelectorAll('#weekPickerBtns button').forEach((b) => {
+                b.classList.toggle('confirm', Number(b.dataset.week) === w.week);
+                b.classList.toggle('cancel', Number(b.dataset.week) !== w.week);
+            });
+        }
+        function maybeShowAllowanceDayPopup() {
+            if (!currentUser || !allowanceDoneLoaded || allowancePopupLater) return;
+            if (!isAllowanceDue()) return;
+            if (document.querySelector('.modal.active, .pin-lock-overlay.active')) return; // retried on the next refresh
+            document.getElementById('allowanceDayModal').classList.add('active');
+        }
+        window.allowanceDayLater = function () {
+            allowancePopupLater = true;
+            closeModal('allowanceDayModal');
+        };
+        window.allowanceDayAdd = function () {
+            closeModal('allowanceDayModal');
+            addUsualAllowance(); // adds the usual allowance (commitAllowance then marks it done)
         };
 
-        function syncFcmTokenToServer() {
-            const token = localStorage.getItem('fcmToken');
-            if (token && currentUser && currentUser.username) {
-                set(ref(database, `users/${currentUser.username}/fcmToken`), token).catch(() => { });
+        // Zezo only: choose which week it is, for everyone. Re-anchors the count so that
+        // today is the chosen week, and the next Fridays carry on from there.
+        window.setCurrentWeek = function (week) {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Only Zezo can change the week', true);
+                return;
+            }
+            week = Number(week);
+            if (!(week >= 1 && week <= 4)) return;
+            // Anchor so exactly (week - 1) Fridays fall after it, up to today.
+            const d = new Date(riyadhDayString(riyadhNow()) + 'T00:00:00Z');
+            let back = week - 1, guard = 0;
+            if (back === 0) {
+                while (d.getUTCDay() !== 5 && guard++ < 8) d.setUTCDate(d.getUTCDate() - 1); // most recent Friday
+            } else {
+                while (guard++ < 400) {
+                    if (d.getUTCDay() === 5 && --back === 0) break; // the (week-1)th most recent Friday
+                    d.setUTCDate(d.getUTCDate() - 1);
+                }
+                d.setUTCDate(d.getUTCDate() - 1); // day before it, so that Friday counts
+            }
+            const payload = { day: d.toISOString().slice(0, 10), week, setAt: Date.now() };
+            set(ref(database, 'financialCycle/weekAnchor'), payload).then(() => {
+                showNotification(`It's now Week ${week} for everyone`);
+            }).catch((err) => showNotification('Could not change the week: ' + err.message, true));
+        };
+
+        // Allowance day = today is a 4th-Friday allowance day and this user hasn't added it yet.
+        function isAllowanceDayToday() {
+            const w = getWeekInfo();
+            return w.allowanceFriday === w.today && allowanceDoneFriday !== w.allowanceFriday;
+        }
+
+        let discordReminderRunning = false;
+        async function checkDiscordReminders() {
+            if (!currentUser || discordReminderRunning) return;
+            if (!getDiscordWebhook()) return;
+            const r = riyadhNow();
+            const hour = r.getUTCHours();
+            if (hour < 13 || hour >= 20) return;
+            const today = riyadhDayString(r);
+            const username = currentUser.username;
+            discordReminderRunning = true;
+            try {
+                const userRef = ref(database, `users/${username}`);
+                const snap = await get(userRef);
+                const d = snap.val() || {};
+                if (d.lastReminderDay === today) return; // already reminded today
+
+                const now = Date.now();
+                let msg = null;
+                if (isAllowanceDayToday()) {
+                    msg = `🎉 **It's allowance day, ${username}!** Tap "I Got Allowance" and make sure to log your spending.`;
+                } else if (r.getUTCDay() === 4) {
+                    msg = `📝 **Thursday check-in, ${username}** — make sure to log your spending!`;
+                } else {
+                    const baseline = d.lastPurchaseAt || d.reminderClockStart;
+                    if (!baseline) { // first run: start the 3-day clock now, don't ping yet
+                        await set(ref(database, `users/${username}/reminderClockStart`), now);
+                        return;
+                    }
+                    if (now - baseline >= THREE_DAYS_MS && now - (d.lastReminderAt || 0) >= THREE_DAYS_MS) {
+                        msg = `📝 **Hey ${username}** — it's been 3+ days. Make sure to log your spending!`;
+                    }
+                }
+                if (!msg) return;
+                if (await window.sendDiscordMessage(msg)) {
+                    await update(userRef, { lastReminderDay: today, lastReminderAt: now });
+                }
+            } catch (e) {
+                console.log('Discord reminder check failed:', e);
+            } finally {
+                discordReminderRunning = false;
             }
         }
+
+        // --- Settings UI ---
+        function renderDiscordSettingsStatus() {
+            const statusEl = document.getElementById('discordSettingsStatus');
+            if (!statusEl) return;
+            const connected = !!getDiscordWebhook();
+            statusEl.textContent = connected ? '✅ Discord is connected' : '⚠️ Discord is not connected';
+            const input = document.getElementById('discordWebhookInput');
+            if (input) input.value = '';
+            const saveBtn = document.getElementById('discordSaveBtn');
+            if (saveBtn) saveBtn.textContent = connected ? 'Replace webhook' : 'Connect Discord';
+            ['discordTestBtn', 'discordDisconnectBtn'].forEach((id) => {
+                const b = document.getElementById(id);
+                if (b) b.style.display = connected ? '' : 'none';
+            });
+        }
+        window.connectDiscordFromSettings = async function () {
+            const input = document.getElementById('discordWebhookInput');
+            const btn = document.getElementById('discordSaveBtn');
+            const url = input ? input.value.trim() : '';
+            if (!url) { showNotification('Paste your Discord webhook URL first', true); return; }
+            const label = btn.textContent;
+            btn.disabled = true; btn.textContent = 'Connecting...';
+            try {
+                await connectDiscordWebhook(url);
+                showNotification('Discord connected — check your channel! 💬');
+            } catch (e) {
+                showNotification(e.message || 'Could not reach Discord', true);
+            } finally {
+                btn.disabled = false; btn.textContent = label;
+                renderDiscordSettingsStatus();
+            }
+        };
+        window.testDiscordFromSettings = async function () {
+            const btn = document.getElementById('discordTestBtn');
+            btn.disabled = true;
+            const ok = await window.sendDiscordMessage('✅ Test message from Money — everything is working.');
+            btn.disabled = false;
+            showNotification(ok ? 'Test message sent to Discord' : 'Could not send to Discord', !ok);
+        };
+        window.disconnectDiscordFromSettings = function () {
+            disconnectDiscordWebhook();
+            renderDiscordSettingsStatus();
+            showNotification('Discord disconnected');
+        };
+
+        // --- Pop-up shown on open (once) until a webhook is set ---
+        function discordDismissKey() {
+            return currentUser ? `moneyDiscordPromptDismissed:${currentUser.username}` : null;
+        }
+        function maybeShowDiscordPrompt() {
+            if (!currentUser || getDiscordWebhook()) return;
+            try { if (localStorage.getItem(discordDismissKey())) return; } catch (e) { }
+            const setup = document.getElementById('setupModal');
+            if (setup && setup.classList.contains('active')) return; // shown after setup finishes
+            const modal = document.getElementById('discordPromptModal');
+            if (!modal || modal.classList.contains('active')) return;
+            document.getElementById('discordPromptInput').value = '';
+            document.getElementById('discordPromptError').textContent = '';
+            modal.classList.add('active');
+        }
+        window.dismissDiscordPrompt = function () {
+            try { localStorage.setItem(discordDismissKey(), '1'); } catch (e) { }
+            closeModal('discordPromptModal');
+        };
+        window.connectDiscordFromPrompt = async function () {
+            const errEl = document.getElementById('discordPromptError');
+            const btn = document.getElementById('discordPromptBtn');
+            const url = document.getElementById('discordPromptInput').value.trim();
+            if (!url) { errEl.textContent = 'Paste the webhook Zezo gave you, or tap Not now.'; return; }
+            if (!isValidDiscordWebhook(url)) { errEl.textContent = "That doesn't look like a Discord webhook URL."; return; }
+            btn.disabled = true; btn.textContent = 'Connecting...';
+            try {
+                await connectDiscordWebhook(url);
+                closeModal('discordPromptModal');
+                renderDiscordSettingsStatus();
+                showNotification('Discord connected — check your channel! 💬');
+            } catch (e) {
+                errEl.textContent = (e && e.message) || 'Could not reach Discord.';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Connect';
+            }
+        };
 
         // ===== Offline mode =====
         // Money Manager keeps working with no wifi. Every action (purchase,
@@ -5700,6 +6554,23 @@
             });
         }
 
+        // Update announcements go to this Discord channel.
+        const UPDATE_DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1554095715079421972/YEha-RiWAgOZsUiHZjGi7rvWkRXPP6AJNurjXKCmGe42Ol4BHtFiyW6v7cnVdhQI-fSI';
+
+        function announceUpdateOnDiscord(version, slides) {
+            let text = `🚀 **${version}** is out!\n\n**What's new**`;
+            slides.forEach((s) => {
+                text += s.title ? `\n\n**${s.title}**\n${s.body}` : `\n\n${s.body}`;
+            });
+            text += `\n\n_Open the app and tap the update pop-up to get it._`;
+            if (text.length > 1900) text = text.slice(0, 1890) + '…';
+            return fetch(UPDATE_DISCORD_WEBHOOK, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'Money', content: text, allowed_mentions: { parse: [] } })
+            }).then((res) => { if (!res.ok) throw new Error('Discord replied ' + res.status); });
+        }
+
         // Zezo-only: broadcast a new update to every user/device.
         window.sendAppUpdate = function () {
             if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
@@ -5733,6 +6604,9 @@
                 releasedBy: currentUser.username
             }).then(() => {
                 showNotification('Update ' + version + ' sent to everyone! 🚀');
+                announceUpdateOnDiscord(version, slides).catch(() => {
+                    showNotification('Update sent, but the Discord message failed', true);
+                });
                 const list = document.getElementById('updateSlidesList');
                 if (list) list.innerHTML = '';
                 addUpdateSlideField();
@@ -5740,6 +6614,29 @@
             }).catch((error) => {
                 showNotification('Failed to send update: ' + error.message, true);
             });
+        };
+
+        window.hardRefreshApp = async function () {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
+                showNotification('Only Zezo can do this', true);
+                return;
+            }
+            if (!confirm('Clear the cache and reload the app?')) return;
+            const btn = document.getElementById('hardRefreshBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Clearing...'; }
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(r => r.unregister()));
+                }
+                if (window.caches) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                }
+            } catch (e) {
+                console.log('Error clearing caches:', e);
+            }
+            location.reload();
         };
 
         const UPDATE_WELCOME_PAYLOAD_KEY = 'zezoUpdateWelcomePayload';
@@ -7353,25 +8250,59 @@ Use the conversation history provided to you to remember what's already been sai
             const changeBtn = document.getElementById('pinChangeBtn');
             const removeBtn = document.getElementById('pinRemoveBtn');
             const enabled = hasPinSet(currentUser.username);
-            if (statusEl) statusEl.textContent = enabled ? '🔒 PIN lock is ON' : '🔓 PIN lock is OFF';
+            if (statusEl) statusEl.innerHTML = enabled ? '<span class="pin-status-pill on">● PIN lock is on</span>' : '<span class="pin-status-pill">○ PIN lock is off</span>';
             if (changeBtn) changeBtn.textContent = enabled ? 'Change PIN' : 'Set PIN';
             if (removeBtn) removeBtn.style.display = enabled ? 'inline-block' : 'none';
+        }
+
+        let pinBusy = false;
+
+        function pinEl(id) {
+            return document.getElementById(id);
+        }
+
+        function setPinMessage(msg) {
+            const el = pinEl('pinError');
+            if (el) el.textContent = msg || '';
+        }
+
+        function setPinSteps(n) {
+            const box = pinEl('pinSteps');
+            if (!box) return;
+            box.style.display = n ? 'flex' : 'none';
+            box.children[0].classList.toggle('on', n >= 1);
+            box.children[1].classList.toggle('on', n >= 2);
         }
 
         function openPinOverlay(mode, title, sub) {
             pinEntryMode = mode;
             pinEntryBuffer = '';
             pinFirstEntry = '';
-            document.getElementById('pinLockTitle').textContent = title || 'Enter your PIN';
-            document.getElementById('pinLockSub').textContent = sub || 'Enter your 4-digit PIN to continue';
-            document.getElementById('pinCancelKey').style.display = (mode === 'unlock') ? 'none' : 'flex';
-            document.getElementById('pinLockForgot').style.display = (mode === 'unlock') ? 'block' : 'none';
+            pinBusy = false;
+            const isUnlock = mode === 'unlock';
+            pinEl('pinLockTitle').textContent = title || 'Enter your PIN';
+            pinEl('pinLockSub').textContent = sub || (isUnlock ? 'Enter your 4-digit PIN to unlock' : 'Enter your 4-digit PIN to continue');
+            pinEl('pinCancelKey').style.visibility = isUnlock ? 'hidden' : 'visible';
+            pinEl('pinLockForgot').style.display = isUnlock ? 'inline-flex' : 'none';
+            const userChip = pinEl('pinLockUser');
+            if (currentUser && isUnlock) {
+                userChip.textContent = 'Signed in as ' + currentUser.username;
+                userChip.style.display = 'inline-block';
+            } else {
+                userChip.style.display = 'none';
+            }
+            setPinSteps(mode === 'create' ? 1 : (mode === 'confirm' ? 2 : 0));
+            setPinMessage('');
+            pinEl('pinBadge').classList.remove('ok');
+            pinEl('pinDots').classList.remove('ok');
+            const overlay = pinEl('pinLockOverlay');
+            overlay.classList.remove('closing');
+            overlay.classList.add('active');
             renderPinDots();
-            document.getElementById('pinLockOverlay').classList.add('active');
         }
 
         function renderPinDots() {
-            const dotsContainer = document.getElementById('pinDots');
+            const dotsContainer = pinEl('pinDots');
             if (!dotsContainer) return;
             dotsContainer.classList.remove('pin-lock-shake');
             const dots = dotsContainer.querySelectorAll('.pin-dot');
@@ -7382,34 +8313,65 @@ Use the conversation history provided to you to remember what's already been sai
         }
 
         function shakePinDots(afterShake) {
-            const dotsContainer = document.getElementById('pinDots');
+            const dotsContainer = pinEl('pinDots');
             if (dotsContainer) {
                 dotsContainer.querySelectorAll('.pin-dot').forEach(d => d.classList.add('error'));
                 dotsContainer.classList.add('pin-lock-shake');
             }
+            if (navigator.vibrate) navigator.vibrate(60);
+            pinBusy = true;
             setTimeout(() => {
                 pinEntryBuffer = '';
+                pinBusy = false;
                 renderPinDots();
                 if (afterShake) afterShake();
             }, 450);
         }
 
+        // Green success moment, then fade the lock screen away.
+        function closePinOverlay(success, after) {
+            const overlay = pinEl('pinLockOverlay');
+            pinBusy = true;
+            if (success) {
+                pinEl('pinBadge').classList.add('ok');
+                const dots = pinEl('pinDots');
+                dots.classList.add('ok');
+                dots.querySelectorAll('.pin-dot').forEach(d => d.classList.add('filled'));
+            }
+            setTimeout(() => {
+                overlay.classList.add('closing');
+                setTimeout(() => {
+                    overlay.classList.remove('active', 'closing');
+                    pinBusy = false;
+                    pinEntryBuffer = '';
+                    pinFirstEntry = '';
+                    if (after) after();
+                }, 230);
+            }, success ? 420 : 0);
+        }
+
         window.pinKeyPress = function (digit) {
-            if (pinEntryBuffer.length >= 4) return;
+            if (pinBusy || pinEntryBuffer.length >= 4) return;
+            if (navigator.vibrate) navigator.vibrate(8);
+            setPinMessage('');
             pinEntryBuffer += digit;
             renderPinDots();
             if (pinEntryBuffer.length === 4) {
-                setTimeout(handlePinComplete, 150);
+                pinBusy = true;
+                setTimeout(() => { pinBusy = false; handlePinComplete(); }, 150);
             }
         };
 
         window.pinKeyBackspace = function () {
+            if (pinBusy) return;
             pinEntryBuffer = pinEntryBuffer.slice(0, -1);
             renderPinDots();
         };
 
         window.cancelPinFlow = function () {
-            document.getElementById('pinLockOverlay').classList.remove('active');
+            const overlay = pinEl('pinLockOverlay');
+            overlay.classList.remove('active', 'closing');
+            pinBusy = false;
             pinEntryBuffer = '';
             pinFirstEntry = '';
         };
@@ -7418,7 +8380,8 @@ Use the conversation history provided to you to remember what's already been sai
             if (currentUser) {
                 localStorage.removeItem(pinStorageKey(currentUser.username));
             }
-            document.getElementById('pinLockOverlay').classList.remove('active');
+            pinEl('pinLockOverlay').classList.remove('active', 'closing');
+            pinBusy = false;
             pinEntryBuffer = '';
             showNotification('PIN reset — please log in again');
             if (typeof logout === 'function') logout();
@@ -7429,10 +8392,9 @@ Use the conversation history provided to you to remember what's already been sai
 
             if (pinEntryMode === 'unlock') {
                 if (username && pinEntryBuffer === localStorage.getItem(pinStorageKey(username))) {
-                    document.getElementById('pinLockOverlay').classList.remove('active');
-                    pinEntryBuffer = '';
+                    closePinOverlay(true);
                 } else {
-                    showNotification('Incorrect PIN', true);
+                    setPinMessage('Incorrect PIN. Try again.');
                     shakePinDots();
                 }
             } else if (pinEntryMode === 'change-verify') {
@@ -7440,37 +8402,39 @@ Use the conversation history provided to you to remember what's already been sai
                     pinEntryMode = 'create';
                     pinFirstEntry = '';
                     pinEntryBuffer = '';
-                    document.getElementById('pinLockTitle').textContent = 'Create a new PIN';
-                    document.getElementById('pinLockSub').textContent = 'Enter a new 4-digit PIN';
+                    pinEl('pinLockTitle').textContent = 'Create a new PIN';
+                    pinEl('pinLockSub').textContent = 'Enter a new 4-digit PIN';
+                    setPinSteps(1);
                     renderPinDots();
                 } else {
-                    showNotification('Incorrect PIN', true);
+                    setPinMessage('Incorrect PIN. Try again.');
                     shakePinDots();
                 }
             } else if (pinEntryMode === 'create') {
                 pinFirstEntry = pinEntryBuffer;
                 pinEntryBuffer = '';
                 pinEntryMode = 'confirm';
-                document.getElementById('pinLockTitle').textContent = 'Confirm your PIN';
-                document.getElementById('pinLockSub').textContent = 'Enter the same 4-digit PIN again';
+                pinEl('pinLockTitle').textContent = 'Confirm your PIN';
+                pinEl('pinLockSub').textContent = 'Enter the same 4-digit PIN again';
+                setPinSteps(2);
                 renderPinDots();
             } else if (pinEntryMode === 'confirm') {
                 if (pinEntryBuffer === pinFirstEntry) {
                     if (username) {
                         localStorage.setItem(pinStorageKey(username), pinEntryBuffer);
                     }
-                    document.getElementById('pinLockOverlay').classList.remove('active');
-                    pinEntryBuffer = '';
-                    pinFirstEntry = '';
-                    showNotification('PIN saved!');
-                    renderPinSettingsStatus();
+                    closePinOverlay(true, () => {
+                        showNotification('PIN saved!');
+                        renderPinSettingsStatus();
+                    });
                 } else {
-                    showNotification("PINs didn't match, try again", true);
+                    setPinMessage("The PINs didn't match. Start again.");
                     shakePinDots(() => {
                         pinEntryMode = 'create';
                         pinFirstEntry = '';
-                        document.getElementById('pinLockTitle').textContent = 'Create a new PIN';
-                        document.getElementById('pinLockSub').textContent = 'Enter a new 4-digit PIN';
+                        pinEl('pinLockTitle').textContent = 'Choose your PIN';
+                        pinEl('pinLockSub').textContent = 'Enter a 4-digit PIN';
+                        setPinSteps(1);
                     });
                 }
             }
@@ -7564,8 +8528,12 @@ Use the conversation history provided to you to remember what's already been sai
                 if (currentUser) markUserActive(currentUser.username);
             }, 15 * 60 * 1000); // every 15 minutes while open
             document.addEventListener('visibilitychange', () => {
-                if (!document.hidden && currentUser) markUserActive(currentUser.username);
+                if (!document.hidden && currentUser) {
+                    markUserActive(currentUser.username);
+                    checkDiscordReminders();
+                }
             });
+            setInterval(checkDiscordReminders, 30 * 60 * 1000); // while the app stays open
 
             // Listen for the shared monthly cycle boundary (applies to everyone,
             // controlled by Zezo) — attach regardless of login so it's ready
@@ -7597,12 +8565,13 @@ Use the conversation history provided to you to remember what's already been sai
 
             const username = currentUser.username;
 
-            // Record this as activity (powers the 3-day-inactive push notification)
-            // and push this device's FCM token up so the server-side check can reach it.
+            // Record this as activity, and restore the Discord webhook on new devices
             markUserActive(username);
-            syncFcmTokenToServer();
-            triggerInactivityCheck();
-            ensureNotificationsAndBackgroundReady();
+            loadAllowanceDone();
+            syncDiscordWebhookFromServer().then(() => {
+                setTimeout(maybeShowDiscordPrompt, 800);
+                setTimeout(checkDiscordReminders, 5000); // give preferences a moment to load
+            });
 
             // Show/hide the Missions tab and the allowance mode toggle — Zezo only
             applyZezoOnlyUI();
@@ -7691,6 +8660,7 @@ Use the conversation history provided to you to remember what's already been sai
                         }
                     }
                     updateUIForPreferences();
+                    maybeShowSetupWizard();
                 } else {
                     // Use default preferences
                     if (userPreferences.minimumSavings === undefined) {
@@ -7716,6 +8686,7 @@ Use the conversation history provided to you to remember what's already been sai
                         set(prefsRef, userPreferences);
                     }
                     updateUIForPreferences();
+                    maybeShowSetupWizard();
                 }
             });
 
@@ -7836,22 +8807,10 @@ Use the conversation history provided to you to remember what's already been sai
                 savingsLimit.textContent = 'Flexible savings';
             }
 
-            // Update allowance countdown for Asser
+            // Allowance timing is shared by everyone (Week counter + Allowance day pop-up),
+            // so the old per-user countdown stays hidden.
             const countdownElement = document.getElementById('allowanceCountdown');
-            if (currentUser && currentUser.username.toLowerCase() === 'asser' && userPreferences.allowanceSchedule) {
-                const allowanceInfo = getDaysUntilNextAllowance();
-                if (allowanceInfo && allowanceInfo.daysRemaining >= 0) {
-                    countdownElement.style.display = 'flex';
-                    document.getElementById('daysRemaining').textContent = allowanceInfo.daysRemaining;
-
-                    // Show reminder
-                    showAllowanceReminder();
-                } else {
-                    countdownElement.style.display = 'none';
-                }
-            } else {
-                countdownElement.style.display = 'none';
-            }
+            if (countdownElement) countdownElement.style.display = 'none';
 
             // Update edit modal with current values
             document.getElementById('editHangout').placeholder = balances.hangout;
@@ -9050,6 +10009,11 @@ Use the conversation history provided to you to remember what's already been sai
                 renderMonthCycleUI();
                 if (currentUser) updateUI();
             });
+            // Zezo-controlled week (shared by everyone)
+            onValue(ref(database, 'financialCycle/weekAnchor'), (snapshot) => {
+                weekAnchorGlobal = snapshot.exists() ? snapshot.val() : null;
+                renderMonthCycleUI();
+            });
 
             // Live-updating clock in the header/settings (every 30s is plenty).
             if (!cycleClockInterval) {
@@ -9064,10 +10028,12 @@ Use the conversation history provided to you to remember what's already been sai
                 const last = cycleHistory[cycleHistory.length - 1];
                 return { label: last.label, startDate: new Date(last.startDate) };
             }
-            const now = new Date();
+            // No month started yet: use the calendar month in Riyadh time, so every device agrees
+            const rNow = new Date(Date.now() + 3 * 60 * 60 * 1000);
+            const y = rNow.getUTCFullYear(), m = rNow.getUTCMonth();
             return {
-                label: now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-                startDate: new Date(now.getFullYear(), now.getMonth(), 1)
+                label: new Date(Date.UTC(y, m, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+                startDate: new Date(Date.UTC(y, m, 1) - 3 * 60 * 60 * 1000)
             };
         }
 
@@ -9159,6 +10125,8 @@ Use the conversation history provided to you to remember what's already been sai
             if (badge && badgeLabel) {
                 badge.style.display = 'inline-flex';
                 badgeLabel.textContent = cycle.label;
+                renderWeekBadge();
+                maybeShowAllowanceDayPopup();
             }
 
             // Settings panel (Zezo only — the section itself is hidden for others)
@@ -11381,6 +12349,46 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         }
 
         // Modal functions
+        // ---- Allowance flow -------------------------------------------------
+        // Step 1: "I Got Allowance" -> choose Usual (one tap) or Different.
+        function getUsualAllowanceAmount() {
+            if (userPreferences.monthlyIncome > 0) return userPreferences.monthlyIncome;
+            return userPreferences.defaultAllowanceAmount || 60;
+        }
+
+        window.startAllowanceFlow = function () {
+            if (!currentUser) {
+                showNotification('Please login first', true);
+                return;
+            }
+            const total = getUsualAllowanceAmount();
+            const s = computeAllowanceSplit(total, 'normal');
+            document.getElementById('acUsualAmount').textContent = `${total} ${'\u20c1'}`;
+            const chips = [
+                `<span class="ac-chip"><i style="background:#feca57"></i>Hangout ${s.hangout}</span>`,
+                `<span class="ac-chip"><i style="background:var(--accent-1,#00f5d4)"></i>Savings ${s.savings}</span>`
+            ];
+            if (userPreferences.enablePlaystation) {
+                chips.push(`<span class="ac-chip"><i style="background:var(--accent-3,#667eea)"></i>PlayStation ${s.playstation}</span>`);
+            }
+            document.getElementById('acUsualChips').innerHTML = chips.join('');
+            document.getElementById('allowanceChoiceModal').classList.add('active');
+        };
+
+        window.addUsualAllowance = function () {
+            if (!currentUser) return;
+            const total = getUsualAllowanceAmount();
+            const s = computeAllowanceSplit(total, 'normal');
+            closeModal('allowanceChoiceModal');
+            commitAllowance(total, s.hangout, s.savings, s.playstation);
+        };
+
+        window.openDifferentAllowance = function () {
+            closeModal('allowanceChoiceModal');
+            openAllowanceModal();
+        };
+
+        // Step 2 (only when "Different"): the editable amount + sliders.
         window.openAllowanceModal = function () {
             if (!currentUser) {
                 showNotification('Please login first', true);
@@ -11398,17 +12406,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             if (normalBtn) normalBtn.classList.add('selected');
             if (savingBtn) savingBtn.classList.remove('selected');
 
-            // Set default amount based on user preferences
-            const defaultAmount = userPreferences.defaultAllowanceAmount || 60;
-            document.getElementById('allowanceAmount').value = defaultAmount;
-
-            // Update button styles
-            document.querySelectorAll('.amount-option-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            document.getElementById(`amount${defaultAmount}`).classList.add('selected');
-
-            autoCalculateSplit(); // Auto-calculate when modal opens
+            // Start from the usual amount; the person can type any other amount
+            document.getElementById('allowanceAmount').value = getUsualAllowanceAmount();
+            autoCalculateSplit();
         };
 
         // Zezo-only: switch between the Normal split and the Saving split (puts
@@ -11741,81 +12741,183 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             showNotification('Logged out successfully');
         };
 
-        // Setup modal functions
+        // ===== Setup wizard =====
+        // Shown the next time the app opens whenever monthly income / split
+        // haven't been set yet. "Later" only snoozes it for this session.
+        let setupSnoozedFor = null;
+        const swState = { step: 1, income: '', ps: true, hang: 50, save: 38, fromSettings: false };
+
+        function needsSetupWizard() {
+            if (!currentUser) return false;
+            if (currentUser.username.toLowerCase() === 'asser') return false; // Asser's plan is preconfigured
+            return !(userPreferences && (userPreferences.setupCompleted || userPreferences.monthlyIncome > 0));
+        }
+
+        function maybeShowSetupWizard() {
+            if (!needsSetupWizard()) return;
+            if (setupSnoozedFor === currentUser.username) return;
+            const modal = document.getElementById('setupModal');
+            if (modal && modal.classList.contains('active')) return;
+            openSetupWizard(false);
+        }
+
         window.openSetupModal = function () {
-            document.getElementById('setupModal').classList.add('active');
+            openSetupWizard(false);
         };
 
-        window.toggleSetupAllowanceType = function () {
-            const type = document.getElementById('setupAllowanceType').value;
-            if (type === 'fixed') {
-                document.getElementById('setupPercentageSettings').style.display = 'none';
-                document.getElementById('setupFixedAmountSettings').style.display = 'block';
+        window.openSetupWizard = function (fromSettings) {
+            const p = userPreferences || {};
+            swState.fromSettings = !!fromSettings;
+            swState.step = 1;
+            swState.ps = p.enablePlaystation !== false;
+
+            let income = p.monthlyIncome > 0 ? p.monthlyIncome : (fromSettings && p.defaultAllowanceAmount > 0 ? p.defaultAllowanceAmount : '');
+            swState.income = income;
+
+            let h, s;
+            if (p.useFixedAmounts && income > 0) {
+                h = Math.round(((p.fixedHangoutAmount || 35) / income) * 100);
+                s = Math.round(((p.fixedSavingsAmount || 25) / income) * 100);
             } else {
-                document.getElementById('setupPercentageSettings').style.display = 'block';
-                document.getElementById('setupFixedAmountSettings').style.display = 'none';
+                h = Math.round(p.hangoutPercent != null ? p.hangoutPercent : 50);
+                s = Math.round(p.savingsPercent != null ? p.savingsPercent : 37.5);
+            }
+            h = Math.min(100, Math.max(0, h));
+            s = Math.min(100 - h, Math.max(0, s));
+            if (!swState.ps) s = 100 - h;
+            swState.hang = h;
+            swState.save = s;
+
+            document.getElementById('swIncome').value = income || '';
+            document.getElementById('swError').textContent = '';
+            document.getElementById('setupModal').classList.add('active');
+            swRender('fwd');
+        };
+
+        function swRender(dir) {
+            document.querySelectorAll('#setupModal .sw-step').forEach(el => {
+                const on = Number(el.dataset.step) === swState.step;
+                el.dataset.dir = dir || 'fwd';
+                el.classList.toggle('active', on);
+            });
+            document.querySelectorAll('#swProgress span').forEach((el, i) => {
+                el.classList.toggle('on', i < swState.step);
+            });
+            document.getElementById('swBack').style.visibility = swState.step > 1 ? 'visible' : 'hidden';
+            document.getElementById('swPsYes').classList.toggle('selected', swState.ps === true);
+            document.getElementById('swPsNo').classList.toggle('selected', swState.ps === false);
+            if (swState.step === 3) swRenderSplit();
+        }
+
+        window.setupBack = function () {
+            if (swState.step > 1) {
+                swState.step -= 1;
+                swRender('back');
             }
         };
 
-        // Show/hide the PlayStation % field in the Default Allowance Split
-        // based on whether the PlayStation/Mobily bucket is enabled.
-        window.toggleSetupPlaystationVisibility = function () {
-            const enablePlaystation = document.getElementById('setupEnablePlaystation').value === 'true';
-            const psGroup = document.getElementById('setupPlaystationPercentGroup');
-            const grid = document.getElementById('setupPercentSplitGrid');
-            if (psGroup) psGroup.style.display = enablePlaystation ? 'block' : 'none';
-            if (grid) grid.style.gridTemplateColumns = enablePlaystation ? '1fr 1fr 1fr' : '1fr 1fr';
+        window.setupNext = function () {
+            if (swState.step !== 1) return;
+            const v = parseFloat(document.getElementById('swIncome').value);
+            if (!(v > 0)) {
+                document.getElementById('swError').textContent = 'Enter your monthly income to continue.';
+                return;
+            }
+            swState.income = Math.round(v);
+            swState.step = 2;
+            swRender('fwd');
         };
 
-        window.completeSetup = function () {
-            const hangoutLimit = parseInt(document.getElementById('setupHangoutLimit').value) || 140;
-            const enablePlaystation = document.getElementById('setupEnablePlaystation').value === 'true';
-            const allowanceType = document.getElementById('setupAllowanceType').value;
+        window.swChoosePs = function (yes) {
+            swState.ps = !!yes;
+            if (!swState.ps) swState.save = 100 - swState.hang; // no third bucket: Save gets the rest
+            else if (swState.hang + swState.save > 100) swState.save = 100 - swState.hang;
+            swRender('fwd');
+            setTimeout(() => {
+                swState.step = 3;
+                swRender('fwd');
+            }, 180);
+        };
 
-            let newPreferences = {
-                hangoutLimit,
-                enablePlaystation,
+        window.swSplitInput = function (which) {
+            let h = Number(document.getElementById('swHangSlider').value);
+            let s = Number(document.getElementById('swSaveSlider').value);
+            if (!swState.ps || h + s > 100) {
+                if (which === 'hang') s = 100 - h; else h = 100 - s;
+            }
+            swState.hang = h;
+            swState.save = s;
+            swRenderSplit();
+        };
+
+        function swAmounts() {
+            const inc = Number(swState.income) || 0;
+            const h = swState.hang, s = swState.save;
+            let ha = Math.round(inc * h / 100);
+            let sa = Math.round(inc * s / 100);
+            let pa = 0;
+            if (swState.ps) pa = Math.max(0, inc - ha - sa); else sa = inc - ha;
+            return { ha, sa, pa, pp: swState.ps ? 100 - h - s : 0 };
+        }
+
+        function swRenderSplit() {
+            const a = swAmounts();
+            document.getElementById('swHangSlider').value = swState.hang;
+            document.getElementById('swSaveSlider').value = swState.save;
+            document.getElementById('swHangText').textContent = `${swState.hang}%  ·  ${a.ha} ${'\u20c1'}`;
+            document.getElementById('swSaveText').textContent = `${swState.save}%  ·  ${a.sa} ${'\u20c1'}`;
+            document.getElementById('swPsText').textContent = `${a.pp}%  ·  ${a.pa} ${'\u20c1'}`;
+            document.getElementById('swPsRow').style.display = swState.ps ? 'flex' : 'none';
+            document.getElementById('swBarH').style.width = swState.hang + '%';
+            document.getElementById('swBarS').style.width = swState.save + '%';
+            document.getElementById('swBarP').style.width = (swState.ps ? a.pp : 0) + '%';
+            document.getElementById('swIncomeEcho').textContent = `Based on ${swState.income} ${'\u20c1'} a month.`;
+            document.getElementById('swNote').textContent = swState.ps
+                ? 'You can change this anytime in Settings.'
+                : 'Hang and Save always add up to 100%. You can change this anytime in Settings.';
+        }
+
+        window.skipSetupWizard = function () {
+            if (currentUser) setupSnoozedFor = currentUser.username;
+            closeModal('setupModal');
+        };
+
+        window.swFinish = function () {
+            if (!currentUser) return;
+            const income = Number(swState.income);
+            if (!(income > 0)) {
+                swState.step = 1;
+                swRender('back');
+                document.getElementById('swError').textContent = 'Enter your monthly income to continue.';
+                return;
+            }
+
+            const h = swState.hang;
+            const s = swState.save;
+            const p = swState.ps ? Math.max(0, 100 - h - s) : 0;
+
+            userPreferences = Object.assign({}, userPreferences, {
+                monthlyIncome: income,
+                defaultAllowanceAmount: income,
+                enablePlaystation: swState.ps,
+                useFixedAmounts: false,
+                hangoutPercent: h,
+                savingsPercent: swState.ps ? s : 100 - h,
+                playstationPercent: p,
+                hangoutLimit: (userPreferences && userPreferences.hangoutLimit) || 140,
                 weeklyHangoutBudget: 4,
                 hangoutBudgetPerDay: 15,
-                minimumSavings: 0 // Default to 0 for regular users
-            };
+                minimumSavings: (userPreferences && userPreferences.minimumSavings) || 0,
+                setupCompleted: true
+            });
 
-            // Handle fixed amounts vs percentages
-            if (allowanceType === 'fixed') {
-                const fixedHangout = parseInt(document.getElementById('setupFixedHangout').value) || 35;
-                const fixedSavings = parseInt(document.getElementById('setupFixedSavings').value) || 25;
-
-                newPreferences.useFixedAmounts = true;
-                newPreferences.fixedHangoutAmount = fixedHangout;
-                newPreferences.fixedSavingsAmount = fixedSavings;
-            } else {
-                const hangoutPercent = parseFloat(document.getElementById('setupHangoutPercent').value) || 50;
-                const savingsPercent = parseFloat(document.getElementById('setupSavingsPercent').value) || 37.5;
-                const playstationPercent = enablePlaystation
-                    ? (parseFloat(document.getElementById('setupPlaystationPercent').value) || 12.5)
-                    : 0;
-
-                // Validate percentages
-                if (Math.abs(hangoutPercent + savingsPercent + playstationPercent - 100) > 0.1) {
-                    showNotification('Percentages must add up to 100%', true);
-                    return;
-                }
-
-                newPreferences.useFixedAmounts = false;
-                newPreferences.hangoutPercent = hangoutPercent;
-                newPreferences.savingsPercent = savingsPercent;
-                newPreferences.playstationPercent = playstationPercent;
-            }
-
-            userPreferences = newPreferences;
-
-            // Save preferences to database
             const prefsRef = ref(database, `users/${currentUser.username}/preferences`);
             set(prefsRef, userPreferences).then(() => {
                 closeModal('setupModal');
-                showNotification('Settings saved! Setting up your account...');
-                loadUserData();
+                showNotification(`All set! Your usual allowance is ${income} ${'\u20c1'}.`);
+                maybeShowDiscordPrompt();
                 updateUIForPreferences();
+                updateUI();
             }).catch((error) => {
                 showNotification('Failed to save settings: ' + error.message, true);
             });
@@ -11826,6 +12928,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             // Load current preferences
             document.getElementById('settingsHangoutLimit').value = userPreferences.hangoutLimit;
             document.getElementById('settingsEnablePlaystation').value = userPreferences.enablePlaystation.toString();
+            document.getElementById('settingsMonthlyIncome').value = userPreferences.monthlyIncome || userPreferences.defaultAllowanceAmount || '';
 
             // Load budget settings
             document.getElementById('monthlyBudgetTarget').value = userPreferences.monthlyBudgetTarget || 140;
@@ -11834,21 +12937,25 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('budgetSavingsPercent').value = userPreferences.budgetSavingsPercent || 30;
             document.getElementById('budgetPlaystationPercent').value = userPreferences.budgetPlaystationPercent || 20;
 
-            // Show appropriate settings based on fixed amounts vs percentages
-            if (userPreferences.useFixedAmounts) {
-                document.getElementById('percentageSettings').style.display = 'none';
-                document.getElementById('fixedAmountSettings').style.display = 'block';
-                document.getElementById('settingsFixedHangout').value = userPreferences.fixedHangoutAmount;
-                document.getElementById('settingsFixedSavings').value = userPreferences.fixedSavingsAmount;
-            } else {
-                document.getElementById('percentageSettings').style.display = 'block';
-                document.getElementById('fixedAmountSettings').style.display = 'none';
-                document.getElementById('settingsHangoutPercent').value = userPreferences.hangoutPercent;
-                document.getElementById('settingsSavingsPercent').value = userPreferences.savingsPercent;
-                document.getElementById('settingsPlaystationPercent').value = userPreferences.playstationPercent;
+            // Split is edited in ⃁ amounts. Older accounts that stored percentages
+            // are converted using the monthly income.
+            {
+                const p = userPreferences;
+                const inc = p.monthlyIncome || p.defaultAllowanceAmount || 0;
+                let h, s;
+                if (p.useFixedAmounts) {
+                    h = p.fixedHangoutAmount; s = p.fixedSavingsAmount;
+                } else if (inc > 0) {
+                    h = Math.round(inc * (p.hangoutPercent != null ? p.hangoutPercent : 50) / 100);
+                    s = Math.round(inc * (p.savingsPercent != null ? p.savingsPercent : 37.5) / 100);
+                } else {
+                    h = p.fixedHangoutAmount || 35; s = p.fixedSavingsAmount || 25;
+                }
+                document.getElementById('settingsFixedHangout').value = h;
+                document.getElementById('settingsFixedSavings').value = s;
             }
 
-            // Hide the PlayStation % field in the split if the bucket is disabled
+            // Hide the PlayStation field in the split if the bucket is disabled
             toggleSettingsPlaystationVisibility();
 
             // Rank threshold is only editable for non-Asser users — Asser's ranks
@@ -11867,6 +12974,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             // PIN lock status
             renderPinSettingsStatus();
+
+            // Discord status
+            renderDiscordSettingsStatus();
 
             // AI API key status
             renderApiKeySettingsStatus();
@@ -11887,15 +12997,44 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         // PlayStation/Mobily bucket is enabled.
         window.toggleSettingsPlaystationVisibility = function () {
             const enablePlaystation = document.getElementById('settingsEnablePlaystation').value === 'true';
-            const psGroup = document.getElementById('settingsPlaystationPercentGroup');
-            const grid = document.getElementById('settingsPercentSplitGrid');
+            const psGroup = document.getElementById('settingsPlaystationAmountGroup');
+            const grid = document.getElementById('settingsAmountSplitGrid');
             if (psGroup) psGroup.style.display = enablePlaystation ? 'block' : 'none';
             if (grid) grid.style.gridTemplateColumns = enablePlaystation ? '1fr 1fr 1fr' : '1fr 1fr';
+            updateSettingsSplitRemainder();
 
             const budgetPsGroup = document.getElementById('budgetPlaystationPercentGroup');
             const budgetGrid = document.getElementById('budgetCategoryGrid');
             if (budgetPsGroup) budgetPsGroup.style.display = enablePlaystation ? 'block' : 'none';
             if (budgetGrid) budgetGrid.style.gridTemplateColumns = enablePlaystation ? '1fr 1fr 1fr' : '1fr 1fr';
+        };
+
+        // The last bucket is always "the rest" of the income:
+        //   PlayStation on  -> PlayStation = income - Hangout - Savings
+        //   PlayStation off -> Savings     = income - Hangout
+        window.updateSettingsSplitRemainder = function () {
+            const p = userPreferences || {};
+            const income = parseFloat(document.getElementById('settingsMonthlyIncome').value) || p.monthlyIncome || p.defaultAllowanceAmount || 0;
+            const ps = document.getElementById('settingsEnablePlaystation').value === 'true';
+            const hEl = document.getElementById('settingsFixedHangout');
+            const sEl = document.getElementById('settingsFixedSavings');
+            const psEl = document.getElementById('settingsPlaystationAmount');
+            const note = document.getElementById('settingsSplitNote');
+            const h = parseFloat(hEl.value) || 0;
+            sEl.disabled = !ps && income > 0;
+            let rest;
+            if (ps) {
+                rest = income - h - (parseFloat(sEl.value) || 0);
+                psEl.value = income > 0 ? Math.round(rest) : '';
+            } else if (income > 0) {
+                rest = income - h;
+                sEl.value = Math.round(rest);
+            }
+            const over = income > 0 && rest < 0;
+            note.style.color = over ? '#ff6b7a' : 'rgba(255,255,255,0.5)';
+            note.textContent = over
+                ? 'These add up to more than your monthly income.'
+                : (ps ? 'PlayStation gets whatever is left of your monthly income.' : 'Savings gets whatever is left of your monthly income.');
         };
 
         window.saveSettings = function () {
@@ -11930,31 +13069,60 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 budgetPlaystationPercent: parseInt(document.getElementById('budgetPlaystationPercent').value) || 20
             };
 
-            // Handle fixed amounts vs percentages
-            if (userPreferences.useFixedAmounts) {
-                const fixedHangout = parseInt(document.getElementById('settingsFixedHangout').value) || 35;
-                const fixedSavings = parseInt(document.getElementById('settingsFixedSavings').value) || 25;
-
-                newPreferences.useFixedAmounts = true;
-                newPreferences.fixedHangoutAmount = fixedHangout;
-                newPreferences.fixedSavingsAmount = fixedSavings;
+            // Monthly income = the usual allowance used by the one-tap "Usual" option
+            const incomeInput = parseFloat(document.getElementById('settingsMonthlyIncome').value);
+            if (incomeInput > 0) {
+                newPreferences.monthlyIncome = Math.round(incomeInput);
+                newPreferences.defaultAllowanceAmount = Math.round(incomeInput);
+                newPreferences.setupCompleted = true;
             } else {
-                const hangoutPercent = parseFloat(document.getElementById('settingsHangoutPercent').value) || 50;
-                const savingsPercent = parseFloat(document.getElementById('settingsSavingsPercent').value) || 37.5;
-                const playstationPercent = enablePlaystation
-                    ? (parseFloat(document.getElementById('settingsPlaystationPercent').value) || 12.5)
-                    : 0;
+                if (userPreferences.monthlyIncome > 0) newPreferences.monthlyIncome = userPreferences.monthlyIncome;
+                if (userPreferences.defaultAllowanceAmount > 0) newPreferences.defaultAllowanceAmount = userPreferences.defaultAllowanceAmount;
+                if (userPreferences.setupCompleted) newPreferences.setupCompleted = true;
+            }
 
-                // Validate percentages
-                if (Math.abs(hangoutPercent + savingsPercent + playstationPercent - 100) > 0.1) {
-                    showNotification('Percentages must add up to 100%', true);
+            // Split is saved as ⃁ amounts
+            const income = newPreferences.monthlyIncome || 0;
+            const hRaw = parseFloat(document.getElementById('settingsFixedHangout').value);
+            if (isNaN(hRaw) || hRaw < 0) {
+                showNotification('Enter the Hangout amount', true);
+                return;
+            }
+            const fixedHangout = Math.round(hRaw);
+            let fixedSavings;
+            if (enablePlaystation) {
+                const sRaw = parseFloat(document.getElementById('settingsFixedSavings').value);
+                if (isNaN(sRaw) || sRaw < 0) {
+                    showNotification('Enter the Savings amount', true);
                     return;
                 }
+                fixedSavings = Math.round(sRaw);
+                if (income > 0 && fixedHangout + fixedSavings > income) {
+                    showNotification('Hangout + Savings can\'t be more than your income', true);
+                    return;
+                }
+            } else {
+                if (income > 0 && fixedHangout > income) {
+                    showNotification('Hangout can\'t be more than your income', true);
+                    return;
+                }
+                fixedSavings = income > 0 ? income - fixedHangout : (userPreferences.fixedSavingsAmount || 25);
+            }
 
-                newPreferences.useFixedAmounts = false;
-                newPreferences.hangoutPercent = hangoutPercent;
-                newPreferences.savingsPercent = savingsPercent;
-                newPreferences.playstationPercent = playstationPercent;
+            newPreferences.useFixedAmounts = true;
+            newPreferences.fixedHangoutAmount = fixedHangout;
+            newPreferences.fixedSavingsAmount = fixedSavings;
+            // Keep the percentage fields in sync (other parts of the app still read them)
+            if (income > 0) {
+                const hp = Math.round(fixedHangout / income * 1000) / 10;
+                const sp = enablePlaystation ? Math.round(fixedSavings / income * 1000) / 10 : Math.round((100 - hp) * 10) / 10;
+                newPreferences.hangoutPercent = hp;
+                newPreferences.savingsPercent = sp;
+                newPreferences.playstationPercent = enablePlaystation ? Math.round((100 - hp - sp) * 10) / 10 : 0;
+            } else {
+                newPreferences.hangoutPercent = userPreferences.hangoutPercent != null ? userPreferences.hangoutPercent : 50;
+                newPreferences.savingsPercent = userPreferences.savingsPercent != null ? userPreferences.savingsPercent : 37.5;
+                newPreferences.playstationPercent = enablePlaystation ? (userPreferences.playstationPercent != null ? userPreferences.playstationPercent : 12.5) : 0;
             }
 
             userPreferences = newPreferences;
@@ -12268,83 +13436,77 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         };
 
         // Select allowance amount
+        // Kept so old callers don't break; amount is now a free number input.
         window.selectAllowanceAmount = function (amount) {
             document.getElementById('allowanceAmount').value = amount;
-
-            // Update button styles
-            document.querySelectorAll('.amount-option-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            document.getElementById(`amount${amount}`).classList.add('selected');
-
-            // Auto calculate split
             autoCalculateSplit();
         };
 
-        // Auto calculate allowance split based on total amount
-        window.autoCalculateSplit = function () {
-            const inputElement = document.getElementById('allowanceAmount');
-            const total = parseInt(inputElement.value) || 60;
-
-            // Ensure we have a valid total
-            if (isNaN(total) || total <= 0) {
-                return;
-            }
-
+        // Works out the usual split for a total, from the person's preferences.
+        // Always adds up exactly to the total (last bucket takes the rounding).
+        function computeAllowanceSplit(total, mode) {
+            const p = userPreferences;
             let hangout, savings, playstation;
-
-            const isZezoSaving = currentUser && currentUser.username.toLowerCase() === 'zezo' && allowanceMode === 'saving';
+            const isZezoSaving = mode === 'saving' && currentUser && currentUser.username.toLowerCase() === 'zezo';
 
             if (isZezoSaving) {
-                // Saving mode: hangout stays at its normal amount — we only
-                // redirect what would've gone to PlayStation into Savings.
-                if (userPreferences.useFixedAmounts) {
-                    hangout = userPreferences.fixedHangoutAmount || 35;
-                    const baseSavings = userPreferences.fixedSavingsAmount || 25;
+                // Saving mode: hangout stays normal, what would've gone to PlayStation goes to Savings.
+                if (p.useFixedAmounts) {
+                    hangout = p.fixedHangoutAmount || 35;
+                    const baseSavings = p.fixedSavingsAmount || 25;
                     playstation = 0;
                     savings = total - hangout;
                     if (savings < baseSavings) savings = baseSavings; // safety floor
                 } else {
-                    hangout = Math.round(total * (userPreferences.hangoutPercent / 100));
+                    hangout = Math.round(total * ((p.hangoutPercent != null ? p.hangoutPercent : 50) / 100));
                     playstation = 0;
                     savings = total - hangout;
                 }
-            } else if (userPreferences.useFixedAmounts) {
-                hangout = userPreferences.fixedHangoutAmount || 35;
-                savings = userPreferences.fixedSavingsAmount || 25;
-                if (userPreferences.enablePlaystation) {
+            } else if (p.useFixedAmounts) {
+                hangout = p.fixedHangoutAmount || 35;
+                savings = p.fixedSavingsAmount || 25;
+                if (p.enablePlaystation) {
                     playstation = total - hangout - savings;
                 } else {
-                    // If PlayStation is disabled, remaining goes to savings (after fixed amounts)
                     playstation = 0;
-                    savings = userPreferences.fixedSavingsAmount + (total - hangout - userPreferences.fixedSavingsAmount);
+                    savings = total - hangout;
                 }
             } else {
-                // Calculate splits based on user preferences
-                hangout = Math.round(total * (userPreferences.hangoutPercent / 100));
-                savings = Math.round(total * (userPreferences.savingsPercent / 100));
-
-                if (userPreferences.enablePlaystation) {
-                    playstation = Math.round(total * (userPreferences.playstationPercent / 100));
+                hangout = Math.round(total * ((p.hangoutPercent != null ? p.hangoutPercent : 50) / 100));
+                if (p.enablePlaystation) {
+                    savings = Math.round(total * ((p.savingsPercent != null ? p.savingsPercent : 37.5) / 100));
+                    playstation = total - hangout - savings;
                 } else {
-                    // If PlayStation is disabled, remaining goes to savings
                     playstation = 0;
                     savings = total - hangout;
                 }
             }
 
-            // Update sliders
-            document.getElementById('hangoutSlider').value = hangout;
-            document.getElementById('hangoutSlider').max = total;
-            document.getElementById('savingsSlider').value = savings;
-            document.getElementById('savingsSlider').max = total;
-            document.getElementById('playstationSlider').value = playstation;
-            document.getElementById('playstationSlider').max = total;
+            // Guard against negatives when a small total doesn't cover the fixed amounts
+            if (hangout > total) hangout = total;
+            if (playstation < 0) { savings += playstation; playstation = 0; }
+            if (savings < 0) { hangout += savings; savings = 0; }
+            if (hangout < 0) hangout = 0;
+            return { hangout, savings, playstation };
+        }
 
-            // Update display
-            document.getElementById('hangoutSplit').textContent = `${hangout} ⃁`;
-            document.getElementById('savingsSplit').textContent = `${savings} ⃁`;
-            document.getElementById('playstationSplit').textContent = `${playstation} ⃁`;
+        // Fill the sliders in the "Different" modal from the usual split
+        window.autoCalculateSplit = function () {
+            const total = parseInt(document.getElementById('allowanceAmount').value);
+            if (isNaN(total) || total <= 0) return;
+
+            const { hangout, savings, playstation } = computeAllowanceSplit(total, allowanceMode);
+
+            document.getElementById('hangoutSlider').max = total;
+            document.getElementById('savingsSlider').max = total;
+            document.getElementById('playstationSlider').max = total;
+            document.getElementById('hangoutSlider').value = hangout;
+            document.getElementById('savingsSlider').value = savings;
+            document.getElementById('playstationSlider').value = playstation;
+
+            document.getElementById('hangoutSplit').textContent = `${hangout} ${'\u20c1'}`;
+            document.getElementById('savingsSplit').textContent = `${savings} ${'\u20c1'}`;
+            document.getElementById('playstationSplit').textContent = `${playstation} ${'\u20c1'}`;
         };
 
         // Update allowance split display
@@ -12359,7 +13521,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('playstationSplit').textContent = `${playstation} ⃁`;
         };
 
-        // Add allowance
+        // Add allowance (from the "Different" modal)
         window.addAllowance = function () {
             if (!currentUser) {
                 showNotification('Please login first', true);
@@ -12376,7 +13538,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 return;
             }
 
-            // Use the actual slider values, but skip PlayStation if disabled
+            commitAllowance(total, hangout, savings, playstation);
+        };
+
+        // Shared by "Usual" (one tap) and "Different": actually adds the money.
+        function commitAllowance(total, hangout, savings, playstation) {
+            // Use the split values, but skip PlayStation if disabled
             balances.hangout += hangout;
             balances.savings += savings;
             let appliedPlaystation = 0;
@@ -12415,11 +13582,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             closeModal('allowanceModal');
             showNotification('Allowance added successfully!');
 
+            markAllowanceDone(); // hides today's Allowance day pop-up for this user
+
             // Zezo-only automation: same-day allowance is the trigger to offer
             // starting a new month, so early allowance doesn't get counted
             // into the wrong month.
             maybeOfferNewMonthOnAllowance();
-        };
+        }
 
         // Add money
         window.addMoney = function () {

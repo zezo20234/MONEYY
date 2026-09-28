@@ -1,0 +1,23 @@
+name: Discord reminders
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 10:00 UTC = 1:00 PM Riyadh, every day
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+    inputs:
+      force:
+        description: 'Send a test message to everyone (ignores the rules)'
+        type: boolean
+        default: false
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/discord-reminders.mjs
+        env:
+          FORCE: ${{ inputs.force && '1' || '0' }}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'money-manager-v6';
+const CACHE_NAME = 'money-manager-v8';
 const urlsToCache = [
     './',
     './index.html',
@@ -28,25 +28,6 @@ self.addEventListener('fetch', event => {
                 return fetch(event.request);
             })
     );
-});
-
-// Push event - shows a system notification even if no tab is open.
-// NOTE: this only fires if something actually sends a Web Push message to
-// this device (e.g. a server-side Firebase Cloud Function). The in-app
-// reminder scheduler in index.html does NOT go through this — it only runs
-// while the app is open/backgrounded, since it has no server to push from.
-self.addEventListener('push', event => {
-    let data = {};
-    try { data = event.data ? event.data.json() : {}; } catch (e) {
-        data = { title: 'Money Manager', body: event.data ? event.data.text() : '' };
-    }
-    const title = data.title || 'Money Manager';
-    const options = {
-        body: data.body || '',
-        icon: data.icon || './money.jpeg',
-        badge: data.badge || './money.jpeg'
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
 });
 
 // Clicking a notification focuses/opens the app instead of leaving it as a

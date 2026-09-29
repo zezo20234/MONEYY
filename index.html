@@ -4069,6 +4069,77 @@
                 color: #555;
             }
         }
+
+        /* ===== Admin Panel page (Zezo only) ===== */
+        .adm-page {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 900;
+            background: var(--bg-color, #0a0a0a);
+            color: #fff;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
+        }
+        .adm-page.active { display: block; }
+        .adm-wrap { max-width: 640px; margin: 0 auto; }
+        .adm-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+        .adm-back {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff;
+            border-radius: 12px; padding: 10px 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+        }
+        .adm-title { font-size: 24px; font-weight: 800; margin: 0; }
+        .adm-msg {
+            width: 100%; min-height: 110px; resize: vertical; box-sizing: border-box;
+            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.22); border-radius: 6px;
+            color: #fff; font-size: 16px; padding: 14px; font-family: inherit;
+        }
+        .adm-msg:focus { outline: none; border-color: var(--accent-1, #00f5d4); }
+        .adm-count { text-align: right; font-size: 12px; color: rgba(255,255,255,0.4); margin: 4px 2px 10px; }
+        .adm-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .adm-btn {
+            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.22); border-radius: 6px;
+            color: #fff; font-size: 15px; font-weight: 700; padding: 14px 6px; cursor: pointer; line-height: 1.2;
+        }
+        .adm-btn:active { transform: scale(0.97); }
+        .adm-btn:disabled { opacity: 0.5; }
+        .adm-btn small { display: block; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.55); margin-top: 3px; }
+        .adm-btn.primary { border-color: var(--accent-1, #00f5d4); }
+        .adm-btn.warn { border-color: #ff6b6b; }
+        .adm-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin: 22px 2px 10px; }
+        .adm-list { display: grid; gap: 14px; }
+        .adm-card { border: 2px solid rgba(255,255,255,0.22); border-radius: 6px; overflow: hidden; background: rgba(255,255,255,0.03); }
+        .adm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+        .adm-pick { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; cursor: pointer; min-width: 0; }
+        .adm-pick input { width: 20px; height: 20px; accent-color: var(--accent-1, #00f5d4); flex: none; }
+        .adm-pick span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .adm-chip {
+            font-size: 12px; font-weight: 700; color: #ff6b6b; border: 1px solid rgba(255,107,107,0.5);
+            border-radius: 20px; padding: 4px 10px; background: transparent; cursor: pointer; flex: none;
+        }
+        .adm-card-btn {
+            display: block; width: calc(100% - 28px); margin: 0 14px 10px; box-sizing: border-box;
+            background: transparent; border: 2px solid rgba(255,255,255,0.22); border-radius: 6px;
+            color: #fff; font-size: 16px; font-weight: 700; padding: 12px; text-align: left; cursor: pointer;
+        }
+        .adm-card-btn:active { background: rgba(255,255,255,0.08); }
+        .adm-stats {
+            display: none; margin: 0 14px 10px; padding: 10px 12px; border-radius: 6px;
+            background: rgba(255,255,255,0.05); font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.8);
+        }
+        .adm-stats.open { display: block; }
+        .adm-stats b { color: #fff; }
+        .adm-stats button {
+            margin-top: 6px; background: transparent; border: none; color: var(--accent-1, #00f5d4);
+            font-weight: 700; font-size: 14px; padding: 0; cursor: pointer;
+        }
+        .adm-next {
+            border-top: 2px solid rgba(255,255,255,0.22); padding: 10px 14px; font-size: 14px;
+            color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.04);
+        }
+        .adm-next b { color: var(--accent-1, #00f5d4); }
+        .adm-empty { text-align: center; color: rgba(255,255,255,0.5); padding: 28px 10px; }
     </style>
 </head>
 
@@ -5292,6 +5363,17 @@
                 <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Ask Zezo for the webhook URL.</small>
             </div>
 
+            <!-- Admin Panel (Zezo only) -->
+            <div class="form-group" id="adminPanelSettingsSection"
+                style="display:none; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
+                <label class="form-label" style="color:#ff6b6b;">🛠️ Admin Panel (Zezo only)</label>
+                <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Send Discord messages
+                    to users, override reminders and see when the next one goes out.</small>
+                <button type="button" class="modal-btn confirm"
+                    style="width:100%; background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);"
+                    onclick="openAdminPanel()">Open Admin Panel</button>
+            </div>
+
             <!-- Budget Planning section -->
             <div class="form-group" id="budgetSettingsSection"
                 style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
@@ -5705,6 +5787,29 @@
             <div class="rank-up-title" id="rankUpTitle">Silver Saver</div>
             <div class="rank-up-name" id="rankUpSubtitle">Your savings just leveled up</div>
             <button class="modal-btn confirm" onclick="closeRankUpOverlay()">Nice! 🎉</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel page (Zezo only) -->
+    <div class="adm-page" id="adminPage">
+        <div class="adm-wrap">
+            <div class="adm-top">
+                <button class="adm-back" onclick="closeAdminPanel()">← Back</button>
+                <h1 class="adm-title">Admin Panel</h1>
+            </div>
+
+            <textarea class="adm-msg" id="admMessage" maxlength="2000" placeholder="Type here"
+                oninput="admUpdateCount()"></textarea>
+            <div class="adm-count"><span id="admCharCount">0</span>/2000</div>
+
+            <div class="adm-actions">
+                <button class="adm-btn primary" id="admSendAllBtn" onclick="admSendAll()">Send to all</button>
+                <button class="adm-btn primary" id="admSendSpecificBtn" onclick="admSendSpecific()">Send to specific</button>
+                <button class="adm-btn warn" id="admOverrideAllBtn" onclick="admOverrideAll()">Override normal<small>override for all</small></button>
+            </div>
+
+            <div class="adm-sub" id="admSummary">Loading users…</div>
+            <div class="adm-list" id="admUserList"></div>
         </div>
     </div>
 
@@ -6186,8 +6291,13 @@
                     }
                 }
                 if (!msg) return;
+                // Admin Panel override: use Zezo's custom text instead of the normal message (one time)
+                const hadOverride = !!(d.reminderOverride && d.reminderOverride.message);
+                if (hadOverride) msg = d.reminderOverride.message;
                 if (await window.sendDiscordMessage(msg)) {
-                    await update(userRef, { lastReminderDay: today, lastReminderAt: now });
+                    const patch = { lastReminderDay: today, lastReminderAt: now };
+                    if (hadOverride) patch.reminderOverride = null;
+                    await update(userRef, patch);
                 }
             } catch (e) {
                 console.log('Discord reminder check failed:', e);
@@ -6239,6 +6349,263 @@
             disconnectDiscordWebhook();
             renderDiscordSettingsStatus();
             showNotification('Discord disconnected');
+        };
+
+// ===== Admin Panel (Zezo only) =====
+        // Full-screen page opened from Settings. Only lists users who connected Discord.
+        //   Send to all / specific : posts the typed message to their webhook right now
+        //   Override               : the NEXT automatic reminder that user would get uses the typed
+        //                            message instead of the normal text (one time, then it clears).
+        //                            Stored at users/<name>/reminderOverride — read by the GitHub Action
+        //                            (scripts/discord-reminders.mjs) and by the in-app reminder check.
+        let admUsers = [];
+        let admCycleStartDay = null;
+        const admSelected = new Set();
+        const admStatsOpen = new Set();
+        let admTimer = null;
+
+        function admIsZezo() { return !!currentUser && currentUser.username.toLowerCase() === 'zezo'; }
+        function admEsc(v) {
+            return String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function admAgo(ms) {
+            if (!ms) return 'never';
+            const m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+            if (m < 1) return 'just now';
+            if (m < 60) return `${m}m ago`;
+            if (m < 1440) return `${Math.floor(m / 60)}h ago`;
+            return `${Math.floor(m / 1440)}d ago`;
+        }
+        function admCountdown(ms) {
+            const m = Math.max(0, Math.round(ms / 60000));
+            const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+            if (d) return `${d}d ${h}h`;
+            if (h) return `${h}h ${mm}m`;
+            return `${mm}m`;
+        }
+
+        // Same allowance-day rule as scripts/discord-reminders.mjs
+        function admIsAllowanceDay(cycleStartDay, anchor, todayStr) {
+            let start = cycleStartDay;
+            if (anchor && anchor > start) start = anchor;
+            const d = new Date(start + 'T00:00:00Z');
+            let fridays = 0, fourth = null;
+            for (let i = 0; i < 400; i++) {
+                d.setUTCDate(d.getUTCDate() + 1);
+                const str = d.toISOString().slice(0, 10);
+                if (str > todayStr) break;
+                if (d.getUTCDay() === 5 && ++fridays === 4) fourth = str;
+            }
+            return fourth === todayStr;
+        }
+
+        // Walks forward day by day (the Action runs daily at 1:00 PM Riyadh) and returns the first
+        // moment the normal rules would send this user a reminder. null = nothing in the next ~10 weeks.
+        function admNextReminder(u, nowMs) {
+            const todayStr = riyadhDayString(new Date(nowMs + RIYADH_OFFSET_MS));
+            const baseline = u.lastPurchaseAt || u.reminderClockStart || nowMs;
+            const day0 = Date.parse(todayStr + 'T00:00:00Z');
+            for (let k = 0; k < 70; k++) {
+                const day = new Date(day0 + k * 86400000);
+                const dayStr = day.toISOString().slice(0, 10);
+                const t = day.getTime() + 10 * 3600 * 1000; // 10:00 UTC = 1:00 PM Riyadh
+                if (t <= nowMs) continue;
+                if (u.lastReminderDay === dayStr) continue;
+                if (admIsAllowanceDay(admCycleStartDay, u.allowanceAnchor, dayStr)) return t;
+                if (day.getUTCDay() === 4) return t;
+                if (t - baseline >= THREE_DAYS_MS && t - (u.lastReminderAt || 0) >= THREE_DAYS_MS) return t;
+            }
+            return null;
+        }
+
+        window.admUpdateCount = function () {
+            const el = document.getElementById('admMessage');
+            document.getElementById('admCharCount').textContent = el.value.length;
+        };
+        function admGetMessage() {
+            const msg = document.getElementById('admMessage').value.trim();
+            if (!msg) { showNotification('Type a message first', true); return null; }
+            return msg;
+        }
+
+        window.openAdminPanel = function () {
+            if (!admIsZezo()) { showNotification('Only Zezo can open the Admin Panel', true); return; }
+            closeModal('settingsModal');
+            document.getElementById('adminPage').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            admLoad();
+            clearInterval(admTimer);
+            admTimer = setInterval(admRenderFooters, 60000);
+        };
+        window.closeAdminPanel = function () {
+            document.getElementById('adminPage').classList.remove('active');
+            document.body.style.overflow = '';
+            clearInterval(admTimer);
+            admTimer = null;
+        };
+
+        async function admLoad() {
+            const listEl = document.getElementById('admUserList');
+            const sumEl = document.getElementById('admSummary');
+            sumEl.textContent = 'Loading users…';
+            listEl.innerHTML = '';
+            try {
+                const [namesRes, histSnap] = await Promise.all([
+                    fetch(`${firebaseConfig.databaseURL}/users.json?shallow=true`).then((r) => r.json()),
+                    get(ref(database, 'financialCycle/history'))
+                ]);
+                const cycles = Object.values(histSnap.exists() ? histSnap.val() : {});
+                const latest = cycles.map((c) => new Date(c.startDate).getTime()).filter(Boolean).sort((a, b) => a - b).pop();
+                const today = riyadhDayString(riyadhNow());
+                admCycleStartDay = latest ? riyadhDayString(new Date(latest + RIYADH_OFFSET_MS)) : today.slice(0, 8) + '01';
+
+                const names = Object.keys(namesRes || {});
+                const fields = ['discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart', 'allowanceAnchor', 'reminderOverride'];
+                const all = await Promise.all(names.map(async (name) => {
+                    const vals = await Promise.all(fields.map((f) => get(ref(database, `users/${name}/${f}`)).then((sn) => (sn.exists() ? sn.val() : null))));
+                    const u = { name };
+                    fields.forEach((f, i) => { u[f] = vals[i]; });
+                    return u;
+                }));
+                admUsers = all.filter((u) => u.discordWebhook);
+                const without = all.length - admUsers.length;
+                sumEl.textContent = `${admUsers.length} user${admUsers.length === 1 ? '' : 's'} with Discord connected` +
+                    (without > 0 ? ` · ${without} without (hidden)` : '');
+                admRenderList();
+            } catch (e) {
+                console.error('Admin panel load failed:', e);
+                sumEl.textContent = '';
+                listEl.innerHTML = '<div class="adm-empty">Could not load users. Check your connection and reopen.</div>';
+            }
+        }
+
+        function admFooterHtml(u) {
+            const next = admNextReminder(u, Date.now());
+            const when = next === null ? 'none scheduled' : admCountdown(next - Date.now());
+            const note = u.reminderOverride && u.reminderOverride.message ? ' <span style="color:#ff6b6b;">(custom message)</span>' : '';
+            return `Next reminder: <b>${when}</b>${note}`;
+        }
+        function admRenderFooters() {
+            document.querySelectorAll('#admUserList .adm-card').forEach((card) => {
+                const u = admUsers.find((x) => x.name === card.dataset.user);
+                const f = card.querySelector('.adm-next');
+                if (u && f) f.innerHTML = admFooterHtml(u);
+            });
+        }
+        function admRenderList() {
+            const listEl = document.getElementById('admUserList');
+            if (!admUsers.length) {
+                listEl.innerHTML = '<div class="adm-empty">Nobody has connected Discord yet.</div>';
+                admUpdateSpecificLabel();
+                return;
+            }
+            listEl.innerHTML = admUsers.map((u) => {
+                const hasOverride = u.reminderOverride && u.reminderOverride.message;
+                const baseline = u.lastPurchaseAt || u.reminderClockStart;
+                return `<div class="adm-card" data-user="${admEsc(u.name)}">
+                    <div class="adm-card-head">
+                        <label class="adm-pick"><input type="checkbox" data-act="pick" ${admSelected.has(u.name) ? 'checked' : ''}><span>${admEsc(u.name)}</span></label>
+                        ${hasOverride ? '<button class="adm-chip" data-act="clear" title="Remove the queued override">Override queued ✕</button>' : ''}
+                    </div>
+                    <button class="adm-card-btn" data-act="stats">See stats</button>
+                    <div class="adm-stats ${admStatsOpen.has(u.name) ? 'open' : ''}">
+                        Last purchase logged: <b>${admAgo(u.lastPurchaseAt)}</b><br>
+                        Last opened the app: <b>${admAgo(u.lastActive)}</b><br>
+                        Last reminder sent: <b>${admAgo(u.lastReminderAt)}</b><br>
+                        ${!u.lastPurchaseAt && baseline ? `3-day clock started: <b>${admAgo(baseline)}</b><br>` : ''}
+                        ${hasOverride ? `Queued message: <b>${admEsc(u.reminderOverride.message.slice(0, 120))}${u.reminderOverride.message.length > 120 ? '…' : ''}</b><br>` : ''}
+                        <button data-act="details">Full balances &amp; transactions →</button>
+                    </div>
+                    <button class="adm-card-btn" data-act="override">Override</button>
+                    <div class="adm-next">${admFooterHtml(u)}</div>
+                </div>`;
+            }).join('');
+            admUpdateSpecificLabel();
+        }
+        function admUpdateSpecificLabel() {
+            const n = admSelected.size;
+            document.getElementById('admSendSpecificBtn').textContent = n ? `Send to specific (${n})` : 'Send to specific';
+        }
+
+        // One listener for every card button
+        document.getElementById('admUserList').addEventListener('click', async (ev) => {
+            const target = ev.target.closest('[data-act]');
+            const card = ev.target.closest('.adm-card');
+            if (!target || !card) return;
+            const name = card.dataset.user;
+            const act = target.dataset.act;
+            if (act === 'pick') {
+                if (target.checked) admSelected.add(name); else admSelected.delete(name);
+                admUpdateSpecificLabel();
+            } else if (act === 'stats') {
+                if (admStatsOpen.has(name)) admStatsOpen.delete(name); else admStatsOpen.add(name);
+                card.querySelector('.adm-stats').classList.toggle('open', admStatsOpen.has(name));
+            } else if (act === 'details') {
+                if (typeof window.showUserDetails === 'function') window.showUserDetails(name);
+            } else if (act === 'override') {
+                const msg = admGetMessage();
+                if (msg) await admSetOverride([name], msg);
+            } else if (act === 'clear') {
+                await admSetOverride([name], null);
+            }
+        });
+
+        async function admPost(url, content) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'Money', content, allowed_mentions: { parse: [] } })
+            });
+            if (!res.ok) throw new Error(`Discord replied ${res.status}`);
+        }
+        async function admSend(targets, msg, btnId) {
+            const btn = document.getElementById(btnId);
+            const label = btn.textContent;
+            btn.disabled = true; btn.textContent = 'Sending…';
+            const results = await Promise.allSettled(targets.map((u) => admPost(u.discordWebhook, msg)));
+            btn.disabled = false; btn.textContent = label;
+            const failed = targets.filter((_, i) => results[i].status === 'rejected').map((u) => u.name);
+            const ok = targets.length - failed.length;
+            if (failed.length) showNotification(`Sent to ${ok}/${targets.length}. Failed: ${failed.join(', ')}`, true);
+            else showNotification(`Message sent to ${ok} user${ok === 1 ? '' : 's'} 💬`);
+        }
+        window.admSendAll = async function () {
+            const msg = admGetMessage();
+            if (!msg) return;
+            if (!admUsers.length) { showNotification('Nobody has Discord connected', true); return; }
+            if (!confirm(`Send this message to all ${admUsers.length} user(s) on Discord now?`)) return;
+            await admSend(admUsers, msg, 'admSendAllBtn');
+        };
+        window.admSendSpecific = async function () {
+            const targets = admUsers.filter((u) => admSelected.has(u.name));
+            if (!targets.length) { showNotification('Tick the users you want first', true); return; }
+            const msg = admGetMessage();
+            if (!msg) return;
+            await admSend(targets, msg, 'admSendSpecificBtn');
+        };
+
+        // msg = string → queue it as the user's next reminder text; msg = null → remove it
+        async function admSetOverride(names, msg) {
+            try {
+                await Promise.all(names.map((n) => set(ref(database, `users/${n}/reminderOverride`),
+                    msg === null ? null : { message: msg, setAt: Date.now() })));
+                names.forEach((n) => {
+                    const u = admUsers.find((x) => x.name === n);
+                    if (u) u.reminderOverride = msg === null ? null : { message: msg, setAt: Date.now() };
+                });
+                admRenderList();
+                showNotification(msg === null ? 'Override removed'
+                    : names.length === 1 ? `Override queued for ${names[0]}` : `Override queued for ${names.length} users`);
+            } catch (e) {
+                showNotification('Could not save override: ' + e.message, true);
+            }
+        }
+        window.admOverrideAll = async function () {
+            const msg = admGetMessage();
+            if (!msg) return;
+            if (!admUsers.length) { showNotification('Nobody has Discord connected', true); return; }
+            if (!confirm(`Replace the next normal reminder for all ${admUsers.length} user(s) with this message?`)) return;
+            await admSetOverride(admUsers.map((u) => u.name), msg);
         };
 
         // --- Pop-up shown on open (once) until a webhook is set ---
@@ -6598,6 +6965,8 @@
             const zezoBox = document.getElementById('zezoUpdateControls');
             if (zezoBox) {
                 zezoBox.style.display = isZezo ? 'block' : 'none';
+                const adminSec = document.getElementById('adminPanelSettingsSection');
+                if (adminSec) adminSec.style.display = isZezo ? 'block' : 'none';
                 if (isZezo) {
                     const baseline = (latestUpdateInfo && latestUpdateInfo.version) || getInstalledVersion();
                     const versionInput = document.getElementById('sendUpdateVersion');
@@ -10221,6 +10590,11 @@ Use the conversation history provided to you to remember what's already been sai
             // the read-only "current month" badge at the top of Home)
             const cycleSection = document.getElementById('monthCycleSettingsSection');
             if (cycleSection) cycleSection.style.display = isZezo ? 'block' : 'none';
+
+            // Admin Panel button in Settings — Zezo only (and close the page if someone else logs in)
+            const adminSection = document.getElementById('adminPanelSettingsSection');
+            if (adminSection) adminSection.style.display = isZezo ? 'block' : 'none';
+            if (!isZezo && typeof window.closeAdminPanel === 'function') window.closeAdminPanel();
 
             // Detach user listeners if Zezo logs out
             if (!isZezo) {

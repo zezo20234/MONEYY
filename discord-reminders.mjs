@@ -16,6 +16,7 @@ const dayStr = (shifted) => shifted.toISOString().slice(0, 10);
 const get = async (path) => (await fetch(`${DB}/${path}.json`)).json();
 const patch = (path, body) =>
     fetch(`${DB}/${path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
+const del = (path) => fetch(`${DB}/${path}.json`, { method: 'DELETE' });
 
 // Allowance day = today is the 4th Friday of the 4-week cycle (same rule as the app).
 // Cycle start = latest month-cycle start, or the user's allowanceAnchor if that is later.
@@ -50,13 +51,14 @@ let sent = 0;
 
 for (const name of usernames) {
     const u = encodeURIComponent(name);
-    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor] = await Promise.all([
+    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, override] = await Promise.all([
         get(`users/${u}/discordWebhook`),
         get(`users/${u}/lastPurchaseAt`),
         get(`users/${u}/lastReminderDay`),
         get(`users/${u}/lastReminderAt`),
         get(`users/${u}/reminderClockStart`),
         get(`users/${u}/allowanceAnchor`),
+        get(`users/${u}/reminderOverride`), // set from the Admin Panel: replaces the next normal message
     ]);
     if (!webhook) continue;
     if (!FORCE && lastReminderDay === today) continue;
@@ -77,6 +79,10 @@ for (const name of usernames) {
     }
     if (!msg) continue;
 
+    // Admin Panel override: send Zezo's custom text instead of the normal one (one time only)
+    const usedOverride = !FORCE && override && override.message;
+    if (usedOverride) msg = override.message;
+
     const res = await fetch(webhook, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,6 +91,7 @@ for (const name of usernames) {
     if (res.ok) {
         sent++;
         if (!FORCE) await patch(`users/${u}`, { lastReminderDay: today, lastReminderAt: nowMs });
+        if (usedOverride) await del(`users/${u}/reminderOverride`);
     } else {
         console.log(`Discord failed for ${name}: ${res.status}`);
     }

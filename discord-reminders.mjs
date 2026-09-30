@@ -3,6 +3,7 @@
 //
 // Normal rules (same as the in-app check in index.html), 1pm-8pm Riyadh, at most one message per user per day:
 //   allowance day (4th Friday)  >  Thursday  >  N days since the last logged purchase
+//   (messages are plain words, 3 different ones, rotated per user)
 //   N = "days between reminders" — set in the Admin Panel for everyone (reminderSettings/intervalDays)
 //   or for one user (users/<n>/reminderIntervalDays). Default 3.
 //
@@ -41,12 +42,16 @@ function isAllowanceDay(cycleStartDay, anchor, todayStr) {
     return fourth === todayStr;
 }
 
-// days = whole days since the last logged purchase (null = unknown)
-function buildMessage(name, allowanceDay, thursday, days) {
-    if (allowanceDay) return `🎉 **It's allowance day, ${name}!** Tap "I Got Allowance" and make sure to log your spending.`;
-    if (thursday) return `📝 **Thursday check-in, ${name}** — make sure to log your spending!`;
-    if (days !== null && days >= 1) return `📝 **Hey ${name}** — it's been ${days}+ days. Make sure to log your spending!`;
-    return `📝 **Hey ${name}** — make sure to log your spending!`;
+// Plain words, three different messages so nobody gets bored of one. idx (0-2) picks which;
+// each user rotates through them (users/<n>/reminderMsgIndex).
+const MESSAGES = [
+    (n) => `Hey ${n}, don't forget to add your spending.`,
+    (n) => `Hi ${n}, remember to log what you spent.`,
+    (n) => `Hey ${n}, have you added your spending yet? Take a minute to log it.`,
+];
+function buildMessage(name, allowanceDay, idx) {
+    if (allowanceDay) return `Hey ${name}, today is allowance day. Add your allowance and your spending.`;
+    return MESSAGES[((Number(idx) || 0) % 3 + 3) % 3](name);
 }
 
 const nowMs = Date.now();
@@ -71,7 +76,7 @@ let sent = 0;
 
 for (const name of usernames) {
     const u = encodeURIComponent(name);
-    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt] = await Promise.all([
+    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt, lastMsgIndex] = await Promise.all([
         get(`users/${u}/discordWebhook`),
         get(`users/${u}/lastPurchaseAt`),
         get(`users/${u}/lastReminderDay`),
@@ -80,34 +85,35 @@ for (const name of usernames) {
         get(`users/${u}/allowanceAnchor`),
         get(`users/${u}/reminderIntervalDays`),
         get(`users/${u}/nextReminderAt`),
+        get(`users/${u}/reminderMsgIndex`),
     ]);
     if (!webhook) continue;
 
     const intervalDays = Number(ownDays) >= 1 ? Number(ownDays) : globalDays;
     const intervalMs = intervalDays * DAY_MS;
     const baseline = lastPurchaseAt || clockStart;
-    const sinceDays = baseline ? Math.floor((nowMs - baseline) / DAY_MS) : null;
+    const nextIdx = ((Number.isInteger(lastMsgIndex) ? lastMsgIndex : -1) + 1) % 3; // rotate the 3 messages
 
     let msg = null;
     let usedCustomTime = false;
     if (FORCE) {
-        msg = `✅ Test reminder for ${name} — Money's Discord reminders are working.`;
+        msg = `Hey ${name}, this is a test reminder. Discord reminders are working.`;
     } else if (nextReminderAt) {
         // Custom time set from the Admin Panel: waits for that moment, ignores the normal rules
         if (nowMs < nextReminderAt) continue;
         usedCustomTime = true;
-        msg = buildMessage(name, isAllowanceDay(cycleStartDay, anchor, today), isThursday, sinceDays);
+        msg = buildMessage(name, isAllowanceDay(cycleStartDay, anchor, today), nextIdx);
     } else {
         if (!inWindow) continue;                      // normal reminders only go out 1pm-8pm Riyadh
         if (lastReminderDay === today) continue;      // at most one per day
         if (isAllowanceDay(cycleStartDay, anchor, today)) {
-            msg = buildMessage(name, true, false, null);
+            msg = buildMessage(name, true, nextIdx);
         } else if (isThursday) {
-            msg = buildMessage(name, false, true, null);
+            msg = buildMessage(name, false, nextIdx);
         } else {
             if (!baseline) { await patch(`users/${u}`, { reminderClockStart: nowMs }); continue; }
             if (nowMs - baseline >= intervalMs && nowMs - (lastReminderAt || 0) >= intervalMs) {
-                msg = buildMessage(name, false, false, intervalDays);
+                msg = buildMessage(name, false, nextIdx);
             }
         }
     }
@@ -120,7 +126,7 @@ for (const name of usernames) {
     });
     if (res.ok) {
         sent++;
-        if (!FORCE) await patch(`users/${u}`, { lastReminderDay: today, lastReminderAt: nowMs });
+        if (!FORCE) await patch(`users/${u}`, { lastReminderDay: today, lastReminderAt: nowMs, reminderMsgIndex: nextIdx });
         if (usedCustomTime) await del(`users/${u}/nextReminderAt`);
     } else {
         console.log(`Discord failed for ${name}: ${res.status}`);

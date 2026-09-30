@@ -6343,12 +6343,16 @@
         }
 
         let discordReminderRunning = false;
-        // The normal reminder texts. days = whole days since the last logged purchase (null = unknown).
-        function buildReminderMessage(name, allowanceDay, thursday, days) {
-            if (allowanceDay) return `🎉 **It's allowance day, ${name}!** Tap "I Got Allowance" and make sure to log your spending.`;
-            if (thursday) return `📝 **Thursday check-in, ${name}** — make sure to log your spending!`;
-            if (days !== null && days >= 1) return `📝 **Hey ${name}** — it's been ${days}+ days. Make sure to log your spending!`;
-            return `📝 **Hey ${name}** — make sure to log your spending!`;
+        // The normal reminder texts: plain words, three different ones so nobody gets bored of one.
+        // idx picks which (0-2). Scheduled reminders rotate through them per user (users/<n>/reminderMsgIndex).
+        const REMINDER_MESSAGES = [
+            (n) => `Hey ${n}, don't forget to add your spending.`,
+            (n) => `Hi ${n}, remember to log what you spent.`,
+            (n) => `Hey ${n}, have you added your spending yet? Take a minute to log it.`
+        ];
+        function buildReminderMessage(name, allowanceDay, idx) {
+            if (allowanceDay) return `Hey ${name}, today is allowance day. Add your allowance and your spending.`;
+            return REMINDER_MESSAGES[((Number(idx) || 0) % 3 + 3) % 3](name);
         }
         async function checkDiscordReminders() {
             if (!currentUser || discordReminderRunning) return;
@@ -6367,32 +6371,32 @@
                 const intervalMs = intervalDays * 24 * 60 * 60 * 1000;
                 const now = Date.now();
                 const baseline = d.lastPurchaseAt || d.reminderClockStart;
-                const sinceDays = baseline ? Math.floor((now - baseline) / 86400000) : null;
+                const nextIdx = ((Number.isInteger(d.reminderMsgIndex) ? d.reminderMsgIndex : -1) + 1) % 3; // rotate the 3 messages
                 let msg = null;
                 if (d.nextReminderAt) {
                     // Zezo set an exact time for this user's next reminder: it replaces the automatic rules until it fires
                     if (now < d.nextReminderAt) return;
-                    msg = buildReminderMessage(username, isAllowanceDayToday(), r.getUTCDay() === 4, sinceDays);
+                    msg = buildReminderMessage(username, isAllowanceDayToday(), nextIdx);
                 } else {
                     if (hour < 13 || hour >= 20) return;
                     if (d.lastReminderDay === today) return; // already reminded today
                     if (isAllowanceDayToday()) {
-                        msg = buildReminderMessage(username, true, false, null);
+                        msg = buildReminderMessage(username, true, nextIdx);
                     } else if (r.getUTCDay() === 4) {
-                        msg = buildReminderMessage(username, false, true, null);
+                        msg = buildReminderMessage(username, false, nextIdx);
                     } else {
                         if (!baseline) { // first run: start the clock now, don't ping yet
                             await set(ref(database, `users/${username}/reminderClockStart`), now);
                             return;
                         }
                         if (now - baseline >= intervalMs && now - (d.lastReminderAt || 0) >= intervalMs) {
-                            msg = buildReminderMessage(username, false, false, intervalDays);
+                            msg = buildReminderMessage(username, false, nextIdx);
                         }
                     }
                 }
                 if (!msg) return;
                 if (await window.sendDiscordMessage(msg)) {
-                    const patch = { lastReminderDay: today, lastReminderAt: now };
+                    const patch = { lastReminderDay: today, lastReminderAt: now, reminderMsgIndex: nextIdx };
                     if (d.nextReminderAt) patch.nextReminderAt = null; // custom time used up → automatic again
                     await update(userRef, patch);
                 }
@@ -6551,14 +6555,12 @@
             return null;
         }
 
-        // The normal reminder text this user would get today (used by Override)
+        // The normal reminder text (used by Override). Picks one of the 3 at random and never saves anything,
+        // so the user's schedule and their message rotation are untouched.
         function admNormalMessage(u, nowMs) {
-            const r = new Date(nowMs + RIYADH_OFFSET_MS);
-            const today = riyadhDayString(r);
+            const today = riyadhDayString(new Date(nowMs + RIYADH_OFFSET_MS));
             const allowance = admIsAllowanceDay(admCycleStartDay, u.allowanceAnchor, today);
-            const baseline = u.lastPurchaseAt || u.reminderClockStart;
-            const days = baseline ? Math.floor((nowMs - baseline) / ADM_DAY_MS) : null;
-            return buildReminderMessage(u.name, allowance, r.getUTCDay() === 4, days);
+            return buildReminderMessage(u.name, allowance, Math.floor(Math.random() * 3));
         }
 
         window.admUpdateCount = function () {

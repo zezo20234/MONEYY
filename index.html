@@ -5563,9 +5563,51 @@
                             <button type="button" class="modal-btn cancel" style="width:100%; padding:12px; font-size:14px;"
                                 onclick="addUpdateSlideField()">+ Add another slide</button>
                         </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Message users get (Discord announcement)</label>
+                            <textarea class="form-input" id="sendUpdateMessage" rows="4"
+                                placeholder="Leave empty for the default message. Write {version} anywhere and it becomes the version number."
+                                style="resize:vertical; font-family:inherit;"></textarea>
+                            <button type="button" class="modal-btn cancel"
+                                style="width:100%; padding:10px; font-size:13px; margin-top:6px;"
+                                onclick="fillDefaultUpdateMessage()">Fill with default text (then edit it)</button>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Send at (Riyadh time) — only used when scheduling</label>
+                            <input type="datetime-local" class="form-input" id="sendUpdateAt">
+                        </div>
                         <button type="button" class="modal-btn confirm"
                             style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);"
-                            onclick="sendAppUpdate()">Send Update to Everyone</button>
+                            onclick="sendAppUpdate()">Send Update to Everyone Now</button>
+                        <button type="button" class="modal-btn cancel" style="width:100%; padding:12px; font-size:14px;"
+                            onclick="scheduleAppUpdate()">🕒 Schedule Update for that time</button>
+                        <small style="color: rgba(255,255,255,0.45); display:block;">Scheduled updates go out at the next hourly check, or right away when anyone opens the app after the time.</small>
+
+                        <div id="scheduledUpdateCard"
+                            style="display:none; padding:12px; border:1px solid rgba(255,107,107,0.35); background:rgba(255,107,107,0.08); border-radius:12px;">
+                            <div id="schedUpdTitle" style="font-weight:700; font-size:14px;"></div>
+                            <div style="font-size:12px; color:rgba(255,255,255,0.65); margin:2px 0 12px;">Goes out: <b id="schedUpdWhen"></b> (Riyadh)</div>
+
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Next update notification time</label>
+                            <input type="datetime-local" class="form-input" id="schedUpdTimeInput">
+                            <button type="button" class="modal-btn confirm"
+                                style="width:100%; padding:10px; font-size:13px; margin-top:6px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);"
+                                onclick="changeScheduledUpdateTime()">Change update time</button>
+                            <small style="color: rgba(255,255,255,0.45); display:block; margin-top:4px;">Only moves this update. The usual reminder schedule is not touched.</small>
+
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.6); display:block; margin-top:12px;">Message users get</label>
+                            <textarea class="form-input" id="schedUpdMsgInput" rows="4" style="resize:vertical; font-family:inherit;"></textarea>
+                            <button type="button" class="modal-btn cancel"
+                                style="width:100%; padding:10px; font-size:13px; margin-top:6px;"
+                                onclick="saveScheduledUpdateMessage()">Save message</button>
+
+                            <div style="display:flex; gap:8px; margin-top:12px;">
+                                <button type="button" class="modal-btn cancel" style="flex:1; padding:10px; font-size:13px;"
+                                    onclick="sendScheduledUpdateNow()">Send now</button>
+                                <button type="button" class="modal-btn cancel" style="flex:1; padding:10px; font-size:13px;"
+                                    onclick="cancelScheduledUpdate()">Cancel schedule</button>
+                            </div>
+                        </div>
 
                     <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(255,255,255,0.18);">
                         <label class="form-label" style="color:#ff6b6b;">🧹 Hard Refresh (Zezo only)</label>
@@ -5899,7 +5941,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, get, update, onValue, push, remove, query, orderByChild, equalTo } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, set, get, update, onValue, push, remove, query, orderByChild, equalTo, runTransaction } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyCugS0qHKstGZArd5vEBzm-DaLZAIDugo",
@@ -7373,6 +7415,7 @@
             const zezoBox = document.getElementById('zezoUpdateControls');
             if (zezoBox) {
                 zezoBox.style.display = isZezo ? 'block' : 'none';
+                renderScheduledUpdateCard();
                 const adminSec = document.getElementById('adminPanelSettingsSection');
                 if (adminSec) adminSec.style.display = isZezo ? 'block' : 'none';
                 if (isZezo) {
@@ -7418,19 +7461,182 @@
         // Update announcements go to this Discord channel.
         const UPDATE_DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1554095715079421972/YEha-RiWAgOZsUiHZjGi7rvWkRXPP6AJNurjXKCmGe42Ol4BHtFiyW6v7cnVdhQI-fSI';
 
-        function announceUpdateOnDiscord(version, slides) {
+        function defaultUpdateAnnouncement(version, slides) {
             let text = `🚀 **${version}** is out!\n\n**What's new**`;
             slides.forEach((s) => {
                 text += s.title ? `\n\n**${s.title}**\n${s.body}` : `\n\n${s.body}`;
             });
             text += `\n\n_Open the app and tap the update pop-up to get it._`;
+            return text;
+        }
+        // Zezo's own message wins (with {version} replaced); empty = the default text.
+        function buildUpdateAnnouncement(version, slides, custom) {
+            let text = (custom || '').trim();
+            text = text ? text.split('{version}').join(version) : defaultUpdateAnnouncement(version, slides);
             if (text.length > 1900) text = text.slice(0, 1890) + '…';
+            return text;
+        }
+        function postUpdateToDiscord(text) {
             return fetch(UPDATE_DISCORD_WEBHOOK, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: 'Money', content: text, allowed_mentions: { parse: [] } })
             }).then((res) => { if (!res.ok) throw new Error('Discord replied ' + res.status); });
         }
+        function announceUpdateOnDiscord(version, slides, custom) {
+            return postUpdateToDiscord(buildUpdateAnnouncement(version, slides, custom));
+        }
+        function normalizeUpdateVersion(v) {
+            v = (v || '').trim();
+            if (!v) return '';
+            return v.toLowerCase().startsWith('zezo ui') ? v : `Zezo UI ${v}`;
+        }
+        window.fillDefaultUpdateMessage = function () {
+            const version = normalizeUpdateVersion(document.getElementById('sendUpdateVersion').value) || 'Zezo UI';
+            document.getElementById('sendUpdateMessage').value = defaultUpdateAnnouncement(version, collectUpdateSlidesFromForm());
+        };
+
+        // ---- Scheduled update (Zezo only) ----
+        // Stored at appUpdates/scheduled. It never touches the reminder fields
+        // (nextReminderAt etc.), so the usual reminder schedule is unaffected.
+        // Delivered by whichever happens first: an open app reaching the time,
+        // someone opening the app after it, or the hourly GitHub script.
+        // Whoever gets there first "claims" it with an atomic delete, so it can
+        // only ever go out once.
+        let scheduledUpdateInfo = null;
+        let scheduledUpdateTimer = null;
+        let scheduledUpdateListenerAttached = false;
+        let publishingScheduledUpdate = false;
+
+        function listenForScheduledUpdate() {
+            if (scheduledUpdateListenerAttached) return;
+            scheduledUpdateListenerAttached = true;
+            onValue(ref(database, 'appUpdates/scheduled'), (snap) => {
+                scheduledUpdateInfo = snap.exists() ? snap.val() : null;
+                renderScheduledUpdateCard();
+                armScheduledUpdateTimer();
+            });
+        }
+
+        function armScheduledUpdateTimer() {
+            clearTimeout(scheduledUpdateTimer);
+            if (!scheduledUpdateInfo || !scheduledUpdateInfo.sendAt) return;
+            const ms = scheduledUpdateInfo.sendAt - Date.now();
+            if (ms <= 0) { publishScheduledUpdate(false); return; }
+            scheduledUpdateTimer = setTimeout(async () => {
+                await publishScheduledUpdate(false);
+                armScheduledUpdateTimer(); // in case the timer fired early (very long waits are capped)
+            }, Math.min(ms + 500, 2147483647));
+        }
+
+        async function publishScheduledUpdate(force) {
+            if (publishingScheduledUpdate) return;
+            publishingScheduledUpdate = true;
+            try {
+                let claimed = null;
+                const res = await runTransaction(ref(database, 'appUpdates/scheduled'), (cur) => {
+                    claimed = null;
+                    if (cur === null) return null;
+                    if (!force && (!cur.sendAt || cur.sendAt > Date.now())) return undefined; // not due yet
+                    claimed = cur;
+                    return null; // claim it (delete) so nobody else sends it
+                });
+                if (!res.committed || !claimed) return;
+                const slides = Array.isArray(claimed.slides) ? claimed.slides : Object.values(claimed.slides || {});
+                await set(ref(database, 'appUpdates/latest'), {
+                    version: claimed.version,
+                    description: claimed.description || 'General improvements and bug fixes.',
+                    slides,
+                    releasedAt: Date.now(),
+                    releasedBy: claimed.scheduledBy || 'zezo'
+                });
+                postUpdateToDiscord(claimed.announcement || defaultUpdateAnnouncement(claimed.version, slides)).catch(() => { });
+                if (admIsZezo()) showNotification('Update ' + claimed.version + ' sent to everyone! 🚀');
+            } catch (e) {
+                console.error('Scheduled update failed:', e);
+            } finally {
+                publishingScheduledUpdate = false;
+            }
+        }
+
+        function renderScheduledUpdateCard() {
+            const card = document.getElementById('scheduledUpdateCard');
+            if (!card) return;
+            const sc = scheduledUpdateInfo;
+            if (!sc || !admIsZezo()) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+            document.getElementById('schedUpdTitle').textContent = `🕒 ${sc.version} — scheduled`;
+            document.getElementById('schedUpdWhen').textContent = admFmtFull(sc.sendAt);
+            const t = document.getElementById('schedUpdTimeInput');
+            if (t && document.activeElement !== t) t.value = admToInput(sc.sendAt);
+            const m = document.getElementById('schedUpdMsgInput');
+            if (m && document.activeElement !== m) m.value = sc.announcement || '';
+        }
+
+        window.scheduleAppUpdate = async function () {
+            if (!admIsZezo()) { showNotification('Only Zezo can schedule updates', true); return; }
+            const version = normalizeUpdateVersion(document.getElementById('sendUpdateVersion').value);
+            if (!version) { showNotification('Enter a version number', true); return; }
+            const slides = collectUpdateSlidesFromForm();
+            if (!slides.length) { showNotification("Add at least one What's New slide", true); return; }
+            const sendAt = admFromInput(document.getElementById('sendUpdateAt').value);
+            if (!sendAt) { showNotification('Pick the date and time to send it', true); return; }
+            if (sendAt < Date.now() + 60000) { showNotification('Pick a time in the future (or use Send Now)', true); return; }
+            if (scheduledUpdateInfo && !confirm(`${scheduledUpdateInfo.version} is already scheduled. Replace it with this one?`)) return;
+            const description = slides.map(x => x.title ? `${x.title}\n${x.body}` : x.body).join('\n---\n');
+            const announcement = buildUpdateAnnouncement(version, slides, document.getElementById('sendUpdateMessage').value);
+            try {
+                await set(ref(database, 'appUpdates/scheduled'), {
+                    version, description, slides, announcement, sendAt,
+                    scheduledAt: Date.now(), scheduledBy: currentUser.username
+                });
+                document.getElementById('sendUpdateMessage').value = '';
+                document.getElementById('sendUpdateAt').value = '';
+                const list = document.getElementById('updateSlidesList');
+                if (list) list.innerHTML = '';
+                addUpdateSlideField();
+                addUpdateSlideField();
+                showNotification(`${version} scheduled for ${admFmtFull(sendAt)} 🕒`);
+            } catch (e) { showNotification('Could not schedule: ' + e.message, true); }
+        };
+
+        // Moves ONLY this scheduled update. Reminder times are never written here.
+        window.changeScheduledUpdateTime = async function () {
+            if (!admIsZezo() || !scheduledUpdateInfo) return;
+            const t = admFromInput(document.getElementById('schedUpdTimeInput').value);
+            if (!t) { showNotification('Pick the new date and time', true); return; }
+            if (t < Date.now() + 60000) { showNotification('Pick a time in the future (or use Send now)', true); return; }
+            try {
+                await update(ref(database, 'appUpdates/scheduled'), { sendAt: t });
+                showNotification(`Update moved to ${admFmtFull(t)} — usual reminders unchanged`);
+            } catch (e) { showNotification('Could not change the time: ' + e.message, true); }
+        };
+
+        window.saveScheduledUpdateMessage = async function () {
+            if (!admIsZezo() || !scheduledUpdateInfo) return;
+            let text = document.getElementById('schedUpdMsgInput').value.trim();
+            if (!text) { showNotification('The message can\'t be empty', true); return; }
+            text = text.split('{version}').join(scheduledUpdateInfo.version).slice(0, 1900);
+            try {
+                await update(ref(database, 'appUpdates/scheduled'), { announcement: text });
+                showNotification('Update message saved ✅');
+            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+        };
+
+        window.sendScheduledUpdateNow = async function () {
+            if (!admIsZezo() || !scheduledUpdateInfo) return;
+            if (!confirm(`Send ${scheduledUpdateInfo.version} to everyone right now?`)) return;
+            await publishScheduledUpdate(true);
+        };
+
+        window.cancelScheduledUpdate = async function () {
+            if (!admIsZezo() || !scheduledUpdateInfo) return;
+            if (!confirm(`Cancel the scheduled ${scheduledUpdateInfo.version}? Nothing will be sent.`)) return;
+            try {
+                await remove(ref(database, 'appUpdates/scheduled'));
+                showNotification('Scheduled update cancelled');
+            } catch (e) { showNotification('Could not cancel: ' + e.message, true); }
+        };
 
         // Zezo-only: broadcast a new update to every user/device.
         window.sendAppUpdate = function () {
@@ -7465,13 +7671,14 @@
                 releasedBy: currentUser.username
             }).then(() => {
                 showNotification('Update ' + version + ' sent to everyone! 🚀');
-                announceUpdateOnDiscord(version, slides).catch(() => {
+                announceUpdateOnDiscord(version, slides, (document.getElementById('sendUpdateMessage') || {}).value).catch(() => {
                     showNotification('Update sent, but the Discord message failed', true);
                 });
                 const list = document.getElementById('updateSlidesList');
                 if (list) list.innerHTML = '';
                 addUpdateSlideField();
                 addUpdateSlideField();
+                const msgBox = document.getElementById('sendUpdateMessage'); if (msgBox) msgBox.value = '';
             }).catch((error) => {
                 showNotification('Failed to send update: ' + error.message, true);
             });
@@ -9541,6 +9748,7 @@ Use the conversation history provided to you to remember what's already been sai
 
             // Check for / listen for app update announcements (shared, not per-user)
             listenForUpdates();
+            listenForScheduledUpdate(); // delivers a scheduled update once its time has passed
 
             // Load this user's on-device AI chat memory (last 50 messages)
             loadChatHistory();

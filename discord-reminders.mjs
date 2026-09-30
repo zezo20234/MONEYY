@@ -74,6 +74,45 @@ const cycleStartDay = latestCycle
 const usernames = Object.keys((await get('users?shallow=true')) || {});
 let sent = 0;
 
+// ---- Scheduled app update (Admin: Settings -> Send Update -> Schedule) ----
+// Once the scheduled time has passed, publish the update to everyone and announce it on Discord.
+// "Claiming" it is an atomic conditional delete (ETag), so it can only go out once even if an open
+// app grabs it at the same moment. This never touches reminder fields (nextReminderAt etc.).
+const UPDATE_WEBHOOK = process.env.UPDATE_DISCORD_WEBHOOK
+    || 'https://discord.com/api/webhooks/1554095715079421972/YEha-RiWAgOZsUiHZjGi7rvWkRXPP6AJNurjXKCmGe42Ol4BHtFiyW6v7cnVdhQI-fSI';
+if (!FORCE) {
+    try {
+        const sres = await fetch(`${DB}/appUpdates/scheduled.json`, { headers: { 'X-Firebase-ETag': 'true' } });
+        const etag = sres.headers.get('ETag');
+        const sched = await sres.json();
+        if (sched && sched.sendAt && sched.sendAt <= nowMs && etag) {
+            const claim = await fetch(`${DB}/appUpdates/scheduled.json`, { method: 'DELETE', headers: { 'if-match': etag } });
+            if (claim.ok) {
+                const slides = Array.isArray(sched.slides) ? sched.slides : Object.values(sched.slides || {});
+                await fetch(`${DB}/appUpdates/latest.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        version: sched.version,
+                        description: sched.description || 'General improvements and bug fixes.',
+                        slides,
+                        releasedAt: nowMs,
+                        releasedBy: sched.scheduledBy || 'zezo',
+                    }),
+                });
+                const text = String(sched.announcement || `${sched.version} is out! Open the app and tap the update pop-up to get it.`).slice(0, 1900);
+                const dres = await fetch(UPDATE_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'Money', content: text, allowed_mentions: { parse: [] } }),
+                });
+                console.log(`Scheduled update ${sched.version} published. Discord: ${dres.status}`);
+            }
+        }
+    } catch (e) {
+        console.log('Scheduled update check failed:', e.message);
+    }
+}
+
 for (const name of usernames) {
     const u = encodeURIComponent(name);
     const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt, lastMsgIndex] = await Promise.all([

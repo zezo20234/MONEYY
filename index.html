@@ -5165,6 +5165,17 @@
                 <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
             </div>
 
+            <!-- Admin Panel (Zezo only) — first thing in Settings so it is easy to find -->
+            <div class="form-group" id="adminPanelSettingsSection"
+                style="display:none; margin-bottom: 20px; padding: 14px; border: 2px solid #ff6b6b; border-radius: 16px; background: rgba(255,107,107,0.08);">
+                <label class="form-label" style="color:#ff6b6b;">🛠️ Admin Panel (Zezo only)</label>
+                <small style="color: rgba(255,255,255,0.6); display:block; margin: 4px 0 10px;">Send Discord messages
+                    to users, override reminders and see when the next one goes out.</small>
+                <button type="button" class="modal-btn confirm"
+                    style="width:100%; background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);"
+                    onclick="openAdminPanel()">Open Admin Panel</button>
+            </div>
+
             <!-- Appearance section -->
             <div class="form-group" id="appearanceSettingsSection">
                 <label class="form-label">🎨 Appearance</label>
@@ -5361,17 +5372,6 @@
                         onclick="disconnectDiscordFromSettings()">Disconnect</button>
                 </div>
                 <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Ask Zezo for the webhook URL.</small>
-            </div>
-
-            <!-- Admin Panel (Zezo only) -->
-            <div class="form-group" id="adminPanelSettingsSection"
-                style="display:none; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
-                <label class="form-label" style="color:#ff6b6b;">🛠️ Admin Panel (Zezo only)</label>
-                <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Send Discord messages
-                    to users, override reminders and see when the next one goes out.</small>
-                <button type="button" class="modal-btn confirm"
-                    style="width:100%; background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);"
-                    onclick="openAdminPanel()">Open Admin Panel</button>
             </div>
 
             <!-- Budget Planning section -->

@@ -2,7 +2,8 @@ name: Discord reminders
 
 on:
   schedule:
-    - cron: '0 10 * * *'   # 10:00 UTC = 1:00 PM Riyadh, every day
+    - cron: '0 * * * *'    # every hour. The script itself only sends normal reminders 1pm-8pm Riyadh,
+                           # and uses the hourly runs to honour custom "next reminder time"s from the Admin Panel.
   workflow_dispatch:        # lets you run it by hand from the Actions tab
     inputs:
       force:

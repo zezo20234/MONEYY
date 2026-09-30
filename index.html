@@ -4140,6 +4140,63 @@
         }
         .adm-next b { color: var(--accent-1, #00f5d4); }
         .adm-empty { text-align: center; color: rgba(255,255,255,0.5); padding: 28px 10px; }
+
+        .adm-card-btn small { display: block; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5); margin-top: 2px; }
+        .adm-timing { margin-top: 16px; border: 2px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 14px; background: rgba(255,255,255,0.03); }
+        .adm-t-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+        .adm-lab { font-size: 13px; color: rgba(255,255,255,0.6); margin: 10px 0 6px; }
+        .adm-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+        .adm-input {
+            flex: 1; min-width: 0; box-sizing: border-box; background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.22); border-radius: 6px; color: #fff; font-size: 16px;
+            padding: 11px 12px; font-family: inherit; color-scheme: dark;
+        }
+        .adm-input:focus { outline: none; border-color: var(--accent-1, #00f5d4); }
+        .adm-mini {
+            flex: none; background: transparent; border: 2px solid var(--accent-1, #00f5d4); border-radius: 6px;
+            color: #fff; font-size: 14px; font-weight: 700; padding: 11px 14px; cursor: pointer;
+        }
+        .adm-mini.ghost { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.8); }
+        .adm-mini:active { transform: scale(0.97); }
+        .adm-hint { display: block; margin-top: 8px; color: rgba(255,255,255,0.45); font-size: 12px; }
+        .adm-edit { display: none; margin: 0 14px 12px; padding: 4px 12px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); }
+        .adm-edit.open { display: block; }
+        .adm-when { font-size: 13px; color: rgba(255,255,255,0.55); margin-left: 4px; }
+        .adm-tags { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+        .adm-none { color: rgba(255,255,255,0.45); font-size: 14px; padding: 6px 2px; }
+        /* stats page */
+        .adm-sec { border: 2px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 14px; margin-bottom: 14px; background: rgba(255,255,255,0.03); }
+        .adm-sec-h { font-size: 17px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: baseline; justify-content: space-between; }
+        .adm-sec-h small { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); }
+        .adm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .adm-stat { background: rgba(255,255,255,0.05); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+        .adm-stat span { font-size: 12px; color: rgba(255,255,255,0.55); }
+        .adm-stat b { font-size: 19px; }
+        .adm-stat small { font-size: 12px; color: rgba(255,255,255,0.5); }
+        .adm-kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
+        .adm-kv:last-child { border-bottom: none; }
+        .adm-kv span { color: rgba(255,255,255,0.6); }
+        .adm-kv b { text-align: right; word-break: break-word; }
+        .adm-kvg { padding: 6px 0; }
+        .adm-kvk { font-size: 13px; font-weight: 700; color: var(--accent-1, #00f5d4); margin-bottom: 2px; }
+        .adm-kvn { margin-left: 10px; padding-left: 10px; border-left: 2px solid rgba(255,255,255,0.12); }
+        .adm-goal { background: rgba(255,255,255,0.05); border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; }
+        .adm-goal-h { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+        .adm-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); margin: 8px 0 6px; overflow: hidden; }
+        .adm-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-2, #00d9f5)); }
+        .adm-goal-s { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .adm-goal-x { margin-top: 6px; font-size: 13px; }
+        .adm-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .adm-fchip { background: transparent; border: 1px solid rgba(255,255,255,0.25); color: #fff; border-radius: 20px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+        .adm-fchip.on { border-color: var(--accent-1, #00f5d4); color: var(--accent-1, #00f5d4); font-weight: 700; }
+        .adm-tx { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .adm-tx-t { font-size: 15px; font-weight: 700; }
+        .adm-tx-n { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .adm-tx-d { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+        .adm-tx-a { font-size: 15px; font-weight: 800; white-space: nowrap; }
+        .adm-tx-a.pos { color: var(--accent-1, #00f5d4); }
+        .adm-tx-a.neg { color: #ff6b6b; }
+        .adm-raw { margin: 10px 0 0; max-height: 420px; overflow: auto; font-size: 11px; line-height: 1.5; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
     </style>
 </head>
 
@@ -5805,11 +5862,38 @@
             <div class="adm-actions">
                 <button class="adm-btn primary" id="admSendAllBtn" onclick="admSendAll()">Send to all</button>
                 <button class="adm-btn primary" id="admSendSpecificBtn" onclick="admSendSpecific()">Send to specific</button>
-                <button class="adm-btn warn" id="admOverrideAllBtn" onclick="admOverrideAll()">Override normal<small>override for all</small></button>
+                <button class="adm-btn warn" id="admOverrideAllBtn" onclick="admOverrideAll()">Override normal<small>normal reminder now, for all</small></button>
+            </div>
+
+            <div class="adm-timing">
+                <div class="adm-t-title">⏱️ Reminder timing — everyone</div>
+                <div class="adm-lab">Days between reminders</div>
+                <div class="adm-row">
+                    <input class="adm-input" id="admGlobalDays" type="number" inputmode="numeric" min="1" max="60" placeholder="3">
+                    <button class="adm-mini" onclick="admSaveGlobalDays()">Save for all</button>
+                </div>
+                <div class="adm-lab">Next reminder time (Riyadh)</div>
+                <div class="adm-row">
+                    <input class="adm-input" id="admGlobalNext" type="datetime-local">
+                    <button class="adm-mini" onclick="admSetNextAll()">Set for all</button>
+                </div>
+                <div class="adm-row"><button class="adm-mini ghost" onclick="admAutoNextAll()">Everyone back to automatic time</button></div>
+                <small class="adm-hint">Each user can also get their own days and time from their card below.</small>
             </div>
 
             <div class="adm-sub" id="admSummary">Loading users…</div>
             <div class="adm-list" id="admUserList"></div>
+        </div>
+    </div>
+
+    <!-- Admin: full stats for one user (Zezo only) -->
+    <div class="adm-page" id="adminStatsPage" style="z-index: 950;">
+        <div class="adm-wrap">
+            <div class="adm-top">
+                <button class="adm-back" onclick="admCloseStats()">← Back</button>
+                <h1 class="adm-title" id="admStatsTitle">Stats</h1>
+            </div>
+            <div id="admStatsBody"></div>
         </div>
     </div>
 
@@ -6259,44 +6343,57 @@
         }
 
         let discordReminderRunning = false;
+        // The normal reminder texts. days = whole days since the last logged purchase (null = unknown).
+        function buildReminderMessage(name, allowanceDay, thursday, days) {
+            if (allowanceDay) return `🎉 **It's allowance day, ${name}!** Tap "I Got Allowance" and make sure to log your spending.`;
+            if (thursday) return `📝 **Thursday check-in, ${name}** — make sure to log your spending!`;
+            if (days !== null && days >= 1) return `📝 **Hey ${name}** — it's been ${days}+ days. Make sure to log your spending!`;
+            return `📝 **Hey ${name}** — make sure to log your spending!`;
+        }
         async function checkDiscordReminders() {
             if (!currentUser || discordReminderRunning) return;
             if (!getDiscordWebhook()) return;
             const r = riyadhNow();
             const hour = r.getUTCHours();
-            if (hour < 13 || hour >= 20) return;
             const today = riyadhDayString(r);
             const username = currentUser.username;
             discordReminderRunning = true;
             try {
                 const userRef = ref(database, `users/${username}`);
-                const snap = await get(userRef);
+                const [snap, gSnap] = await Promise.all([get(userRef), get(ref(database, 'reminderSettings/intervalDays'))]);
                 const d = snap.val() || {};
-                if (d.lastReminderDay === today) return; // already reminded today
-
+                const g = gSnap.exists() ? Number(gSnap.val()) : 3;
+                const intervalDays = Number(d.reminderIntervalDays) >= 1 ? Number(d.reminderIntervalDays) : (g >= 1 ? g : 3);
+                const intervalMs = intervalDays * 24 * 60 * 60 * 1000;
                 const now = Date.now();
+                const baseline = d.lastPurchaseAt || d.reminderClockStart;
+                const sinceDays = baseline ? Math.floor((now - baseline) / 86400000) : null;
                 let msg = null;
-                if (isAllowanceDayToday()) {
-                    msg = `🎉 **It's allowance day, ${username}!** Tap "I Got Allowance" and make sure to log your spending.`;
-                } else if (r.getUTCDay() === 4) {
-                    msg = `📝 **Thursday check-in, ${username}** — make sure to log your spending!`;
+                if (d.nextReminderAt) {
+                    // Zezo set an exact time for this user's next reminder: it replaces the automatic rules until it fires
+                    if (now < d.nextReminderAt) return;
+                    msg = buildReminderMessage(username, isAllowanceDayToday(), r.getUTCDay() === 4, sinceDays);
                 } else {
-                    const baseline = d.lastPurchaseAt || d.reminderClockStart;
-                    if (!baseline) { // first run: start the 3-day clock now, don't ping yet
-                        await set(ref(database, `users/${username}/reminderClockStart`), now);
-                        return;
-                    }
-                    if (now - baseline >= THREE_DAYS_MS && now - (d.lastReminderAt || 0) >= THREE_DAYS_MS) {
-                        msg = `📝 **Hey ${username}** — it's been 3+ days. Make sure to log your spending!`;
+                    if (hour < 13 || hour >= 20) return;
+                    if (d.lastReminderDay === today) return; // already reminded today
+                    if (isAllowanceDayToday()) {
+                        msg = buildReminderMessage(username, true, false, null);
+                    } else if (r.getUTCDay() === 4) {
+                        msg = buildReminderMessage(username, false, true, null);
+                    } else {
+                        if (!baseline) { // first run: start the clock now, don't ping yet
+                            await set(ref(database, `users/${username}/reminderClockStart`), now);
+                            return;
+                        }
+                        if (now - baseline >= intervalMs && now - (d.lastReminderAt || 0) >= intervalMs) {
+                            msg = buildReminderMessage(username, false, false, intervalDays);
+                        }
                     }
                 }
                 if (!msg) return;
-                // Admin Panel override: use Zezo's custom text instead of the normal message (one time)
-                const hadOverride = !!(d.reminderOverride && d.reminderOverride.message);
-                if (hadOverride) msg = d.reminderOverride.message;
                 if (await window.sendDiscordMessage(msg)) {
                     const patch = { lastReminderDay: today, lastReminderAt: now };
-                    if (hadOverride) patch.reminderOverride = null;
+                    if (d.nextReminderAt) patch.nextReminderAt = null; // custom time used up → automatic again
                     await update(userRef, patch);
                 }
             } catch (e) {
@@ -6354,19 +6451,23 @@
 // ===== Admin Panel (Zezo only) =====
         // Full-screen page opened from Settings. Only lists users who connected Discord.
         //   Send to all / specific : posts the typed message to their webhook right now
-        //   Override               : the NEXT automatic reminder that user would get uses the typed
-        //                            message instead of the normal text (one time, then it clears).
-        //                            Stored at users/<name>/reminderOverride — read by the GitHub Action
-        //                            (scripts/discord-reminders.mjs) and by the in-app reminder check.
+        //   Override               : sends the NORMAL reminder message right now. It never touches the
+        //                            schedule (lastReminderAt / lastReminderDay), so "Next reminder" stays put.
+        //   Days between reminders : reminderSettings/intervalDays (everyone) or users/<n>/reminderIntervalDays
+        //   Next reminder time     : users/<n>/nextReminderAt (exact time, Riyadh) — replaces the automatic
+        //                            rules for that user until it fires, then automatic takes over again.
+        // The GitHub Action (scripts/discord-reminders.mjs) and checkDiscordReminders() read the same fields.
+        const ADM_DAY_MS = 24 * 60 * 60 * 1000;
         let admUsers = [];
         let admCycleStartDay = null;
+        let admGlobalDays = 3;
         const admSelected = new Set();
-        const admStatsOpen = new Set();
+        const admTimingOpen = new Set();
         let admTimer = null;
 
         function admIsZezo() { return !!currentUser && currentUser.username.toLowerCase() === 'zezo'; }
         function admEsc(v) {
-            return String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
         function admAgo(ms) {
             if (!ms) return 'never';
@@ -6382,6 +6483,25 @@
             if (d) return `${d}d ${h}h`;
             if (h) return `${h}h ${mm}m`;
             return `${mm}m`;
+        }
+        // Riyadh-time helpers (UTC+3, no DST)
+        function admFmtRiyadh(ms) {
+            return new Date(ms + RIYADH_OFFSET_MS).toLocaleString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
+        function admFmtFull(v) {
+            const t = typeof v === 'number' ? v : Date.parse(v);
+            if (!t || isNaN(t)) return admEsc(v);
+            return new Date(t + RIYADH_OFFSET_MS).toLocaleString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        function admToInput(ms) { return new Date(ms + RIYADH_OFFSET_MS).toISOString().slice(0, 16); }
+        function admFromInput(v) {
+            if (!v) return null;
+            const t = Date.parse(v + ':00Z');
+            return isNaN(t) ? null : t - RIYADH_OFFSET_MS;
+        }
+        function admIntervalDays(u) {
+            const d = Number(u.reminderIntervalDays);
+            return d >= 1 ? d : admGlobalDays;
         }
 
         // Same allowance-day rule as scripts/discord-reminders.mjs
@@ -6399,28 +6519,50 @@
             return fourth === todayStr;
         }
 
-        // Walks forward day by day (the Action runs daily at 1:00 PM Riyadh) and returns the first
-        // moment the normal rules would send this user a reminder. null = nothing in the next ~10 weeks.
+        // When will this user next be reminded?
+        //  - an exact time set by Zezo (nextReminderAt) wins
+        //  - otherwise the automatic rules, checked daily at 1:00 PM Riyadh: allowance day, Thursday,
+        //    or N days since the last purchase AND N days since the last reminder (N = days between reminders)
+        // Returns { t, custom, pending } or null.
         function admNextReminder(u, nowMs) {
+            if (u.nextReminderAt) {
+                return { t: Math.max(u.nextReminderAt, nowMs), custom: true, pending: u.nextReminderAt <= nowMs };
+            }
+            const intervalMs = admIntervalDays(u) * ADM_DAY_MS;
             const todayStr = riyadhDayString(new Date(nowMs + RIYADH_OFFSET_MS));
-            const baseline = u.lastPurchaseAt || u.reminderClockStart || nowMs;
+            const baseline = u.lastPurchaseAt || u.reminderClockStart || null;
             const day0 = Date.parse(todayStr + 'T00:00:00Z');
-            for (let k = 0; k < 70; k++) {
-                const day = new Date(day0 + k * 86400000);
-                const dayStr = day.toISOString().slice(0, 10);
-                const t = day.getTime() + 10 * 3600 * 1000; // 10:00 UTC = 1:00 PM Riyadh
-                if (t <= nowMs) continue;
+            for (let k = 0; k < 90; k++) {
+                const dayStr = new Date(day0 + k * ADM_DAY_MS).toISOString().slice(0, 10);
+                let t = day0 + k * ADM_DAY_MS + 10 * 3600 * 1000; // 10:00 UTC = 1:00 PM Riyadh
+                let pending = false;
+                if (t <= nowMs) {
+                    // today's 1 PM already passed: still due if we're inside the 1-8 PM window and nothing was sent today
+                    const windowEnd = day0 + k * ADM_DAY_MS + 17 * 3600 * 1000;
+                    if (k === 0 && nowMs < windowEnd && u.lastReminderDay !== dayStr) { t = nowMs; pending = true; } else continue;
+                }
                 if (u.lastReminderDay === dayStr) continue;
-                if (admIsAllowanceDay(admCycleStartDay, u.allowanceAnchor, dayStr)) return t;
-                if (day.getUTCDay() === 4) return t;
-                if (t - baseline >= THREE_DAYS_MS && t - (u.lastReminderAt || 0) >= THREE_DAYS_MS) return t;
+                const dow = new Date(day0 + k * ADM_DAY_MS).getUTCDay();
+                if (admIsAllowanceDay(admCycleStartDay, u.allowanceAnchor, dayStr) || dow === 4 ||
+                    (baseline && t - baseline >= intervalMs && t - (u.lastReminderAt || 0) >= intervalMs)) {
+                    return { t, custom: false, pending };
+                }
             }
             return null;
         }
 
+        // The normal reminder text this user would get today (used by Override)
+        function admNormalMessage(u, nowMs) {
+            const r = new Date(nowMs + RIYADH_OFFSET_MS);
+            const today = riyadhDayString(r);
+            const allowance = admIsAllowanceDay(admCycleStartDay, u.allowanceAnchor, today);
+            const baseline = u.lastPurchaseAt || u.reminderClockStart;
+            const days = baseline ? Math.floor((nowMs - baseline) / ADM_DAY_MS) : null;
+            return buildReminderMessage(u.name, allowance, r.getUTCDay() === 4, days);
+        }
+
         window.admUpdateCount = function () {
-            const el = document.getElementById('admMessage');
-            document.getElementById('admCharCount').textContent = el.value.length;
+            document.getElementById('admCharCount').textContent = document.getElementById('admMessage').value.length;
         };
         function admGetMessage() {
             const msg = document.getElementById('admMessage').value.trim();
@@ -6438,6 +6580,8 @@
             admTimer = setInterval(admRenderFooters, 60000);
         };
         window.closeAdminPanel = function () {
+            const st = document.getElementById('adminStatsPage');
+            if (st) st.classList.remove('active');
             document.getElementById('adminPage').classList.remove('active');
             document.body.style.overflow = '';
             clearInterval(admTimer);
@@ -6450,27 +6594,38 @@
             sumEl.textContent = 'Loading users…';
             listEl.innerHTML = '';
             try {
-                const [namesRes, histSnap] = await Promise.all([
+                const [namesRes, histSnap, daysSnap] = await Promise.all([
                     fetch(`${firebaseConfig.databaseURL}/users.json?shallow=true`).then((r) => r.json()),
-                    get(ref(database, 'financialCycle/history'))
+                    get(ref(database, 'financialCycle/history')),
+                    get(ref(database, 'reminderSettings/intervalDays'))
                 ]);
+                const gd = daysSnap.exists() ? Number(daysSnap.val()) : 3;
+                admGlobalDays = gd >= 1 ? gd : 3;
                 const cycles = Object.values(histSnap.exists() ? histSnap.val() : {});
                 const latest = cycles.map((c) => new Date(c.startDate).getTime()).filter(Boolean).sort((a, b) => a - b).pop();
                 const today = riyadhDayString(riyadhNow());
                 admCycleStartDay = latest ? riyadhDayString(new Date(latest + RIYADH_OFFSET_MS)) : today.slice(0, 8) + '01';
 
                 const names = Object.keys(namesRes || {});
-                const fields = ['discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart', 'allowanceAnchor', 'reminderOverride'];
+                const fields = ['discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
+                    'allowanceAnchor', 'reminderIntervalDays', 'nextReminderAt', 'reminderOverride'];
                 const all = await Promise.all(names.map(async (name) => {
                     const vals = await Promise.all(fields.map((f) => get(ref(database, `users/${name}/${f}`)).then((sn) => (sn.exists() ? sn.val() : null))));
                     const u = { name };
                     fields.forEach((f, i) => { u[f] = vals[i]; });
                     return u;
                 }));
+                // Older admin builds queued one-time override texts; overrides no longer work that way, so clear leftovers.
+                all.forEach((u) => {
+                    if (u.reminderOverride) { set(ref(database, `users/${u.name}/reminderOverride`), null).catch(() => { }); }
+                    delete u.reminderOverride;
+                });
                 admUsers = all.filter((u) => u.discordWebhook);
                 const without = all.length - admUsers.length;
                 sumEl.textContent = `${admUsers.length} user${admUsers.length === 1 ? '' : 's'} with Discord connected` +
                     (without > 0 ? ` · ${without} without (hidden)` : '');
+                document.getElementById('admGlobalDays').value = admGlobalDays;
+                document.getElementById('admGlobalNext').value = '';
                 admRenderList();
             } catch (e) {
                 console.error('Admin panel load failed:', e);
@@ -6480,10 +6635,16 @@
         }
 
         function admFooterHtml(u) {
-            const next = admNextReminder(u, Date.now());
-            const when = next === null ? 'none scheduled' : admCountdown(next - Date.now());
-            const note = u.reminderOverride && u.reminderOverride.message ? ' <span style="color:#ff6b6b;">(custom message)</span>' : '';
-            return `Next reminder: <b>${when}</b>${note}`;
+            const now = Date.now();
+            const n = admNextReminder(u, now);
+            let main;
+            if (!n) main = '<b>none scheduled</b>';
+            else if (n.pending) main = '<b>due now</b> <span class="adm-when">(goes out at the next check, within the hour)</span>';
+            else main = `<b>${admCountdown(n.t - now)}</b> <span class="adm-when">${admFmtRiyadh(n.t)}</span>`;
+            const tags = [];
+            if (u.nextReminderAt) tags.push('custom time');
+            tags.push(`every ${admIntervalDays(u)} day${admIntervalDays(u) === 1 ? '' : 's'}${u.reminderIntervalDays ? ' (custom)' : ''}`);
+            return `Next reminder: ${main}<div class="adm-tags">${tags.join(' · ')}</div>`;
         }
         function admRenderFooters() {
             document.querySelectorAll('#admUserList .adm-card').forEach((card) => {
@@ -6500,23 +6661,28 @@
                 return;
             }
             listEl.innerHTML = admUsers.map((u) => {
-                const hasOverride = u.reminderOverride && u.reminderOverride.message;
-                const baseline = u.lastPurchaseAt || u.reminderClockStart;
+                const custom = u.nextReminderAt || u.reminderIntervalDays;
                 return `<div class="adm-card" data-user="${admEsc(u.name)}">
                     <div class="adm-card-head">
                         <label class="adm-pick"><input type="checkbox" data-act="pick" ${admSelected.has(u.name) ? 'checked' : ''}><span>${admEsc(u.name)}</span></label>
-                        ${hasOverride ? '<button class="adm-chip" data-act="clear" title="Remove the queued override">Override queued ✕</button>' : ''}
+                        ${custom ? '<span class="adm-chip">custom timing</span>' : ''}
                     </div>
                     <button class="adm-card-btn" data-act="stats">See stats</button>
-                    <div class="adm-stats ${admStatsOpen.has(u.name) ? 'open' : ''}">
-                        Last purchase logged: <b>${admAgo(u.lastPurchaseAt)}</b><br>
-                        Last opened the app: <b>${admAgo(u.lastActive)}</b><br>
-                        Last reminder sent: <b>${admAgo(u.lastReminderAt)}</b><br>
-                        ${!u.lastPurchaseAt && baseline ? `3-day clock started: <b>${admAgo(baseline)}</b><br>` : ''}
-                        ${hasOverride ? `Queued message: <b>${admEsc(u.reminderOverride.message.slice(0, 120))}${u.reminderOverride.message.length > 120 ? '…' : ''}</b><br>` : ''}
-                        <button data-act="details">Full balances &amp; transactions →</button>
+                    <button class="adm-card-btn" data-act="override">Override <small>send the normal reminder now</small></button>
+                    <button class="adm-card-btn" data-act="timing">Reminder timing ${admTimingOpen.has(u.name) ? '▴' : '▾'}</button>
+                    <div class="adm-edit ${admTimingOpen.has(u.name) ? 'open' : ''}">
+                        <div class="adm-lab">Days between reminders</div>
+                        <div class="adm-row">
+                            <input class="adm-input" data-f="days" type="number" inputmode="numeric" min="1" max="60" placeholder="${admGlobalDays} (default)" value="${u.reminderIntervalDays || ''}">
+                            <button class="adm-mini" data-act="saveDays">Save</button>
+                        </div>
+                        <div class="adm-lab">Next reminder time (Riyadh)</div>
+                        <div class="adm-row">
+                            <input class="adm-input" data-f="next" type="datetime-local" value="${u.nextReminderAt ? admToInput(u.nextReminderAt) : ''}">
+                            <button class="adm-mini" data-act="setNext">Set</button>
+                        </div>
+                        <div class="adm-row"><button class="adm-mini ghost" data-act="autoNext">Back to automatic time</button></div>
                     </div>
-                    <button class="adm-card-btn" data-act="override">Override</button>
                     <div class="adm-next">${admFooterHtml(u)}</div>
                 </div>`;
             }).join('');
@@ -6527,29 +6693,100 @@
             document.getElementById('admSendSpecificBtn').textContent = n ? `Send to specific (${n})` : 'Send to specific';
         }
 
+        async function admWrite(pairs) {
+            await Promise.all(pairs.map(([path, value]) => set(ref(database, path), value)));
+        }
+
         // One listener for every card button
         document.getElementById('admUserList').addEventListener('click', async (ev) => {
             const target = ev.target.closest('[data-act]');
             const card = ev.target.closest('.adm-card');
             if (!target || !card) return;
             const name = card.dataset.user;
+            const u = admUsers.find((x) => x.name === name);
             const act = target.dataset.act;
             if (act === 'pick') {
                 if (target.checked) admSelected.add(name); else admSelected.delete(name);
                 admUpdateSpecificLabel();
             } else if (act === 'stats') {
-                if (admStatsOpen.has(name)) admStatsOpen.delete(name); else admStatsOpen.add(name);
-                card.querySelector('.adm-stats').classList.toggle('open', admStatsOpen.has(name));
-            } else if (act === 'details') {
-                if (typeof window.showUserDetails === 'function') window.showUserDetails(name);
-            } else if (act === 'override') {
-                const msg = admGetMessage();
-                if (msg) await admSetOverride([name], msg);
-            } else if (act === 'clear') {
-                await admSetOverride([name], null);
+                admOpenStats(name);
+            } else if (act === 'override' && u) {
+                await admSendEach([u], null, target);
+            } else if (act === 'timing') {
+                if (admTimingOpen.has(name)) admTimingOpen.delete(name); else admTimingOpen.add(name);
+                card.querySelector('.adm-edit').classList.toggle('open', admTimingOpen.has(name));
+                target.textContent = `Reminder timing ${admTimingOpen.has(name) ? '▴' : '▾'}`;
+            } else if (act === 'saveDays' && u) {
+                const raw = card.querySelector('[data-f="days"]').value.trim();
+                let v = null;
+                if (raw !== '') {
+                    v = Math.floor(Number(raw));
+                    if (!(v >= 1 && v <= 60)) { showNotification('Enter a number of days from 1 to 60', true); return; }
+                }
+                try {
+                    await admWrite([[`users/${name}/reminderIntervalDays`, v]]);
+                    u.reminderIntervalDays = v;
+                    admRenderList();
+                    showNotification(v === null ? `${name} now uses the default (${admGlobalDays} days)` : `${name} will be reminded every ${v} day${v === 1 ? '' : 's'}`);
+                } catch (e) { showNotification('Could not save: ' + e.message, true); }
+            } else if (act === 'setNext' && u) {
+                const t = admFromInput(card.querySelector('[data-f="next"]').value);
+                if (!t) { showNotification('Pick a date and time first', true); return; }
+                if (t <= Date.now()) { showNotification('Pick a time in the future', true); return; }
+                try {
+                    await admWrite([[`users/${name}/nextReminderAt`, t]]);
+                    u.nextReminderAt = t;
+                    admRenderList();
+                    showNotification(`${name}'s next reminder: ${admFmtRiyadh(t)}`);
+                } catch (e) { showNotification('Could not save: ' + e.message, true); }
+            } else if (act === 'autoNext' && u) {
+                try {
+                    await admWrite([[`users/${name}/nextReminderAt`, null]]);
+                    u.nextReminderAt = null;
+                    admRenderList();
+                    showNotification(`${name} is back on the automatic schedule`);
+                } catch (e) { showNotification('Could not save: ' + e.message, true); }
             }
         });
 
+        // ---- Reminder timing for EVERYONE ----
+        window.admSaveGlobalDays = async function () {
+            const v = Math.floor(Number(document.getElementById('admGlobalDays').value));
+            if (!(v >= 1 && v <= 60)) { showNotification('Enter a number of days from 1 to 60', true); return; }
+            if (!confirm(`Remind everyone every ${v} day${v === 1 ? '' : 's'}? This also replaces any custom days set on individual users.`)) return;
+            try {
+                await admWrite([['reminderSettings/intervalDays', v], ...admUsers.map((u) => [`users/${u.name}/reminderIntervalDays`, null])]);
+                admGlobalDays = v;
+                admUsers.forEach((u) => { u.reminderIntervalDays = null; });
+                admRenderList();
+                showNotification(`Everyone is now reminded every ${v} day${v === 1 ? '' : 's'}`);
+            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+        };
+        window.admSetNextAll = async function () {
+            const t = admFromInput(document.getElementById('admGlobalNext').value);
+            if (!t) { showNotification('Pick a date and time first', true); return; }
+            if (t <= Date.now()) { showNotification('Pick a time in the future', true); return; }
+            if (!admUsers.length) { showNotification('Nobody has Discord connected', true); return; }
+            if (!confirm(`Set everyone's next reminder to ${admFmtRiyadh(t)} (Riyadh)?`)) return;
+            try {
+                await admWrite(admUsers.map((u) => [`users/${u.name}/nextReminderAt`, t]));
+                admUsers.forEach((u) => { u.nextReminderAt = t; });
+                admRenderList();
+                showNotification(`Everyone's next reminder: ${admFmtRiyadh(t)}`);
+            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+        };
+        window.admAutoNextAll = async function () {
+            if (!admUsers.length) return;
+            if (!confirm('Put everyone back on the automatic reminder time?')) return;
+            try {
+                await admWrite(admUsers.map((u) => [`users/${u.name}/nextReminderAt`, null]));
+                admUsers.forEach((u) => { u.nextReminderAt = null; });
+                admRenderList();
+                showNotification('Everyone is back on the automatic schedule');
+            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+        };
+
+        // ---- Sending ----
         async function admPost(url, content) {
             const res = await fetch(url, {
                 method: 'POST',
@@ -6558,55 +6795,224 @@
             });
             if (!res.ok) throw new Error(`Discord replied ${res.status}`);
         }
-        async function admSend(targets, msg, btnId) {
-            const btn = document.getElementById(btnId);
-            const label = btn.textContent;
-            btn.disabled = true; btn.textContent = 'Sending…';
-            const results = await Promise.allSettled(targets.map((u) => admPost(u.discordWebhook, msg)));
-            btn.disabled = false; btn.textContent = label;
+        // msg = text to send to everyone, or null = each user's own normal reminder message.
+        // Sending never writes to the database, so nobody's schedule moves.
+        async function admSendEach(targets, msg, btn) {
+            const html = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+            const now = Date.now();
+            const results = await Promise.allSettled(targets.map((u) => admPost(u.discordWebhook, msg === null ? admNormalMessage(u, now) : msg)));
+            if (btn) { btn.disabled = false; btn.innerHTML = html; }
             const failed = targets.filter((_, i) => results[i].status === 'rejected').map((u) => u.name);
             const ok = targets.length - failed.length;
             if (failed.length) showNotification(`Sent to ${ok}/${targets.length}. Failed: ${failed.join(', ')}`, true);
-            else showNotification(`Message sent to ${ok} user${ok === 1 ? '' : 's'} 💬`);
+            else showNotification(`Sent to ${ok} user${ok === 1 ? '' : 's'} 💬`);
         }
         window.admSendAll = async function () {
             const msg = admGetMessage();
             if (!msg) return;
             if (!admUsers.length) { showNotification('Nobody has Discord connected', true); return; }
             if (!confirm(`Send this message to all ${admUsers.length} user(s) on Discord now?`)) return;
-            await admSend(admUsers, msg, 'admSendAllBtn');
+            await admSendEach(admUsers, msg, document.getElementById('admSendAllBtn'));
         };
         window.admSendSpecific = async function () {
             const targets = admUsers.filter((u) => admSelected.has(u.name));
             if (!targets.length) { showNotification('Tick the users you want first', true); return; }
             const msg = admGetMessage();
             if (!msg) return;
-            await admSend(targets, msg, 'admSendSpecificBtn');
+            await admSendEach(targets, msg, document.getElementById('admSendSpecificBtn'));
+        };
+        window.admOverrideAll = async function () {
+            if (!admUsers.length) { showNotification('Nobody has Discord connected', true); return; }
+            if (!confirm(`Send the normal reminder to all ${admUsers.length} user(s) right now? Their next scheduled reminder will not change.`)) return;
+            await admSendEach(admUsers, null, document.getElementById('admOverrideAllBtn'));
         };
 
-        // msg = string → queue it as the user's next reminder text; msg = null → remove it
-        async function admSetOverride(names, msg) {
-            try {
-                await Promise.all(names.map((n) => set(ref(database, `users/${n}/reminderOverride`),
-                    msg === null ? null : { message: msg, setAt: Date.now() })));
-                names.forEach((n) => {
-                    const u = admUsers.find((x) => x.name === n);
-                    if (u) u.reminderOverride = msg === null ? null : { message: msg, setAt: Date.now() };
-                });
-                admRenderList();
-                showNotification(msg === null ? 'Override removed'
-                    : names.length === 1 ? `Override queued for ${names[0]}` : `Override queued for ${names.length} users`);
-            } catch (e) {
-                showNotification('Could not save override: ' + e.message, true);
-            }
+        // ---- Full stats page ----
+        const ADM_KNOWN_KEYS = ['balances', 'preferences', 'goals', 'history', 'missions', 'points', 'missionPrestige',
+            'discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
+            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt'];
+        let admStats = null; // { name, node, txs, filter, search, limit }
+
+        function admHuman(k) {
+            const t = String(k).replace(/([A-Z])/g, ' $1').replace(/[_-]+/g, ' ').trim();
+            return t.charAt(0).toUpperCase() + t.slice(1);
         }
-        window.admOverrideAll = async function () {
-            const msg = admGetMessage();
-            if (!msg) return;
-            if (!admUsers.length) { showNotification('Nobody has Discord connected', true); return; }
-            if (!confirm(`Replace the next normal reminder for all ${admUsers.length} user(s) with this message?`)) return;
-            await admSetOverride(admUsers.map((u) => u.name), msg);
+        function admNum(n) { return Math.round(Number(n) * 100) / 100; }
+        function admMoney(n) { return `${admNum(n)} ⃁`; }
+        function admMask(node) {
+            const c = JSON.parse(JSON.stringify(node || {}));
+            if (c.discordWebhook) c.discordWebhook = '••••' + String(c.discordWebhook).slice(-6);
+            return c;
+        }
+        function admVal(k, v) {
+            if (v === null || v === undefined) return '—';
+            if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+            if (typeof v === 'number') return (/(At|Active|Start|Date)$/i.test(k) && v > 1e12) ? admFmtFull(v) : String(admNum(v));
+            return admEsc(v);
+        }
+        function admRows(obj) {
+            const entries = Array.isArray(obj) ? obj.map((v, i) => [String(i + 1), v]) : Object.entries(obj || {});
+            if (!entries.length) return '<div class="adm-none">Nothing here</div>';
+            return entries.map(([k, v]) => (v !== null && typeof v === 'object')
+                ? `<div class="adm-kvg"><div class="adm-kvk">${admEsc(admHuman(k))}</div><div class="adm-kvn">${admRows(v)}</div></div>`
+                : `<div class="adm-kv"><span>${admEsc(admHuman(k))}</span><b>${admVal(k, v)}</b></div>`).join('');
+        }
+        function admSection(title, inner, note) {
+            return `<div class="adm-sec"><div class="adm-sec-h">${title}${note ? `<small>${note}</small>` : ''}</div>${inner}</div>`;
+        }
+
+        window.admOpenStats = async function (name) {
+            if (!admIsZezo()) return;
+            const page = document.getElementById('adminStatsPage');
+            document.getElementById('admStatsTitle').textContent = name;
+            document.getElementById('admStatsBody').innerHTML = '<div class="adm-empty">Loading everything…</div>';
+            page.classList.add('active');
+            page.scrollTop = 0;
+            try {
+                const snap = await get(ref(database, `users/${name}`));
+                const node = snap.exists() ? snap.val() : {};
+                admStats = { name, node, filter: 'all', search: '', limit: 100 };
+                admRenderStats();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('admStatsBody').innerHTML = '<div class="adm-empty">Could not load this user.</div>';
+            }
         };
+        window.admCloseStats = function () {
+            document.getElementById('adminStatsPage').classList.remove('active');
+        };
+
+        function admRenderStats() {
+            const { name, node } = admStats;
+            const balances = node.balances || {};
+            const txs = Object.values(node.history || {}).filter((x) => x && typeof x === 'object')
+                .sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0));
+            admStats.txs = txs;
+            const goals = Object.values(node.goals || {}).filter((x) => x && typeof x === 'object');
+            const missions = Object.values(node.missions || {}).filter((x) => x && typeof x === 'object');
+            const bucketNums = Object.entries(balances).filter(([, v]) => typeof v === 'number');
+            const total = bucketNums.reduce((s, [, v]) => s + v, 0);
+            const savings = typeof balances.savings === 'number' ? balances.savings : 0;
+
+            const spent = txs.filter((t) => t.type === 'Purchase').reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
+            const added = txs.filter((t) => (t.type === 'Allowance' || t.type === 'Add Money') && Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
+            const byDay = {}, byCat = {};
+            txs.filter((t) => t.type === 'Purchase').forEach((t) => {
+                const day = admFmtFull(t.date).split(',')[0];
+                byDay[day] = (byDay[day] || 0) + Math.abs(Number(t.amount) || 0);
+                const c = t.category || 'other';
+                byCat[c] = (byCat[c] || 0) + Math.abs(Number(t.amount) || 0);
+            });
+            const topDay = Object.entries(byDay).sort((a, b) => b[1] - a[1])[0];
+
+            const overview = `<div class="adm-grid">
+                <div class="adm-stat"><span>Total money</span><b>${admMoney(total)}</b></div>
+                <div class="adm-stat"><span>Spent (all time)</span><b>${admMoney(spent)}</b></div>
+                <div class="adm-stat"><span>Added (allowance + deposits)</span><b>${admMoney(added)}</b></div>
+                <div class="adm-stat"><span>Transactions</span><b>${txs.length}</b></div>
+                <div class="adm-stat"><span>Goals</span><b>${goals.length}</b></div>
+                <div class="adm-stat"><span>Biggest spending day</span><b>${topDay ? `${admMoney(topDay[1])}` : '—'}</b>${topDay ? `<small>${admEsc(topDay[0])}</small>` : ''}</div>
+            </div>`;
+
+            const bucketLabel = { hangout: 'Hangout', savings: 'Savings', playstation: 'PlayStation' };
+            const buckets = bucketNums.length
+                ? `<div class="adm-grid">${bucketNums.map(([k, v]) => `<div class="adm-stat"><span>${admEsc(bucketLabel[k] || admHuman(k))}</span><b>${admMoney(v)}</b></div>`).join('')}</div>`
+                : '<div class="adm-none">No buckets saved yet</div>';
+            const otherBalances = Object.entries(balances).filter(([, v]) => typeof v !== 'number');
+            const bucketsHtml = buckets + (otherBalances.length ? admRows(Object.fromEntries(otherBalances)) : '');
+
+            const goalsHtml = goals.length ? goals.map((g) => {
+                const amt = Number(g.amount) || 0;
+                const pct = amt > 0 ? Math.min(100, (savings / amt) * 100) : 0;
+                const extra = Object.fromEntries(Object.entries(g).filter(([k]) => k !== 'name' && k !== 'amount'));
+                return `<div class="adm-goal"><div class="adm-goal-h"><b>${admEsc(g.name || 'Goal')}</b><span>${admMoney(amt)}</span></div>
+                    <div class="adm-bar"><i style="width:${pct}%"></i></div>
+                    <div class="adm-goal-s">${pct >= 100 ? '🎉 Reached' : `${admMoney(Math.max(0, amt - savings))} to go`} · ${Math.round(pct)}% of savings</div>
+                    ${Object.keys(extra).length ? `<div class="adm-goal-x">${admRows(extra)}</div>` : ''}</div>`;
+            }).join('') : '<div class="adm-none">No goals</div>';
+
+            const catRows = Object.entries(byCat).sort((a, b) => b[1] - a[1])
+                .map(([c, v]) => `<div class="adm-kv"><span>${admEsc(admHuman(c))}</span><b>${admMoney(v)}</b></div>`).join('');
+
+            const types = ['all', ...Array.from(new Set(txs.map((t) => t.type).filter(Boolean)))];
+            const txHtml = `<div class="adm-chips" id="admTxChips">${types.map((t) => `<button class="adm-fchip ${t === 'all' ? 'on' : ''}" data-type="${admEsc(t)}">${admEsc(t === 'all' ? 'All' : t)}</button>`).join('')}</div>
+                <input class="adm-input" id="admTxSearch" type="search" placeholder="Search transactions…" style="width:100%; box-sizing:border-box; margin:8px 0;">
+                <div id="admTxList"></div>`;
+
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const missionsHtml = `<div class="adm-kv"><span>Points</span><b>${admVal('points', node.points || 0)}</b></div>
+                <div class="adm-kv"><span>Prestige</span><b>${admVal('missionPrestige', node.missionPrestige || 0)}</b></div>` +
+                (missions.length ? missions.map((m) => {
+                    const done = Array.isArray(m.completedDates) ? m.completedDates : [];
+                    return `<div class="adm-goal"><div class="adm-goal-h"><b>${admEsc(m.title || 'Mission')}</b><span>${admEsc(m.points || 0)} pts</span></div>
+                        <div class="adm-goal-s">${m.time ? admEsc(m.time) + ' · ' : ''}${Array.isArray(m.days) && m.days.length ? m.days.map((d) => days[d] || d).join(', ') : 'every day'} · done ${done.length} time${done.length === 1 ? '' : 's'}${done.length ? ` (last: ${admEsc(done.slice().sort().pop())})` : ''}</div></div>`;
+                }).join('') : '<div class="adm-none">No missions</div>');
+
+            const activity = {};
+            ['lastActive', 'lastPurchaseAt', 'lastReminderAt', 'lastReminderDay', 'reminderClockStart', 'allowanceAnchor', 'allowanceDoneFriday'].forEach((k) => { if (node[k] !== undefined) activity[k] = node[k]; });
+            activity.discordWebhook = node.discordWebhook ? 'Connected (' + '••••' + String(node.discordWebhook).slice(-6) + ')' : 'Not connected';
+            activity.reminderEveryDays = (Number(node.reminderIntervalDays) >= 1 ? node.reminderIntervalDays + ' (custom)' : admGlobalDays + ' (default)');
+            activity.nextReminderTime = node.nextReminderAt ? admFmtFull(node.nextReminderAt) + ' (custom)' : 'Automatic';
+
+            const rest = {};
+            Object.keys(node).filter((k) => !ADM_KNOWN_KEYS.includes(k)).forEach((k) => { rest[k] = admMask(node)[k]; });
+
+            document.getElementById('admStatsBody').innerHTML =
+                admSection('Overview', overview) +
+                admSection('Money & buckets', bucketsHtml) +
+                admSection('Goals', goalsHtml, `${goals.length}`) +
+                admSection('Spending by category', catRows || '<div class="adm-none">No purchases yet</div>') +
+                admSection('All transactions', txHtml, `${txs.length}`) +
+                admSection('Settings & preferences', admRows(node.preferences || {})) +
+                admSection('Missions & points', missionsHtml) +
+                admSection('Activity & reminders', admRows(activity)) +
+                (Object.keys(rest).length ? admSection('Everything else', admRows(rest)) : '') +
+                `<div class="adm-sec"><button class="adm-mini ghost" id="admRawBtn" style="width:100%">Show raw data (everything, as saved)</button><pre class="adm-raw" id="admRaw" style="display:none"></pre></div>`;
+            admRenderTx();
+        }
+
+        function admRenderTx() {
+            const box = document.getElementById('admTxList');
+            if (!box || !admStats) return;
+            const q = admStats.search.trim().toLowerCase();
+            const list = admStats.txs.filter((t) => (admStats.filter === 'all' || t.type === admStats.filter) &&
+                (!q || [t.type, t.category, t.notes].some((x) => String(x || '').toLowerCase().includes(q))));
+            if (!list.length) { box.innerHTML = '<div class="adm-none">No transactions match</div>'; return; }
+            const shown = list.slice(0, admStats.limit);
+            box.innerHTML = shown.map((t) => {
+                const amt = Number(t.amount) || 0;
+                const extra = Object.entries(t).filter(([k]) => !['type', 'amount', 'category', 'notes', 'emoji', 'date'].includes(k))
+                    .map(([k, v]) => `${admEsc(admHuman(k))}: ${typeof v === 'object' ? admEsc(JSON.stringify(v)) : admVal(k, v)}`).join(' · ');
+                return `<div class="adm-tx"><div class="adm-tx-l">
+                    <div class="adm-tx-t">${admEsc(t.emoji || '')} ${admEsc(t.type || 'Entry')}${t.category ? ' · ' + admEsc(t.category) : ''}</div>
+                    ${t.notes ? `<div class="adm-tx-n">${admEsc(t.notes)}</div>` : ''}
+                    <div class="adm-tx-d">${t.date ? admFmtFull(t.date) : ''}</div>
+                    ${extra ? `<div class="adm-tx-d">${extra}</div>` : ''}</div>
+                    <div class="adm-tx-a ${amt >= 0 ? 'pos' : 'neg'}">${amt > 0 ? '+' : ''}${admMoney(amt)}</div></div>`;
+            }).join('') + (list.length > shown.length ? `<button class="adm-mini ghost" id="admTxMore" style="width:100%; margin-top:8px;">Show more (${list.length - shown.length} left)</button>` : '');
+        }
+
+        document.getElementById('adminStatsPage').addEventListener('click', (ev) => {
+            if (!admStats) return;
+            const chip = ev.target.closest('.adm-fchip');
+            if (chip) {
+                admStats.filter = chip.dataset.type; admStats.limit = 100;
+                document.querySelectorAll('#admTxChips .adm-fchip').forEach((c) => c.classList.toggle('on', c === chip));
+                admRenderTx();
+            } else if (ev.target.closest('#admTxMore')) {
+                admStats.limit += 100; admRenderTx();
+            } else if (ev.target.closest('#admRawBtn')) {
+                const pre = document.getElementById('admRaw');
+                const open = pre.style.display === 'none';
+                if (open) pre.textContent = JSON.stringify(admMask(admStats.node), null, 2);
+                pre.style.display = open ? 'block' : 'none';
+                ev.target.closest('#admRawBtn').textContent = open ? 'Hide raw data' : 'Show raw data (everything, as saved)';
+            }
+        });
+        document.getElementById('adminStatsPage').addEventListener('input', (ev) => {
+            if (admStats && ev.target.id === 'admTxSearch') { admStats.search = ev.target.value; admStats.limit = 100; admRenderTx(); }
+        });
 
         // --- Pop-up shown on open (once) until a webhook is set ---
         function discordDismissKey() {

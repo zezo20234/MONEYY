@@ -1,15 +1,22 @@
 // Runs on GitHub Actions (free, no card) so reminders arrive even when the app is closed.
-// Same rules as the in-app check in index.html:
-//   allowance day (4th Friday)  >  Thursday  >  3+ days since the last logged purchase
-// At most one message per user per day (shares lastReminderDay with the app).
+// The workflow runs every hour; the rules below decide who actually gets a message.
+//
+// Normal rules (same as the in-app check in index.html), 1pm-8pm Riyadh, at most one message per user per day:
+//   allowance day (4th Friday)  >  Thursday  >  N days since the last logged purchase
+//   N = "days between reminders" — set in the Admin Panel for everyone (reminderSettings/intervalDays)
+//   or for one user (users/<n>/reminderIntervalDays). Default 3.
+//
+// Custom time: if the Admin Panel set users/<n>/nextReminderAt, that exact time replaces the normal
+// rules for that user. When it passes, the reminder goes out (any hour), the field is cleared and the
+// normal rules take over again.
 //
 // Needs Node 18+ (built-in fetch). Talks to Firebase over its REST API, so your
-// Realtime Database rules must allow read/write on users/<name>/... without login
+// Realtime Database rules must allow read/write on users/<n>/... without login
 // (the app itself currently works that way).
 
 const DB = 'https://money-e560a-default-rtdb.firebaseio.com';
 const OFFSET_MS = 3 * 60 * 60 * 1000; // Riyadh, UTC+3
-const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const FORCE = process.env.FORCE === '1'; // manual test: ignore the rules and send to everyone
 
 const dayStr = (shifted) => shifted.toISOString().slice(0, 10);
@@ -34,10 +41,23 @@ function isAllowanceDay(cycleStartDay, anchor, todayStr) {
     return fourth === todayStr;
 }
 
+// days = whole days since the last logged purchase (null = unknown)
+function buildMessage(name, allowanceDay, thursday, days) {
+    if (allowanceDay) return `🎉 **It's allowance day, ${name}!** Tap "I Got Allowance" and make sure to log your spending.`;
+    if (thursday) return `📝 **Thursday check-in, ${name}** — make sure to log your spending!`;
+    if (days !== null && days >= 1) return `📝 **Hey ${name}** — it's been ${days}+ days. Make sure to log your spending!`;
+    return `📝 **Hey ${name}** — make sure to log your spending!`;
+}
+
 const nowMs = Date.now();
 const r = new Date(nowMs + OFFSET_MS);
 const today = dayStr(r);
 const isThursday = r.getUTCDay() === 4;
+const inWindow = r.getUTCHours() >= 13 && r.getUTCHours() < 20; // 1pm-8pm Riyadh
+
+// Days between reminders for everyone (a user's own value wins). Default 3.
+const g = Number(await get('reminderSettings/intervalDays'));
+const globalDays = g >= 1 ? g : 3;
 
 // Shared month-cycle start (Riyadh day). With no cycles recorded, the app uses the 1st of the current month.
 const cycles = Object.values((await get('financialCycle/history')) || {});
@@ -51,37 +71,47 @@ let sent = 0;
 
 for (const name of usernames) {
     const u = encodeURIComponent(name);
-    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, override] = await Promise.all([
+    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt] = await Promise.all([
         get(`users/${u}/discordWebhook`),
         get(`users/${u}/lastPurchaseAt`),
         get(`users/${u}/lastReminderDay`),
         get(`users/${u}/lastReminderAt`),
         get(`users/${u}/reminderClockStart`),
         get(`users/${u}/allowanceAnchor`),
-        get(`users/${u}/reminderOverride`), // set from the Admin Panel: replaces the next normal message
+        get(`users/${u}/reminderIntervalDays`),
+        get(`users/${u}/nextReminderAt`),
     ]);
     if (!webhook) continue;
-    if (!FORCE && lastReminderDay === today) continue;
+
+    const intervalDays = Number(ownDays) >= 1 ? Number(ownDays) : globalDays;
+    const intervalMs = intervalDays * DAY_MS;
+    const baseline = lastPurchaseAt || clockStart;
+    const sinceDays = baseline ? Math.floor((nowMs - baseline) / DAY_MS) : null;
 
     let msg = null;
+    let usedCustomTime = false;
     if (FORCE) {
         msg = `✅ Test reminder for ${name} — Money's Discord reminders are working.`;
-    } else if (isAllowanceDay(cycleStartDay, anchor, today)) {
-        msg = `🎉 **It's allowance day, ${name}!** Tap "I Got Allowance" and make sure to log your spending.`;
-    } else if (isThursday) {
-        msg = `📝 **Thursday check-in, ${name}** — make sure to log your spending!`;
+    } else if (nextReminderAt) {
+        // Custom time set from the Admin Panel: waits for that moment, ignores the normal rules
+        if (nowMs < nextReminderAt) continue;
+        usedCustomTime = true;
+        msg = buildMessage(name, isAllowanceDay(cycleStartDay, anchor, today), isThursday, sinceDays);
     } else {
-        const baseline = lastPurchaseAt || clockStart;
-        if (!baseline) { await patch(`users/${u}`, { reminderClockStart: nowMs }); continue; }
-        if (nowMs - baseline >= THREE_DAYS_MS && nowMs - (lastReminderAt || 0) >= THREE_DAYS_MS) {
-            msg = `📝 **Hey ${name}** — it's been 3+ days. Make sure to log your spending!`;
+        if (!inWindow) continue;                      // normal reminders only go out 1pm-8pm Riyadh
+        if (lastReminderDay === today) continue;      // at most one per day
+        if (isAllowanceDay(cycleStartDay, anchor, today)) {
+            msg = buildMessage(name, true, false, null);
+        } else if (isThursday) {
+            msg = buildMessage(name, false, true, null);
+        } else {
+            if (!baseline) { await patch(`users/${u}`, { reminderClockStart: nowMs }); continue; }
+            if (nowMs - baseline >= intervalMs && nowMs - (lastReminderAt || 0) >= intervalMs) {
+                msg = buildMessage(name, false, false, intervalDays);
+            }
         }
     }
     if (!msg) continue;
-
-    // Admin Panel override: send Zezo's custom text instead of the normal one (one time only)
-    const usedOverride = !FORCE && override && override.message;
-    if (usedOverride) msg = override.message;
 
     const res = await fetch(webhook, {
         method: 'POST',
@@ -91,7 +121,7 @@ for (const name of usernames) {
     if (res.ok) {
         sent++;
         if (!FORCE) await patch(`users/${u}`, { lastReminderDay: today, lastReminderAt: nowMs });
-        if (usedOverride) await del(`users/${u}/reminderOverride`);
+        if (usedCustomTime) await del(`users/${u}/nextReminderAt`);
     } else {
         console.log(`Discord failed for ${name}: ${res.status}`);
     }

@@ -8664,7 +8664,16 @@ Use the conversation history provided to you to remember what's already been sai
         // re-sends the exact same prompt.
         async function runAIRequest(message) {
             const typingIndicator = addTypingIndicator();
-            const response = await generateAIResponse(message);
+            // Silent auto-retry: if the AI fails, quietly try again (up to 2 retries,
+            // 3 attempts total) with the typing indicator still showing. Only after
+            // the 3rd failure does the error message + Retry button appear.
+            const MAX_AI_RETRIES = 2;
+            let response = await generateAIResponse(message);
+            for (let attempt = 1; attempt <= MAX_AI_RETRIES && isAIErrorResponse(response) && isOnline; attempt++) {
+                console.log(`AI request failed, silent retry ${attempt}/${MAX_AI_RETRIES}...`);
+                await new Promise(r => setTimeout(r, 800 * attempt));
+                response = await generateAIResponse(message);
+            }
             removeTypingIndicator(typingIndicator);
 
             if (isAIErrorResponse(response)) {

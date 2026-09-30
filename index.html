@@ -4159,6 +4159,12 @@
         .adm-mini.ghost { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.8); }
         .adm-mini:active { transform: scale(0.97); }
         .adm-hint { display: block; margin-top: 8px; color: rgba(255,255,255,0.45); font-size: 12px; }
+        .adm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .adm-day {
+            background: transparent; border: 2px solid rgba(255,255,255,0.22); border-radius: 6px;
+            color: #fff; font-size: 14px; font-weight: 700; padding: 8px 11px; cursor: pointer;
+        }
+        .adm-day.on { background: var(--accent-1, #00f5d4); border-color: var(--accent-1, #00f5d4); color: #000; }
         .adm-edit { display: none; margin: 0 14px 12px; padding: 4px 12px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); }
         .adm-edit.open { display: block; }
         .adm-when { font-size: 13px; color: rgba(255,255,255,0.55); margin-left: 4px; }
@@ -5923,6 +5929,43 @@
                 <small class="adm-hint">Each user can also get their own days and time from their card below.</small>
             </div>
 
+            <div class="adm-timing">
+                <div class="adm-t-title">🕐 Reminder hours</div>
+                <div class="adm-lab">Who</div>
+                <div class="adm-row">
+                    <select class="adm-input" id="admHrsWho">
+                        <option value="all">Everyone</option>
+                        <option value="picked">Selected users (tick them below)</option>
+                    </select>
+                </div>
+                <div class="adm-lab">When</div>
+                <div class="adm-row">
+                    <select class="adm-input" id="admHrsScope" onchange="admHrsChanged()">
+                        <option value="today">Today only</option>
+                        <option value="week">Whole week</option>
+                        <option value="days">Specific days</option>
+                    </select>
+                </div>
+                <div id="admHrsDaysRow" style="display:none"><div class="adm-chips"><button type="button" class="adm-day" onclick="admToggleDay(0, this)">Sun</button><button type="button" class="adm-day" onclick="admToggleDay(1, this)">Mon</button><button type="button" class="adm-day" onclick="admToggleDay(2, this)">Tue</button><button type="button" class="adm-day" onclick="admToggleDay(3, this)">Wed</button><button type="button" class="adm-day" onclick="admToggleDay(4, this)">Thu</button><button type="button" class="adm-day" onclick="admToggleDay(5, this)">Fri</button><button type="button" class="adm-day" onclick="admToggleDay(6, this)">Sat</button></div></div>
+                <div id="admHrsRepeatRow" style="display:none" class="adm-row">
+                    <select class="adm-input" id="admHrsRepeat">
+                        <option value="weekly">Every week</option>
+                        <option value="once">This week only</option>
+                    </select>
+                </div>
+                <div class="adm-lab">Send reminders between (Riyadh time)</div>
+                <div class="adm-row">
+                    <input class="adm-input" id="admHrsFrom" type="time" value="13:00">
+                    <input class="adm-input" id="admHrsTo" type="time" value="20:00">
+                </div>
+                <div class="adm-row">
+                    <button class="adm-mini" onclick="admSaveHours()">Save hours</button>
+                    <button class="adm-mini ghost" onclick="admResetHours()">Back to default</button>
+                </div>
+                <small class="adm-hint">Default is 1 PM to 8 PM, and Thursday 5 PM to 10 PM. "Back to default" clears the same Who / When you have picked.</small>
+                <div class="adm-hint" id="admHrsSummary"></div>
+            </div>
+
             <div class="adm-sub" id="admSummary">Loading users…</div>
             <div class="adm-list" id="admUserList"></div>
         </div>
@@ -6243,7 +6286,8 @@
         }
 
         // ===== Discord spending reminders =====
-        // One message per day at most, sent to the user's own webhook, 1pm-8pm Riyadh time:
+        // One message per day at most, sent to the user's own webhook, during that day's reminder hours
+        // (default 1pm-8pm Riyadh, Thursday 5pm-10pm; editable per day/week/user in the Admin Panel):
         //   1) Allowance day (accounts with an allowance schedule)
         //   2) Every Thursday
         //   3) 3+ days since the last logged purchase (and 3+ days since the last reminder)
@@ -6253,6 +6297,20 @@
         const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
         function riyadhNow() { return new Date(Date.now() + RIYADH_OFFSET_MS); } // read with getUTC*()
         function riyadhDayString(shifted) { return shifted.toISOString().slice(0, 10); }
+
+        // Reminder hours, in minutes since midnight Riyadh time ({ s: start, e: end }, end exclusive).
+        // Most specific wins: user's date > everyone's date > user's weekday > everyone's weekday > default.
+        // Weekday keys are d0 (Sunday) ... d6 (Saturday). Same rule as scripts/discord-reminders.mjs.
+        const DEFAULT_REMINDER_WINDOW = { s: 13 * 60, e: 20 * 60 };    // 1pm-8pm
+        const DEFAULT_THURSDAY_WINDOW = { s: 17 * 60, e: 22 * 60 };    // Thursday 5pm-10pm
+        function validReminderWin(w) {
+            return !!w && Number.isInteger(w.s) && Number.isInteger(w.e) && w.s >= 0 && w.e <= 1440 && w.e > w.s;
+        }
+        function resolveReminderWindow(dateStr, dow, userWins, userDays, gWins, gDays) {
+            const pick = (o, k) => (o && validReminderWin(o[k]) ? o[k] : null);
+            return pick(userDays, dateStr) || pick(gDays, dateStr) || pick(userWins, 'd' + dow) || pick(gWins, 'd' + dow)
+                || (dow === 4 ? DEFAULT_THURSDAY_WINDOW : DEFAULT_REMINDER_WINDOW);
+        }
 
         // ===== Week counter + Allowance day =====
         // A 4-week cycle that ticks over every Friday (Riyadh time), the same for everyone:
@@ -6406,7 +6464,12 @@
             discordReminderRunning = true;
             try {
                 const userRef = ref(database, `users/${username}`);
-                const [snap, gSnap] = await Promise.all([get(userRef), get(ref(database, 'reminderSettings/intervalDays'))]);
+                const [snap, gSnap, wSnap, oSnap] = await Promise.all([
+                    get(userRef),
+                    get(ref(database, 'reminderSettings/intervalDays')),
+                    get(ref(database, 'reminderSettings/windows')),
+                    get(ref(database, 'reminderSettings/dayOverrides'))
+                ]);
                 const d = snap.val() || {};
                 const g = gSnap.exists() ? Number(gSnap.val()) : 3;
                 const intervalDays = Number(d.reminderIntervalDays) >= 1 ? Number(d.reminderIntervalDays) : (g >= 1 ? g : 3);
@@ -6420,7 +6483,9 @@
                     if (now < d.nextReminderAt) return;
                     msg = buildReminderMessage(username, isAllowanceDayToday(), nextIdx);
                 } else {
-                    if (hour < 13 || hour >= 20) return;
+                    const win = resolveReminderWindow(today, r.getUTCDay(), d.reminderWindows, d.reminderDayOverrides, wSnap.val(), oSnap.val());
+                    const minutes = hour * 60 + r.getUTCMinutes();
+                    if (minutes < win.s || minutes >= win.e) return; // outside today's reminder hours
                     if (d.lastReminderDay === today) return; // already reminded today
                     if (isAllowanceDayToday()) {
                         msg = buildReminderMessage(username, true, nextIdx);
@@ -6507,6 +6572,8 @@
         let admUsers = [];
         let admCycleStartDay = null;
         let admGlobalDays = 3;
+        let admGWins = {};   // everyone's weekday hours  (reminderSettings/windows)
+        let admGDays = {};   // everyone's one-day hours (reminderSettings/dayOverrides)
         const admSelected = new Set();
         const admTimingOpen = new Set();
         let admTimer = null;
@@ -6567,7 +6634,7 @@
 
         // When will this user next be reminded?
         //  - an exact time set by Zezo (nextReminderAt) wins
-        //  - otherwise the automatic rules, checked daily at 1:00 PM Riyadh: allowance day, Thursday,
+        //  - otherwise the automatic rules, checked when that day's reminder hours open (default 1:00 PM Riyadh, Thursday 5:00 PM): allowance day, Thursday,
         //    or N days since the last purchase AND N days since the last reminder (N = days between reminders)
         // Returns { t, custom, pending } or null.
         function admNextReminder(u, nowMs) {
@@ -6580,15 +6647,17 @@
             const day0 = Date.parse(todayStr + 'T00:00:00Z');
             for (let k = 0; k < 90; k++) {
                 const dayStr = new Date(day0 + k * ADM_DAY_MS).toISOString().slice(0, 10);
-                let t = day0 + k * ADM_DAY_MS + 10 * 3600 * 1000; // 10:00 UTC = 1:00 PM Riyadh
+                const dow = new Date(day0 + k * ADM_DAY_MS).getUTCDay();
+                const win = resolveReminderWindow(dayStr, dow, u.reminderWindows, u.reminderDayOverrides, admGWins, admGDays);
+                // day0 is Riyadh midnight written as UTC, so subtract the offset to get the real instant
+                let t = day0 + k * ADM_DAY_MS + win.s * 60000 - RIYADH_OFFSET_MS;
                 let pending = false;
                 if (t <= nowMs) {
-                    // today's 1 PM already passed: still due if we're inside the 1-8 PM window and nothing was sent today
-                    const windowEnd = day0 + k * ADM_DAY_MS + 17 * 3600 * 1000;
+                    // the hours already opened today: still due if we're inside them and nothing was sent today
+                    const windowEnd = day0 + k * ADM_DAY_MS + win.e * 60000 - RIYADH_OFFSET_MS;
                     if (k === 0 && nowMs < windowEnd && u.lastReminderDay !== dayStr) { t = nowMs; pending = true; } else continue;
                 }
                 if (u.lastReminderDay === dayStr) continue;
-                const dow = new Date(day0 + k * ADM_DAY_MS).getUTCDay();
                 if (admIsAllowanceDay(admCycleStartDay, u.allowanceAnchor, dayStr) || dow === 4 ||
                     (baseline && t - baseline >= intervalMs && t - (u.lastReminderAt || 0) >= intervalMs)) {
                     return { t, custom: false, pending };
@@ -6638,11 +6707,15 @@
             sumEl.textContent = 'Loading users…';
             listEl.innerHTML = '';
             try {
-                const [namesRes, histSnap, daysSnap] = await Promise.all([
+                const [namesRes, histSnap, daysSnap, winSnap, dayOvSnap] = await Promise.all([
                     fetch(`${firebaseConfig.databaseURL}/users.json?shallow=true`).then((r) => r.json()),
                     get(ref(database, 'financialCycle/history')),
-                    get(ref(database, 'reminderSettings/intervalDays'))
+                    get(ref(database, 'reminderSettings/intervalDays')),
+                    get(ref(database, 'reminderSettings/windows')),
+                    get(ref(database, 'reminderSettings/dayOverrides'))
                 ]);
+                admGWins = winSnap.exists() ? winSnap.val() : {};
+                admGDays = dayOvSnap.exists() ? dayOvSnap.val() : {};
                 const gd = daysSnap.exists() ? Number(daysSnap.val()) : 3;
                 admGlobalDays = gd >= 1 ? gd : 3;
                 const cycles = Object.values(histSnap.exists() ? histSnap.val() : {});
@@ -6652,7 +6725,7 @@
 
                 const names = Object.keys(namesRes || {});
                 const fields = ['discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
-                    'allowanceAnchor', 'reminderIntervalDays', 'nextReminderAt', 'reminderOverride'];
+                    'allowanceAnchor', 'reminderIntervalDays', 'nextReminderAt', 'reminderOverride', 'reminderWindows', 'reminderDayOverrides'];
                 const all = await Promise.all(names.map(async (name) => {
                     const vals = await Promise.all(fields.map((f) => get(ref(database, `users/${name}/${f}`)).then((sn) => (sn.exists() ? sn.val() : null))));
                     const u = { name };
@@ -6671,6 +6744,7 @@
                 document.getElementById('admGlobalDays').value = admGlobalDays;
                 document.getElementById('admGlobalNext').value = '';
                 admRenderList();
+                admRenderHoursSummary();
             } catch (e) {
                 console.error('Admin panel load failed:', e);
                 sumEl.textContent = '';
@@ -6687,6 +6761,13 @@
             else main = `<b>${admCountdown(n.t - now)}</b> <span class="adm-when">${admFmtRiyadh(n.t)}</span>`;
             const tags = [];
             if (u.nextReminderAt) tags.push('custom time');
+            {
+                const today = riyadhDayString(new Date(now + RIYADH_OFFSET_MS));
+                const dow = new Date(now + RIYADH_OFFSET_MS).getUTCDay();
+                const w = resolveReminderWindow(today, dow, u.reminderWindows, u.reminderDayOverrides, admGWins, admGDays);
+                const own = admHasHours(u);
+                tags.push(`today ${admFmtMin(w.s)}–${admFmtMin(w.e)}${own ? ' (custom hours)' : ''}`);
+            }
             tags.push(`every ${admIntervalDays(u)} day${admIntervalDays(u) === 1 ? '' : 's'}${u.reminderIntervalDays ? ' (custom)' : ''}`);
             return `Next reminder: ${main}<div class="adm-tags">${tags.join(' · ')}</div>`;
         }
@@ -6705,7 +6786,7 @@
                 return;
             }
             listEl.innerHTML = admUsers.map((u) => {
-                const custom = u.nextReminderAt || u.reminderIntervalDays;
+                const custom = u.nextReminderAt || u.reminderIntervalDays || admHasHours(u);
                 return `<div class="adm-card" data-user="${admEsc(u.name)}">
                     <div class="adm-card-head">
                         <label class="adm-pick"><input type="checkbox" data-act="pick" ${admSelected.has(u.name) ? 'checked' : ''}><span>${admEsc(u.name)}</span></label>
@@ -6735,6 +6816,8 @@
         function admUpdateSpecificLabel() {
             const n = admSelected.size;
             document.getElementById('admSendSpecificBtn').textContent = n ? `Send to specific (${n})` : 'Send to specific';
+            const pickedOpt = document.querySelector('#admHrsWho option[value="picked"]');
+            if (pickedOpt) pickedOpt.textContent = n ? `Selected users (${n})` : 'Selected users (tick them below)';
         }
 
         async function admWrite(pairs) {
@@ -6829,6 +6912,120 @@
                 showNotification('Everyone is back on the automatic schedule');
             } catch (e) { showNotification('Could not save: ' + e.message, true); }
         };
+
+        // ---- Reminder hours (per day / week / user) ----
+        const ADM_DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const admHrsDays = new Set();
+        function admHasHours(u) {
+            const any = (o) => !!o && Object.keys(o).length > 0;
+            return any(u.reminderWindows) || any(u.reminderDayOverrides);
+        }
+        function admFmtMin(m) {
+            const h = Math.floor(m / 60) % 24, mm = m % 60;
+            return `${(h % 12) || 12}:${String(mm).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+        }
+        function admTimeToMin(v) {
+            if (!v || !/^\d{1,2}:\d{2}/.test(v)) return null;
+            const [h, m] = v.split(':').map(Number);
+            return h * 60 + m;
+        }
+        // The dates (Riyadh) of the chosen weekdays within today + the next 6 days
+        function admDatesForDays(dows) {
+            const day0 = Date.parse(riyadhDayString(riyadhNow()) + 'T00:00:00Z');
+            const out = [];
+            for (let k = 0; k < 7; k++) {
+                const d = new Date(day0 + k * ADM_DAY_MS);
+                if (dows.includes(d.getUTCDay())) out.push(d.toISOString().slice(0, 10));
+            }
+            return out;
+        }
+        window.admHrsChanged = function () {
+            const scope = document.getElementById('admHrsScope').value;
+            document.getElementById('admHrsDaysRow').style.display = scope === 'days' ? '' : 'none';
+            document.getElementById('admHrsRepeatRow').style.display = scope === 'today' ? 'none' : '';
+        };
+        window.admToggleDay = function (i, btn) {
+            if (admHrsDays.has(i)) admHrsDays.delete(i); else admHrsDays.add(i);
+            btn.classList.toggle('on', admHrsDays.has(i));
+        };
+        // Works out which database paths to write for the current form choices
+        function admHoursPlan(value) {
+            const who = document.getElementById('admHrsWho').value;
+            const scope = document.getElementById('admHrsScope').value;
+            const repeat = document.getElementById('admHrsRepeat').value;
+            const today = riyadhDayString(riyadhNow());
+            let entries, when;
+            if (scope === 'today') {
+                entries = [{ map: 'day', key: today }];
+                when = 'today only';
+            } else {
+                const dows = scope === 'week' ? [0, 1, 2, 3, 4, 5, 6] : [...admHrsDays].sort();
+                if (!dows.length) return { error: 'Pick at least one day' };
+                const names = scope === 'week' ? 'the whole week' : dows.map((d) => ADM_DOW[d]).join(', ');
+                if (repeat === 'once') {
+                    entries = admDatesForDays(dows).map((k) => ({ map: 'day', key: k }));
+                    when = `${names}, this week only`;
+                } else {
+                    entries = dows.map((d) => ({ map: 'win', key: 'd' + d }));
+                    when = `${names}, every week`;
+                }
+            }
+            if (who === 'picked' && !admSelected.size) return { error: 'Tick at least one user card first' };
+            const users = who === 'all' ? admUsers.map((u) => u.name) : [...admSelected];
+            const pairs = [];
+            if (who === 'all') {
+                // everyone-level setting; also clear each user's own value for the same slot so it really applies to all
+                entries.forEach((e) => pairs.push([`reminderSettings/${e.map === 'win' ? 'windows' : 'dayOverrides'}/${e.key}`, value]));
+            }
+            users.forEach((n) => entries.forEach((e) => {
+                pairs.push([`users/${n}/${e.map === 'win' ? 'reminderWindows' : 'reminderDayOverrides'}/${e.key}`, who === 'all' ? null : value]);
+            }));
+            return { pairs, who, when, userCount: users.length };
+        }
+        window.admSaveHours = async function () {
+            const s = admTimeToMin(document.getElementById('admHrsFrom').value);
+            const e = admTimeToMin(document.getElementById('admHrsTo').value);
+            if (s === null || e === null || e <= s) { showNotification('"To" must be later than "From"', true); return; }
+            const plan = admHoursPlan({ s, e });
+            if (plan.error) { showNotification(plan.error, true); return; }
+            const whoTxt = plan.who === 'all' ? 'everyone' : `${plan.userCount} selected user${plan.userCount === 1 ? '' : 's'}`;
+            if (!confirm(`Reminder hours ${admFmtMin(s)} to ${admFmtMin(e)} (Riyadh) for ${whoTxt}: ${plan.when}?`)) return;
+            try {
+                await admWrite(plan.pairs);
+                showNotification('Reminder hours saved');
+                await admLoad();
+            } catch (err) { showNotification('Could not save: ' + err.message, true); }
+        };
+        window.admResetHours = async function () {
+            const plan = admHoursPlan(null);
+            if (plan.error) { showNotification(plan.error, true); return; }
+            const whoTxt = plan.who === 'all' ? 'everyone' : `${plan.userCount} selected user${plan.userCount === 1 ? '' : 's'}`;
+            if (!confirm(`Put ${whoTxt} back to the default hours for: ${plan.when}?`)) return;
+            try {
+                await admWrite(plan.pairs);
+                showNotification('Back to the default hours');
+                await admLoad();
+            } catch (err) { showNotification('Could not save: ' + err.message, true); }
+        };
+        function admRenderHoursSummary() {
+            const el = document.getElementById('admHrsSummary');
+            if (!el) return;
+            const today = riyadhDayString(riyadhNow());
+            const f = (w) => `${admFmtMin(w.s)}–${admFmtMin(w.e)}`;
+            const lines = [`Default: ${f(DEFAULT_REMINDER_WINDOW)}, Thursday ${f(DEFAULT_THURSDAY_WINDOW)}`];
+            const add = (who, wins, days) => {
+                for (let d = 0; d < 7; d++) {
+                    const w = wins && wins['d' + d];
+                    if (validReminderWin(w)) lines.push(`${who} · every ${ADM_DOW[d]}: ${f(w)}`);
+                }
+                Object.keys(days || {}).sort().forEach((k) => {
+                    if (k >= today && validReminderWin(days[k])) lines.push(`${who} · ${k}: ${f(days[k])}`);
+                });
+            };
+            add('Everyone', admGWins, admGDays);
+            admUsers.forEach((u) => add(u.name, u.reminderWindows, u.reminderDayOverrides));
+            el.innerHTML = lines.map(admEsc).join('<br>');
+        }
 
         // ---- Sending ----
         async function admPost(url, content) {

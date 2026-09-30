@@ -1,11 +1,18 @@
 // Runs on GitHub Actions (free, no card) so reminders arrive even when the app is closed.
 // The workflow runs every hour; the rules below decide who actually gets a message.
 //
-// Normal rules (same as the in-app check in index.html), 1pm-8pm Riyadh, at most one message per user per day:
+// Normal rules (same as the in-app check in index.html), at most one message per user per day, only during
+// that day's reminder hours (Riyadh). Default hours: 1pm-8pm, and Thursday 5pm-10pm. The Admin Panel can
+// change the hours for today only, this week only, every week, specific weekdays, everyone or specific users:
 //   allowance day (4th Friday)  >  Thursday  >  N days since the last logged purchase
 //   (messages are plain words, 3 different ones, rotated per user)
 //   N = "days between reminders" — set in the Admin Panel for everyone (reminderSettings/intervalDays)
 //   or for one user (users/<n>/reminderIntervalDays). Default 3.
+//
+// Reminder hours are resolved per user, most specific first:
+//   users/<n>/reminderDayOverrides/<YYYY-MM-DD>  >  reminderSettings/dayOverrides/<YYYY-MM-DD>
+//   >  users/<n>/reminderWindows/d<0-6>  >  reminderSettings/windows/d<0-6>  >  built-in default
+//   (each is { s: startMinutes, e: endMinutes } in Riyadh time, end exclusive; d0 = Sunday ... d6 = Saturday)
 //
 // Custom time: if the Admin Panel set users/<n>/nextReminderAt, that exact time replaces the normal
 // rules for that user. When it passes, the reminder goes out (any hour), the field is cleared and the
@@ -57,8 +64,23 @@ function buildMessage(name, allowanceDay, idx) {
 const nowMs = Date.now();
 const r = new Date(nowMs + OFFSET_MS);
 const today = dayStr(r);
-const isThursday = r.getUTCDay() === 4;
-const inWindow = r.getUTCHours() >= 13 && r.getUTCHours() < 20; // 1pm-8pm Riyadh
+const dow = r.getUTCDay();
+const isThursday = dow === 4;
+const nowMin = r.getUTCHours() * 60 + r.getUTCMinutes();
+
+// ---- Reminder hours (minutes since midnight, Riyadh) ----
+const DEFAULT_WINDOW = { s: 13 * 60, e: 20 * 60 };          // 1pm-8pm
+const DEFAULT_THURSDAY_WINDOW = { s: 17 * 60, e: 22 * 60 }; // Thursday 5pm-10pm
+const validWin = (w) => w && Number.isInteger(w.s) && Number.isInteger(w.e) && w.s >= 0 && w.e <= 1440 && w.e > w.s;
+function resolveWindow(dateStr, weekday, userWins, userDays, gWins, gDays) {
+    const pick = (o, k) => (o && validWin(o[k]) ? o[k] : null);
+    return pick(userDays, dateStr) || pick(gDays, dateStr) || pick(userWins, 'd' + weekday) || pick(gWins, 'd' + weekday)
+        || (weekday === 4 ? DEFAULT_THURSDAY_WINDOW : DEFAULT_WINDOW);
+}
+const gWins = (await get('reminderSettings/windows')) || {};
+const gDays = (await get('reminderSettings/dayOverrides')) || {};
+// One-day overrides for days that already passed are just clutter: remove them.
+for (const k of Object.keys(gDays)) if (k < today) await del(`reminderSettings/dayOverrides/${k}`);
 
 // Days between reminders for everyone (a user's own value wins). Default 3.
 const g = Number(await get('reminderSettings/intervalDays'));
@@ -115,7 +137,7 @@ if (!FORCE) {
 
 for (const name of usernames) {
     const u = encodeURIComponent(name);
-    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt, lastMsgIndex] = await Promise.all([
+    const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt, lastMsgIndex, userWins, userDayWins] = await Promise.all([
         get(`users/${u}/discordWebhook`),
         get(`users/${u}/lastPurchaseAt`),
         get(`users/${u}/lastReminderDay`),
@@ -125,6 +147,8 @@ for (const name of usernames) {
         get(`users/${u}/reminderIntervalDays`),
         get(`users/${u}/nextReminderAt`),
         get(`users/${u}/reminderMsgIndex`),
+        get(`users/${u}/reminderWindows`),
+        get(`users/${u}/reminderDayOverrides`),
     ]);
     if (!webhook) continue;
 
@@ -143,7 +167,8 @@ for (const name of usernames) {
         usedCustomTime = true;
         msg = buildMessage(name, isAllowanceDay(cycleStartDay, anchor, today), nextIdx);
     } else {
-        if (!inWindow) continue;                      // normal reminders only go out 1pm-8pm Riyadh
+        const win = resolveWindow(today, dow, userWins, userDayWins, gWins, gDays);
+        if (nowMin < win.s || nowMin >= win.e) continue; // normal reminders only go out during today's reminder hours
         if (lastReminderDay === today) continue;      // at most one per day
         if (isAllowanceDay(cycleStartDay, anchor, today)) {
             msg = buildMessage(name, true, nextIdx);

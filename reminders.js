@@ -131,6 +131,26 @@ async function run(force) {
 
     const usernames = Object.keys((await get('users', '?shallow=true')) || {});
 
+    // Manual scheduled messages (Admin Panel): scheduledMessages/<id> = { to: username | '*', text, sendAt }
+    let manual = 0;
+    if (!force) {
+        const msgs = (await get('scheduledMessages')) || {};
+        for (const [id, m] of Object.entries(msgs)) {
+            if (!m || !m.text || !m.sendAt || m.sendAt > nowMs) continue;
+            await del(`scheduledMessages/${id}`); // claim it first so it is never sent twice
+            for (const name of m.to === '*' ? usernames : [m.to]) {
+                const hook = await get(`users/${encodeURIComponent(name)}/discordWebhook`);
+                if (!hook) continue;
+                const res = await fetch(hook, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'Money', content: String(m.text).slice(0, 1900), allowed_mentions: { parse: [] } }),
+                }).catch(() => null);
+                if (res && res.ok) manual++;
+            }
+        }
+    }
+
     async function handleUser(name) {
         const u = encodeURIComponent(name);
         const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt, lastMsgIndex, userWins, userDayWins] = await Promise.all([
@@ -198,7 +218,7 @@ async function run(force) {
         const results = await Promise.all(usernames.slice(i, i + 10).map((n) => handleUser(n).catch(() => false)));
         sent += results.filter(Boolean).length;
     }
-    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, scheduledUpdate: update };
+    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, manualMessages: manual, scheduledUpdate: update };
 }
 
 export default async function handler(req, res) {

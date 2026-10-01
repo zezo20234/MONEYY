@@ -5926,6 +5926,12 @@
                     <button class="adm-mini" onclick="admSetNextAll()">Set for all</button>
                 </div>
                 <div class="adm-row"><button class="adm-mini ghost" onclick="admAutoNextAll()">Everyone back to automatic time</button></div>
+                <div class="adm-lab">Scheduled message to everyone</div>
+                <textarea class="adm-input" id="admGlobalMsg" rows="2" placeholder="Your own message"></textarea>
+                <div class="adm-row">
+                    <input class="adm-input" id="admGlobalMsgAt" type="datetime-local">
+                    <button class="adm-mini" onclick="admSchedMsgAll()">Schedule</button>
+                </div>
                 <small class="adm-hint">Each user can also get their own days and time from their card below.</small>
             </div>
 
@@ -6769,7 +6775,7 @@
                 tags.push(`today ${admFmtMin(w.s)}–${admFmtMin(w.e)}${own ? ' (custom hours)' : ''}`);
             }
             tags.push(`every ${admIntervalDays(u)} day${admIntervalDays(u) === 1 ? '' : 's'}${u.reminderIntervalDays ? ' (custom)' : ''}`);
-            return `Next reminder: ${main}<div class="adm-tags">${tags.join(' · ')}</div>`;
+            return `Next reminder: ${main} <button class="adm-mini" data-act="editTime">✏️ Edit</button><div class="adm-tags">${tags.join(' · ')}</div>`;
         }
         function admRenderFooters() {
             document.querySelectorAll('#admUserList .adm-card').forEach((card) => {
@@ -6866,6 +6872,8 @@
                     admRenderList();
                     showNotification(`${name}'s next reminder: ${admFmtRiyadh(t)}`);
                 } catch (e) { showNotification('Could not save: ' + e.message, true); }
+            } else if (act === 'editTime' && u) {
+                admOpenEdit(u);
             } else if (act === 'autoNext' && u) {
                 try {
                     await admWrite([[`users/${name}/nextReminderAt`, null]]);
@@ -6887,6 +6895,75 @@
                 admUsers.forEach((u) => { u.reminderIntervalDays = null; });
                 admRenderList();
                 showNotification(`Everyone is now reminded every ${v} day${v === 1 ? '' : 's'}`);
+            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+        };
+        function admOpenEdit(u) {
+            const now = Date.now();
+            const cur = admNextReminder(u, now);
+            const ov = document.createElement('div');
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            ov.innerHTML = `<div style="background:#1a1a2e;color:#fff;border-radius:14px;padding:18px;width:100%;max-width:380px;max-height:90vh;overflow:auto;">
+                <div style="font-weight:700;font-size:17px;margin-bottom:10px;">Edit ${admEsc(u.name)}</div>
+                <div class="adm-lab">Next reminder time (Riyadh)</div>
+                <input class="adm-input" id="admEdT" type="datetime-local" value="${cur ? admToInput(cur.t) : ''}">
+                <div class="adm-lab">...or remind in</div>
+                <div class="adm-row">
+                    <input class="adm-input" id="admEdN" type="number" inputmode="numeric" min="1" placeholder="e.g. 2">
+                    <select class="adm-input" id="admEdU"><option value="1">minutes</option><option value="60" selected>hours</option><option value="1440">days</option></select>
+                </div>
+                <div class="adm-row"><button class="adm-mini" id="admEdSave">Save time</button><button class="adm-mini ghost" id="admEdAuto">Back to automatic</button></div>
+                <div class="adm-lab">Scheduled message to ${admEsc(u.name)}</div>
+                <textarea class="adm-input" id="admEdM" rows="3" placeholder="Your own message"></textarea>
+                <input class="adm-input" id="admEdMT" type="datetime-local">
+                <div class="adm-row"><button class="adm-mini" id="admEdMsg">Schedule message</button><button class="adm-mini ghost" id="admEdClose">Close</button></div>
+            </div>`;
+            document.body.appendChild(ov);
+            const q = (id) => ov.querySelector('#' + id);
+            const close = () => ov.remove();
+            ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+            q('admEdClose').onclick = close;
+            q('admEdSave').onclick = async () => {
+                const n = Number(q('admEdN').value);
+                const t = n > 0 ? Date.now() + n * Number(q('admEdU').value) * 60000 : admFromInput(q('admEdT').value);
+                if (!t || t <= Date.now()) { showNotification('Pick a time in the future', true); return; }
+                try {
+                    await admWrite([[`users/${u.name}/nextReminderAt`, t]]);
+                    u.nextReminderAt = t;
+                    admRenderList();
+                    showNotification(`${u.name}'s next reminder: ${admFmtRiyadh(t)}`);
+                    close();
+                } catch (e) { showNotification('Could not save: ' + e.message, true); }
+            };
+            q('admEdAuto').onclick = async () => {
+                try {
+                    await admWrite([[`users/${u.name}/nextReminderAt`, null]]);
+                    u.nextReminderAt = null;
+                    admRenderList();
+                    showNotification(`${u.name} is back on the automatic schedule`);
+                    close();
+                } catch (e) { showNotification('Could not save: ' + e.message, true); }
+            };
+            q('admEdMsg').onclick = async () => {
+                const text = q('admEdM').value.trim();
+                const t = admFromInput(q('admEdMT').value);
+                if (!text) { showNotification('Type the message first', true); return; }
+                if (!t || t <= Date.now()) { showNotification('Pick a time in the future', true); return; }
+                try {
+                    await admWrite([[`scheduledMessages/m${Date.now()}`, { to: u.name, text: text.slice(0, 1900), sendAt: t }]]);
+                    showNotification(`Message to ${u.name} scheduled: ${admFmtRiyadh(t)}`);
+                    close();
+                } catch (e) { showNotification('Could not save: ' + e.message, true); }
+            };
+        }
+        window.admSchedMsgAll = async function () {
+            const text = document.getElementById('admGlobalMsg').value.trim();
+            const t = admFromInput(document.getElementById('admGlobalMsgAt').value);
+            if (!text) { showNotification('Type the message first', true); return; }
+            if (!t || t <= Date.now()) { showNotification('Pick a time in the future', true); return; }
+            try {
+                await admWrite([[`scheduledMessages/m${Date.now()}`, { to: '*', text: text.slice(0, 1900), sendAt: t }]]);
+                document.getElementById('admGlobalMsg').value = '';
+                showNotification(`Message to everyone scheduled: ${admFmtRiyadh(t)}`);
             } catch (e) { showNotification('Could not save: ' + e.message, true); }
         };
         window.admSetNextAll = async function () {

@@ -4118,6 +4118,13 @@
             font-size: 12px; font-weight: 700; color: #ff6b6b; border: 1px solid rgba(255,107,107,0.5);
             border-radius: 20px; padding: 4px 10px; background: transparent; cursor: pointer; flex: none;
         }
+        .adm-ver { margin: 0 14px 10px; padding: 10px 12px; border: 2px solid rgba(255,255,255,0.22); border-radius: 6px; font-size: 14px; }
+        .adm-ver b { font-size: 15px; }
+        .adm-ver .adm-vtag { font-size: 11px; font-weight: 700; border-radius: 20px; padding: 2px 8px; margin-left: 6px; border: 1px solid; }
+        .adm-ver .adm-vtag.ok { color: #4ade80; border-color: rgba(74,222,128,0.5); }
+        .adm-ver .adm-vtag.old { color: #fbbf24; border-color: rgba(251,191,36,0.5); }
+        .adm-ver .adm-vtag.pend { color: #60a5fa; border-color: rgba(96,165,250,0.5); }
+        .adm-ver .adm-row { margin-top: 8px; }
         .adm-card-btn {
             display: block; width: calc(100% - 28px); margin: 0 14px 10px; box-sizing: border-box;
             background: transparent; border: 2px solid rgba(255,255,255,0.22); border-radius: 6px;
@@ -6226,6 +6233,14 @@
         function markUserActive(username) {
             if (!username) return;
             set(ref(database, `users/${username}/lastActive`), Date.now()).catch(() => { });
+            reportAppVersion(username);
+        }
+        // Tells the Admin Panel which app version this device is on.
+        function reportAppVersion(username) {
+            if (!username) return;
+            try {
+                set(ref(database, `users/${username}/appVersion`), getInstalledVersion()).catch(() => { });
+            } catch (e) { /* ignore */ }
         }
         function markPurchaseLogged(username) {
             if (!username) return;
@@ -6731,7 +6746,7 @@
 
                 const names = Object.keys(namesRes || {});
                 const fields = ['discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
-                    'allowanceAnchor', 'reminderIntervalDays', 'nextReminderAt', 'reminderOverride', 'reminderWindows', 'reminderDayOverrides'];
+                    'allowanceAnchor', 'reminderIntervalDays', 'nextReminderAt', 'reminderOverride', 'reminderWindows', 'reminderDayOverrides', 'appVersion', 'forceVersion'];
                 const all = await Promise.all(names.map(async (name) => {
                     const vals = await Promise.all(fields.map((f) => get(ref(database, `users/${name}/${f}`)).then((sn) => (sn.exists() ? sn.val() : null))));
                     const u = { name };
@@ -6784,6 +6799,18 @@
                 if (u && f) f.innerHTML = admFooterHtml(u);
             });
         }
+        function admVersionHtml(u) {
+            const v = u.appVersion;
+            let tag = '';
+            if (u.forceVersion) tag = `<span class="adm-vtag pend">waiting for ${admEsc(u.forceVersion)}</span>`;
+            else if (v && latestUpdateInfo && latestUpdateInfo.version) {
+                tag = isNewerVersion(latestUpdateInfo.version, v)
+                    ? '<span class="adm-vtag old">behind</span>'
+                    : '<span class="adm-vtag ok">up to date</span>';
+            }
+            const shown = v ? `<b>${admEsc(v)}</b>` : '<b>unknown</b> <small style="opacity:.6">(hasn\'t opened the new build yet)</small>';
+            return `📱 Version: ${shown}${tag}`;
+        }
         function admRenderList() {
             const listEl = document.getElementById('admUserList');
             if (!admUsers.length) {
@@ -6797,6 +6824,13 @@
                     <div class="adm-card-head">
                         <label class="adm-pick"><input type="checkbox" data-act="pick" ${admSelected.has(u.name) ? 'checked' : ''}><span>${admEsc(u.name)}</span></label>
                         ${custom ? '<span class="adm-chip">custom timing</span>' : ''}
+                    </div>
+                    <div class="adm-ver">
+                        ${admVersionHtml(u)}
+                        <div class="adm-row">
+                            <input class="adm-input" data-f="ver" type="text" placeholder="e.g. 1.2" value="">
+                            <button class="adm-mini" data-act="setVer">Change</button>
+                        </div>
                     </div>
                     <button class="adm-card-btn" data-act="stats">See stats</button>
                     <button class="adm-card-btn" data-act="override">Override <small>send the normal reminder now</small></button>
@@ -6871,6 +6905,18 @@
                     u.nextReminderAt = t;
                     admRenderList();
                     showNotification(`${name}'s next reminder: ${admFmtRiyadh(t)}`);
+                } catch (e) { showNotification('Could not save: ' + e.message, true); }
+            } else if (act === 'setVer' && u) {
+                const input = card.querySelector('[data-f="ver"]');
+                const v = normalizeUpdateVersion(input.value);
+                if (!v) { showNotification('Type a version, like 1.2', true); return; }
+                if (!/Zezo UI\s*\d+(\.\d+)?$/i.test(v)) { showNotification('Use a number like 1.2', true); return; }
+                if (!confirm(`Change ${name}'s version to ${v}?` + (latestUpdateInfo && isNewerVersion(latestUpdateInfo.version, v) ? '\n\nThat is older than the latest release, so they will see the update pop-up again.' : ''))) return;
+                try {
+                    await admWrite([[`users/${name}/forceVersion`, v]]);
+                    u.forceVersion = v;
+                    admRenderList();
+                    showNotification(`${name} will switch to ${v} as soon as their app is open`);
                 } catch (e) { showNotification('Could not save: ' + e.message, true); }
             } else if (act === 'editTime' && u) {
                 admOpenEdit(u);
@@ -7624,6 +7670,39 @@
 
         function setInstalledVersion(v) {
             localStorage.setItem('moneyManagerInstalledVersion', v);
+            if (typeof currentUser !== 'undefined' && currentUser) reportAppVersion(currentUser.username);
+        }
+
+        // ---- Admin can change the version a user is on ----
+        // The Admin Panel writes users/<name>/forceVersion. This device picks it
+        // up (instantly if open, or next time it opens), switches to that version,
+        // and clears the request. Setting a version BELOW the latest release makes
+        // the "update available" pop-up appear again for that user.
+        let versionOverrideUnsub = null;
+        let versionOverrideFor = null;
+        function listenForVersionOverride() {
+            if (!currentUser) return;
+            const name = currentUser.username;
+            if (versionOverrideFor === name) return;
+            if (versionOverrideUnsub) { try { versionOverrideUnsub(); } catch (e) { } }
+            versionOverrideFor = name;
+            reportAppVersion(name);
+            versionOverrideUnsub = onValue(ref(database, `users/${name}/forceVersion`), (snap) => {
+                if (!snap.exists()) return;
+                const v = String(snap.val() || '').trim();
+                remove(ref(database, `users/${name}/forceVersion`)).catch(() => { });
+                if (!v || v === getInstalledVersion()) { reportAppVersion(name); return; }
+                setInstalledVersion(v);
+                updateAllVersionReferences(v);
+                renderUpdatesSettingsUI();
+                if (latestUpdateInfo && latestUpdateInfo.version && isNewerVersion(latestUpdateInfo.version, v)) {
+                    showUpdateBadge(true);
+                    showFullScreenUpdate(latestUpdateInfo);
+                } else {
+                    showUpdateBadge(false);
+                }
+                showNotification('Your app version is now ' + v);
+            });
         }
 
         function isNewerVersion(remote, local) {
@@ -10022,6 +10101,7 @@ Use the conversation history provided to you to remember what's already been sai
 
             // Check for / listen for app update announcements (shared, not per-user)
             listenForUpdates();
+            listenForVersionOverride();
             listenForScheduledUpdate(); // delivers a scheduled update once its time has passed
 
             // Load this user's on-device AI chat memory (last 50 messages)

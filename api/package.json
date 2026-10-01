@@ -1,0 +1,5 @@
+{
+  "name": "money-manager-api",
+  "private": true,
+  "type": "module"
+}

@@ -1,8 +1,5 @@
 {
-  "name": "money-manager-notify",
-  "version": "1.0.0",
+  "name": "money-manager-api",
   "private": true,
-  "dependencies": {
-    "firebase-admin": "^12.0.0"
-  }
+  "type": "module"
 }

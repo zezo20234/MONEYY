@@ -22,7 +22,13 @@ const OFFSET_MS = 3 * 60 * 60 * 1000; // Riyadh, UTC+3 (no DST)
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const dayStr = (shifted) => shifted.toISOString().slice(0, 10);
-const get = async (path) => (await fetch(`${DB}/${path}.json`)).json();
+const get = async (path, query = '') => {
+    const res = await fetch(`${DB}/${path}.json${query}`);
+    const text = await res.text();
+    try { return JSON.parse(text); } catch {
+        throw new Error(`Firebase sent a web page instead of data for "${path}" (status ${res.status}). Check FIREBASE_DATABASE_URL and your database rules.`);
+    }
+};
 const patch = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
 const del = (path) => fetch(`${DB}/${path}.json`, { method: 'DELETE' });
 
@@ -123,7 +129,7 @@ async function run(force) {
 
     const update = force ? null : await publishScheduledUpdate(nowMs);
 
-    const usernames = Object.keys((await get('users?shallow=true')) || {});
+    const usernames = Object.keys((await get('users', '?shallow=true')) || {});
 
     async function handleUser(name) {
         const u = encodeURIComponent(name);

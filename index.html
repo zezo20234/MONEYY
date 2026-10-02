@@ -1501,6 +1501,33 @@
         .savings-ring .ring-fg { fill: none; stroke: var(--accent-1, #00f5d4); stroke-width: 8; stroke-linecap: round;
             transition: stroke-dashoffset 0.8s ease; }
         .savings-ring.done .ring-fg { stroke: #feca57; }
+        .savings-ring { cursor: pointer; }
+        .savings-ring .ring-info small { display: block; color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .tag-chip { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px;
+            color: var(--accent-1, #00f5d4); border: 1px solid rgba(0,245,212,0.35); background: rgba(0,245,212,0.08); }
+        .recap-overlay { position: fixed; inset: 0; z-index: 10050; display: none; align-items: center; justify-content: center; padding: 18px;
+            background: rgba(0,0,0,0.78); backdrop-filter: blur(6px); overflow-y: auto; }
+        .recap-overlay.active { display: flex; }
+        .recap-card { width: 100%; max-width: 380px; border-radius: 26px; padding: 24px 20px 20px; color: #fff;
+            background: linear-gradient(160deg, #0f2a3d 0%, #1a1a2e 55%, #2a1a4a 100%); border: 1px solid rgba(0,245,212,0.35);
+            box-shadow: 0 0 40px rgba(0,245,212,0.18); animation: rankUpPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .recap-eyebrow { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-1, #00f5d4); font-weight: 800; text-align: center; }
+        .recap-title { font-size: 26px; font-weight: 800; text-align: center; margin: 4px 0 14px; }
+        .recap-hero { text-align: center; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.06); margin-bottom: 12px; }
+        .recap-hero span { display: block; font-size: 13px; color: rgba(255,255,255,0.65); }
+        .recap-hero b { display: block; font-size: 40px; line-height: 1.15; }
+        .recap-delta { font-size: 13px; font-weight: 700; margin-top: 2px; }
+        .recap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .recap-stat { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 10px 6px; text-align: center; }
+        .recap-stat b { display: block; font-size: 17px; }
+        .recap-stat span { font-size: 11px; color: rgba(255,255,255,0.6); }
+        .recap-block { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 12px; margin-bottom: 12px; font-size: 14px; }
+        .recap-block h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.55); margin: 0 0 8px; }
+        .recap-bar-row { margin-bottom: 8px; font-size: 13px; }
+        .recap-bar-row div.top { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .recap-bar { height: 7px; border-radius: 6px; background: rgba(255,255,255,0.1); overflow: hidden; }
+        .recap-bar i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent-1, #00f5d4), var(--accent-3, #667eea)); }
+        .recap-note { text-align: center; font-size: 14px; margin: 4px 0 14px; color: rgba(255,255,255,0.85); }
         .savings-ring .ring-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
             font-size: 15px; font-weight: 700; }
         .savings-ring .ring-wrap { position: relative; width: 78px; height: 78px; flex-shrink: 0; }
@@ -4118,6 +4145,10 @@
             font-size: 12px; font-weight: 700; color: #ff6b6b; border: 1px solid rgba(255,107,107,0.5);
             border-radius: 20px; padding: 4px 10px; background: transparent; cursor: pointer; flex: none;
         }
+        .adm-seen { margin: 0 14px 8px; font-size: 13px; color: rgba(255,255,255,0.65); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .adm-seen .adm-dot { width: 9px; height: 9px; border-radius: 50%; background: #6b7280; flex: none; }
+        .adm-seen .adm-dot.on { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+        .adm-seen small { color: rgba(255,255,255,0.45); font-size: 12px; }
         .adm-ver { margin: 0 14px 10px; padding: 10px 12px; border: 2px solid rgba(255,255,255,0.22); border-radius: 6px; font-size: 14px; }
         .adm-ver b { font-size: 15px; }
         .adm-ver .adm-vtag { font-size: 11px; font-weight: 700; border-radius: 20px; padding: 2px 8px; margin-left: 6px; border: 1px solid; }
@@ -4316,8 +4347,7 @@
                             <div class="card-amount" id="savingsBalance">0 ⃁</div>
                         </div>
                         <div class="card-limit" id="savingsLimit">Flexible savings</div>
-                        <div class="savings-ring" id="savingsRing"></div>
-                        <div class="rank-badge" id="rankBadge" style="display: none;"></div>
+                        <div class="savings-ring" id="savingsRing" onclick="openGoalsModal()"></div>
                     </div>
 
                     <div class="balance-card playstation">
@@ -4599,6 +4629,7 @@
                         <div class="modal-title">📊 Monthly Report</div>
                         <button class="close-btn" onclick="closeModal('monthlyReportModal')">&times;</button>
                     </div>
+                    <button class="modal-btn confirm" style="width: 100%; margin-bottom: 12px;" onclick="openRecapForSelectedMonth()">🎬 View Recap Card</button>
                     <div id="monthlyReportContent">
                         <!-- Monthly report will be populated here -->
                     </div>
@@ -5360,13 +5391,6 @@
                 <small id="settingsSplitNote" style="color: rgba(255,255,255,0.5); display:block; margin-top:6px;"></small>
             </div>
 
-            <div class="form-group" id="rankThresholdSettingsGroup" style="display: none;">
-                <label class="form-label">🏆 1st Rank Savings Goal (⃁)</label>
-                <input type="number" class="form-input" id="settingsRankFirstThreshold" placeholder="40">
-                <small style="color: rgba(255,255,255,0.5);">Reach this amount in Savings to earn your 1st rank. The 5th
-                    (top) rank is always 220 ⃁.</small>
-            </div>
-
             <!-- AI Settings (Groq or Google AI Studio / Gemini — user's own key) -->
             <div class="form-group" id="apiKeySettingsSection"
                 style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: 16px;">
@@ -5894,12 +5918,17 @@
     <!-- Rank Up Celebration Overlay -->
     <div class="rank-up-overlay" id="rankUpOverlay">
         <div class="rank-up-card">
-            <div class="rank-up-icon" id="rankUpIcon">🥈</div>
-            <div class="rank-up-eyebrow">Rank Up!</div>
-            <div class="rank-up-title" id="rankUpTitle">Silver Saver</div>
-            <div class="rank-up-name" id="rankUpSubtitle">Your savings just leveled up</div>
-            <button class="modal-btn confirm" onclick="closeRankUpOverlay()">Nice! 🎉</button>
+            <div class="rank-up-icon" id="rankUpIcon">🎯</div>
+            <div class="rank-up-eyebrow">Goal Reached!</div>
+            <div class="rank-up-title" id="rankUpTitle">Your goal</div>
+            <div class="rank-up-name" id="rankUpSubtitle">Your savings hit the target</div>
+            <button class="modal-btn confirm" onclick="closeGoalOverlay()">Nice! 🎉</button>
         </div>
+    </div>
+
+    <!-- Monthly Recap Card -->
+    <div class="recap-overlay" id="recapOverlay" onclick="if(event.target===this)closeMonthlyRecap()">
+        <div class="recap-card" id="recapCard"></div>
     </div>
 
     <!-- Admin Panel page (Zezo only) -->
@@ -6611,6 +6640,15 @@
             if (m < 1440) return `${Math.floor(m / 60)}h ago`;
             return `${Math.floor(m / 1440)}d ago`;
         }
+        // "Last online" row on each user's card (from users/<name>/lastActive).
+        function admSeenHtml(u) {
+            const t = Number(u.lastActive) || 0;
+            if (!t) return '<div class="adm-seen"><span class="adm-dot"></span>Last online: <b>never</b></div>';
+            const online = Date.now() - t < 20 * 60 * 1000; // heartbeat is every 15 min
+            return `<div class="adm-seen"><span class="adm-dot ${online ? 'on' : ''}"></span>` +
+                (online ? '<b>Online now</b>' : `Last online: <b>${admAgo(t)}</b>`) +
+                ` <small>${admFmtFull(t)}</small></div>`;
+        }
         function admCountdown(ms) {
             const m = Math.max(0, Math.round(ms / 60000));
             const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
@@ -6825,6 +6863,7 @@
                         <label class="adm-pick"><input type="checkbox" data-act="pick" ${admSelected.has(u.name) ? 'checked' : ''}><span>${admEsc(u.name)}</span></label>
                         ${custom ? '<span class="adm-chip">custom timing</span>' : ''}
                     </div>
+                    ${admSeenHtml(u)}
                     <div class="adm-ver">
                         ${admVersionHtml(u)}
                         <div class="adm-row">
@@ -7637,6 +7676,18 @@
                             const historyIdx = historyKeys.indexOf(newRef.key);
                             if (historyIdx !== -1 && history[historyIdx]) {
                                 history[historyIdx].emoji = aiEmoji;
+                                updateTransactionsList();
+                            }
+                        }).catch(() => { });
+                    }
+
+                    if (item.entry.type === 'Purchase' && !item.entry.tag) {
+                        getAITagForPurchase(item.entry.notes, item.entry.category).then(tag => {
+                            if (!tag) return;
+                            update(newRef, { tag });
+                            const hi = historyKeys.indexOf(newRef.key);
+                            if (hi !== -1 && history[hi]) {
+                                history[hi].tag = tag;
                                 updateTransactionsList();
                             }
                         }).catch(() => { });
@@ -9627,14 +9678,6 @@ Use the conversation history provided to you to remember what's already been sai
         // Allowance mode toggle (Zezo only): 'normal' or 'saving'
         let allowanceMode = 'normal';
 
-        // Savings rank tiers — 5th tier gets a glowing badge
-        const RANK_TIERS = [
-            { name: 'Bronze Saver', icon: '🥉' },
-            { name: 'Silver Saver', icon: '🥈' },
-            { name: 'Gold Saver', icon: '🥇' },
-            { name: 'Platinum Saver', icon: '💎' },
-            { name: 'Diamond Saver', icon: '👑' }
-        ];
         let spendingChart = null;
         let allowanceChart = null;
         let balanceChart = null;
@@ -10044,6 +10087,10 @@ Use the conversation history provided to you to remember what's already been sai
                 if (currentUser) markUserActive(currentUser.username);
             }, 15 * 60 * 1000); // every 15 minutes while open
             document.addEventListener('visibilitychange', () => {
+                if (document.hidden && currentUser) {
+                    // Stamp the moment they leave so "last online" is accurate.
+                    set(ref(database, `users/${currentUser.username}/lastActive`), Date.now()).catch(() => { });
+                }
                 if (!document.hidden && currentUser) {
                     markUserActive(currentUser.username);
                     checkDiscordReminders();
@@ -10229,6 +10276,8 @@ Use the conversation history provided to you to remember what's already been sai
                     updateTransactionsList();
                     updateCharts();
                     checkMonthlyReportNotification();
+                    maybeShowMonthlyRecap();
+                    setTimeout(backfillPurchaseTags, 1500);
                 } else {
                     history = [];
                     historyKeys = [];
@@ -10335,8 +10384,8 @@ Use the conversation history provided to you to remember what's already been sai
             document.getElementById('editSavings').placeholder = balances.savings;
             document.getElementById('editPlaystation').placeholder = balances.playstation;
 
-            // Update savings rank badge (and fire rank-up celebration if applicable)
-            updateRankDisplay();
+            // Savings goal ring (and goal-reached celebration)
+            updateSavingsGoalWidget(true);
         }
 
         // Transaction filter state
@@ -10412,9 +10461,10 @@ Use the conversation history provided to you to remember what's already been sai
             list.innerHTML = items.map(({ item, index }) => `
                 <div class="history-item">
                     <div class="history-info">
-                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${item.type}</div>
+                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${historyTypeLabel(item)}</div>
                         <div class="history-date">${new Date(item.date).toLocaleDateString()} · ${new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                         ${item.notes ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.notes}</div>` : ''}
+                        ${tagChipHtml(item)}
                     </div>
                     <div class="history-amount ${item.amount >= 0 ? 'positive' : 'negative'}">
                         ${item.amount >= 0 ? '+' : ''}${item.amount} ⃁
@@ -10468,6 +10518,7 @@ Use the conversation history provided to you to remember what's already been sai
 
         // Update goals list with advanced calculations
         function updateGoalsList() {
+            updateSavingsGoalWidget(false);
             const goalsList = document.getElementById('goalsList');
             if (goals.length === 0) {
                 goalsList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No goals yet</div>';
@@ -13289,6 +13340,61 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
         // lookup table. Tries each emoji-capable model in turn so a single
         // model hiccup right after reconnecting doesn't leave the purchase
         // stuck on its fallback emoji.
+        // ===== AI category tags for purchases =====
+        const PURCHASE_TAGS = { Food: '🍔', Drinks: '🥤', Snacks: '🍿', Games: '🎮', Entertainment: '🎬', Shopping: '🛍️', Clothes: '👕', Tech: '💻', Transport: '🚗', Gifts: '🎁', Education: '📚', Health: '💊', Other: '📦' };
+
+        function tagChipHtml(item) {
+            if (!item || item.type !== 'Purchase' || !item.tag) return '';
+            return `<div><span class="tag-chip">${PURCHASE_TAGS[item.tag] || '🏷️'} ${admEsc(item.tag)}</span></div>`;
+        }
+
+        // Asks the AI to file a purchase under ONE tag from the fixed list above.
+        async function getAITagForPurchase(name, category) {
+            const names = Object.keys(PURCHASE_TAGS);
+            const prompt = `Classify this purchase into exactly ONE tag from this list: ${names.join(', ')}.
+
+Purchase: "${name}"
+Spending bucket it came from: ${category || 'general'}
+
+Examples: "Shawarma" -> Food, "Pepsi" -> Drinks, "Cheetos" -> Snacks, "FC 27" -> Games, "Movie tickets" -> Entertainment, "New shoes" -> Clothes, "Phone charger" -> Tech, "Uber" -> Transport, "Birthday present" -> Gifts, "Notebook" -> Education.
+
+Reply with ONLY the tag word from the list. Nothing else.`;
+            for (const modelName of EMOJI_MODELS_TO_TRY) {
+                try {
+                    const text = (await callGroq(modelName, prompt)) || '';
+                    const hit = names.find((t) => new RegExp('\\b' + t + '\\b', 'i').test(text));
+                    if (hit) return hit;
+                } catch (e) {
+                    console.log(`Tag model ${modelName} failed: ${e.message}`);
+                }
+            }
+            return null;
+        }
+
+        // Tags older purchases that don't have one yet (a few at a time, in the
+        // background). Stops quietly if the AI isn't reachable; retries next session.
+        let tagBackfillRunning = false;
+        const tagBackfillTried = new Set();
+        async function backfillPurchaseTags() {
+            if (!currentUser || tagBackfillRunning) return;
+            tagBackfillRunning = true;
+            const username = currentUser.username;
+            try {
+                const todo = history.map((it, i) => ({ it, key: historyKeys[i] }))
+                    .filter(({ it, key }) => it && it.type === 'Purchase' && !it.tag && key && !String(key).startsWith('local_') && !tagBackfillTried.has(key))
+                    .slice(0, 12);
+                for (const { it, key } of todo) {
+                    tagBackfillTried.add(key);
+                    const tag = await getAITagForPurchase(it.notes, it.category);
+                    if (!tag) break;
+                    if (!currentUser || currentUser.username !== username) break;
+                    update(ref(database, `users/${username}/history/${key}`), { tag });
+                }
+            } catch (e) { /* ignore */ } finally {
+                tagBackfillRunning = false;
+            }
+        }
+
         async function getAIEmojiForPurchase(name, category) {
             const prompt = `Pick ONE emoji that best represents this specific purchase.
 
@@ -13321,6 +13427,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 }
             }
             return null; // every model failed — caller keeps the fallback emoji
+        }
+
+        // Display name for a history entry. An allowance that also triggered the
+        // Hangout-limit auto transfer shows as one combined transaction.
+        function historyTypeLabel(item) {
+            if (item.type === 'Allowance' && Number(item.autoTransferred) > 0) return 'Allowance & Auto Transfer';
+            return item.type;
         }
 
         // Add to history. Shows the new entry on screen immediately (works
@@ -13386,8 +13499,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             fixedSavingsAmount: 'Fixed Savings Amount',
             weeklyHangoutBudget: 'Hangout Days Per Week',
             hangoutBudgetPerDay: 'Hangout Budget Per Day',
-            minimumSavings: 'Minimum Savings Requirement',
-            rankFirstThreshold: '1st Savings Rank Threshold'
+            minimumSavings: 'Minimum Savings Requirement'
         };
         // Settings whose value is a true/false toggle rather than a number.
         const AI_BOOLEAN_SETTING_KEYS = ['enablePlaystation', 'useFixedAmounts'];
@@ -13846,126 +13958,72 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         };
 
 
-        // ===== Savings Ranks =====
-
-        // Compute the 5 savings thresholds. Asser has fixed thresholds (30 → 150).
-        // Everyone else picks their own 1st-rank amount in Settings; the 5th rank is
-        // always 220 ⃁, with ranks 2-4 evenly spaced in between.
-        function getRankThresholds() {
-            if (currentUser && currentUser.username.toLowerCase() === 'asser') {
-                return [30, 60, 90, 120, 150];
-            }
-            const first = (userPreferences && userPreferences.rankFirstThreshold) || 40;
-            const last = 220;
-            const thresholds = [];
-            for (let i = 0; i < 5; i++) {
-                thresholds.push(Math.round(first + (last - first) * i / 4));
-            }
-            return thresholds;
-        }
-
-        // Returns { level (0-5), tier, thresholds, nextThreshold, amountToNext }
-        function getCurrentRankInfo(savings) {
-            const thresholds = getRankThresholds();
-            let level = 0;
-            for (let i = 0; i < thresholds.length; i++) {
-                if (savings >= thresholds[i]) level = i + 1;
-            }
-            const tier = level > 0 ? RANK_TIERS[level - 1] : null;
-            const nextThreshold = level < 5 ? thresholds[level] : null;
-            const amountToNext = nextThreshold !== null ? Math.max(0, nextThreshold - savings) : 0;
-            return { level, tier, thresholds, nextThreshold, amountToNext };
-        }
-
-        // Render the rank badge on the Savings card, and fire the rank-up celebration
-        // if the user just crossed into a new tier.
-        function updateRankDisplay() {
-            const badge = document.getElementById('rankBadge');
-            if (!badge || !currentUser) return;
-
-            const info = getCurrentRankInfo(balances.savings);
-            badge.style.display = 'flex';
-            badge.classList.toggle('rank-level-5', info.level === 5);
-
-            if (info.level === 0) {
-                badge.innerHTML = `
-                    <span class="rank-badge-icon">🔒</span>
-                    <span class="rank-badge-text">
-                        <div class="rank-badge-name">Unranked</div>
-                        <div class="rank-badge-progress">Save ${info.amountToNext} more ⃁ for your 1st rank</div>
-                    </span>
-                `;
-            } else {
-                const progressText = info.level === 5
-                    ? "Top rank reached! 🎉"
-                    : `${info.amountToNext} ⃁ to ${RANK_TIERS[info.level].name}`;
-                badge.innerHTML = `
-                    <span class="rank-badge-icon">${info.tier.icon}</span>
-                    <span class="rank-badge-text">
-                        <div class="rank-badge-name">Rank ${info.level} · ${info.tier.name}</div>
-                        <div class="rank-badge-progress">${progressText}</div>
-                    </span>
-                `;
-            }
-
-            updateSavingsRing(info);
-            checkRankUp(info.level);
-        }
-
-        // Ring on the Savings card: progress from the previous rank line to the next one.
-        function updateSavingsRing(info) {
+        // ===== Savings Goals (replaces the old Bronze/Silver/Gold rank tiers) =====
+        // The Savings card shows your closest unfinished goal as a progress ring.
+        // Tap it to open the Goals screen. When savings reach a goal you get a
+        // celebration pop-up (once per goal).
+        function updateSavingsGoalWidget(celebrate) {
             const el = document.getElementById('savingsRing');
-            if (!el) return;
-            const savings = balances.savings;
-            const done = info.level === 5;
-            const from = info.level > 0 ? info.thresholds[info.level - 1] : 0;
-            const to = done ? info.thresholds[4] : info.thresholds[info.level];
-            const pct = done ? 100 : Math.max(0, Math.min(100, Math.round((savings - from) / Math.max(1, to - from) * 100)));
-            const C = 2 * Math.PI * 34;
+            if (!el || !currentUser) return;
             el.style.display = 'flex';
-            el.classList.toggle('done', done);
-            el.innerHTML = `
+            const savings = Number(balances.savings) || 0;
+            const list = goals.map((g, i) => ({ name: g.name, amt: Number(g.amount) || 0, key: goalKeys[i] })).filter((x) => x.amt > 0);
+            const C = 2 * Math.PI * 34;
+            const ring = (pct, center) => `
                 <div class="ring-wrap">
                     <svg viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="34"></circle>
                         <circle class="ring-fg" cx="40" cy="40" r="34" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct / 100)).toFixed(1)}"></circle></svg>
-                    <div class="ring-center">${done ? '🏆' : pct + '%'}</div>
-                </div>
-                <div class="ring-info">
-                    <b>${done ? 'Top rank reached!' : 'Goal: ' + RANK_TIERS[info.level].name}</b>
-                    ${done ? savings + ' \u20c1 saved' : savings + ' / ' + to + ' \u20c1'}
+                    <div class="ring-center">${center}</div>
                 </div>`;
+
+            if (!list.length) {
+                el.classList.remove('done');
+                el.innerHTML = ring(0, '🎯') + '<div class="ring-info"><b>Set a savings goal</b>Tap here to add one</div>';
+                return;
+            }
+            const pending = list.filter((x) => savings < x.amt).sort((a, b) => a.amt - b.amt);
+            const done = pending.length === 0;
+            const target = done ? list.slice().sort((a, b) => b.amt - a.amt)[0] : pending[0];
+            const pct = done ? 100 : Math.max(0, Math.min(100, Math.round(savings / target.amt * 100)));
+            el.classList.toggle('done', done);
+            const more = !done && pending.length > 1 ? `<small>+${pending.length - 1} more goal${pending.length - 1 === 1 ? '' : 's'}</small>` : '';
+            el.innerHTML = ring(pct, done ? '🏆' : pct + '%') + `
+                <div class="ring-info">
+                    <b>${done ? 'All goals reached!' : '🎯 ' + admEsc(target.name)}</b>
+                    ${done ? `${list.length} goal${list.length === 1 ? '' : 's'} done` : `${savings} / ${target.amt} ⃁`}
+                    ${more}
+                </div>`;
+            if (celebrate) checkGoalsReached(list, savings);
         }
 
-        // Detect a rank-up by comparing against the last known rank stored per-user
-        // in localStorage, and pop the celebration overlay when it goes up.
-        function checkRankUp(newLevel) {
-            if (!currentUser) return;
-            const key = `rankLevel_${currentUser.username}`;
-            const stored = localStorage.getItem(key);
-            const storedLevel = stored !== null ? parseInt(stored) : null;
-
-            if (storedLevel !== null && newLevel > storedLevel) {
-                showRankUpCelebration(newLevel);
+        // Pops the celebration the first time savings reach a goal. Which goals
+        // were already celebrated is remembered per user on this device; the very
+        // first run just records the goals that are already done (no pop-up).
+        function checkGoalsReached(list, savings) {
+            if (!currentUser || !list.length) return;
+            const k = `goalsCelebrated_${currentUser.username}`;
+            let seen = null;
+            try { seen = JSON.parse(localStorage.getItem(k)); } catch (e) { seen = null; }
+            const reached = list.filter((x) => x.key && savings >= x.amt);
+            const ids = reached.map((x) => `${x.key}:${x.amt}`);
+            if (!Array.isArray(seen)) {
+                try { localStorage.setItem(k, JSON.stringify(ids)); } catch (e) { }
+                return;
             }
-            if (storedLevel === null || newLevel !== storedLevel) {
-                localStorage.setItem(key, String(newLevel));
-            }
+            const fresh = reached.filter((x) => !seen.includes(`${x.key}:${x.amt}`));
+            if (!fresh.length) return;
+            try { localStorage.setItem(k, JSON.stringify(Array.from(new Set(seen.concat(ids))))); } catch (e) { }
+            showGoalReachedCelebration(fresh.sort((a, b) => b.amt - a.amt)[0]);
         }
 
-        function showRankUpCelebration(level) {
-            const tier = RANK_TIERS[level - 1];
-            if (!tier) return;
-            const icon = document.getElementById('rankUpIcon');
-            icon.textContent = tier.icon;
-            icon.classList.toggle('glow-icon', level === 5);
-            document.getElementById('rankUpTitle').textContent = tier.name;
-            document.getElementById('rankUpSubtitle').textContent = level === 5
-                ? "You've hit the top rank! 👑"
-                : `Rank ${level} unlocked — keep saving!`;
+        function showGoalReachedCelebration(goal) {
+            document.getElementById('rankUpIcon').textContent = '🎯';
+            document.getElementById('rankUpTitle').textContent = goal.name;
+            document.getElementById('rankUpSubtitle').textContent = `You saved ${goal.amt} ⃁ — goal complete! 🎉`;
             document.getElementById('rankUpOverlay').classList.add('active');
         }
 
-        window.closeRankUpOverlay = function () {
+        window.closeGoalOverlay = function () {
             document.getElementById('rankUpOverlay').classList.remove('active');
         };
 
@@ -14599,17 +14657,6 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             toggleSettingsPlaystationVisibility();
             renderBudgetSettings();
 
-            // Rank threshold is only editable for non-Asser users — Asser's ranks
-            // are fixed at 30/60/90/120/150 ⃁.
-            const rankGroup = document.getElementById('rankThresholdSettingsGroup');
-            const isAsser = currentUser && currentUser.username.toLowerCase() === 'asser';
-            if (rankGroup) {
-                rankGroup.style.display = isAsser ? 'none' : 'block';
-                if (!isAsser) {
-                    document.getElementById('settingsRankFirstThreshold').value = userPreferences.rankFirstThreshold || 40;
-                }
-            }
-
             // Updates section (version display + Zezo's send-update controls)
             renderUpdatesSettingsUI();
 
@@ -14781,19 +14828,6 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const hangoutLimit = parseInt(document.getElementById('settingsHangoutLimit').value) || 140;
             const enablePlaystation = document.getElementById('settingsEnablePlaystation').value === 'true';
 
-            const isAsser = currentUser && currentUser.username.toLowerCase() === 'asser';
-            let rankFirstThreshold = userPreferences.rankFirstThreshold || 40;
-            if (!isAsser) {
-                const rankInput = parseInt(document.getElementById('settingsRankFirstThreshold').value);
-                if (!isNaN(rankInput) && rankInput > 0) {
-                    if (rankInput >= 220) {
-                        showNotification('1st rank goal must be less than the top rank (220 ⃁)', true);
-                        return;
-                    }
-                    rankFirstThreshold = rankInput;
-                }
-            }
-
             // Budget breakdown: Auto stores nothing new (it is always calculated); Custom is validated and saved.
             const bd = BUDGET_LEGACY_DEFAULTS;
             const budgetVals = {
@@ -14836,7 +14870,6 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 hangoutBudgetPerDay: 15,
                 minimumSavings: userPreferences.minimumSavings || 0, // Preserve existing minimumSavings
                 allowanceSchedule: userPreferences.allowanceSchedule || null, // Preserve Asser's allowance schedule
-                rankFirstThreshold,
                 budgetMode,
                 monthlyBudgetTarget: budgetVals.target,
                 budgetAlertThreshold,
@@ -15331,16 +15364,35 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 // If PlayStation is disabled, add that amount to savings instead
                 balances.savings += playstation;
             }
-            const appliedSavings = savings + (userPreferences.enablePlaystation ? 0 : playstation);
+            let appliedSavings = savings + (userPreferences.enablePlaystation ? 0 : playstation);
+            let appliedHangout = hangout;
+
+            // Hangout limit: if this allowance pushes Hangout over the limit, the
+            // extra goes to Savings. It is folded INTO this one Allowance entry
+            // (no separate "Auto Transfer" entry), and the entry records the NET
+            // amount that landed in each bucket, so deleting the allowance later
+            // reverses everything exactly in one step.
+            let autoMoved = 0;
+            const limit = userPreferences.hangoutLimit;
+            if (limit != null && balances.hangout > limit) {
+                autoMoved = balances.hangout - limit;
+                balances.hangout = limit;
+                balances.savings += autoMoved;
+                appliedHangout -= autoMoved;
+                appliedSavings += autoMoved;
+            }
 
             saveBalances();
             playMoneySound();
-            // Record exactly what landed in each bucket (splitHangout/splitSavings/
-            // splitPlaystation) so deleting this entry later can reverse it precisely.
-            addToHistory('Allowance', total, null, `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`, null, {
-                splitHangout: hangout,
+            let allowanceNotes = `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`;
+            if (autoMoved > 0) {
+                allowanceNotes += ` · Auto transfer: ${autoMoved} \u20c1 moved from Hangout to Savings (Hangout limit ${limit} reached)`;
+            }
+            addToHistory('Allowance', total, null, allowanceNotes, null, {
+                splitHangout: appliedHangout,
                 splitSavings: appliedSavings,
-                splitPlaystation: appliedPlaystation
+                splitPlaystation: appliedPlaystation,
+                ...(autoMoved > 0 ? { autoTransferred: autoMoved } : {})
             });
 
             // Update allowance schedule for Asser
@@ -16367,9 +16419,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                             ${periodTransactions.length > 0 ? periodTransactions.map(item => `
                                 <div class="history-item">
                                     <div class="history-info">
-                                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${item.type}</div>
+                                        <div class="history-type">${item.emoji ? item.emoji + ' ' : ''}${historyTypeLabel(item)}</div>
                                         <div class="history-date">${new Date(item.date).toLocaleDateString()}</div>
                                         ${item.notes ? `<div style="font-size: 12px; color: rgba(255,255,255,0.5);">${item.notes}</div>` : ''}
+                        ${tagChipHtml(item)}
                                     </div>
                                     <div class="history-amount ${item.amount >= 0 ? 'positive' : 'negative'}">
                                         ${item.amount >= 0 ? '+' : ''}${item.amount} ⃁
@@ -16441,6 +16494,97 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         };
 
         // Check for monthly report notification
+        // ===== Monthly Recap Card =====
+        // Everyone gets last month's recap automatically during week 1 of the new
+        // month (once per month per user). It can also be opened any time from the
+        // monthly report screen ("View Recap Card").
+        let recapShownThisSession = false;
+
+        function recapStats(cycle) {
+            let income = 0, spent = 0, count = 0, biggest = null;
+            const tagTotals = {};
+            let any = false;
+            history.forEach((it) => {
+                if (!isDateInCycle(it.date, cycle)) return;
+                any = true;
+                const amt = Number(it.amount) || 0;
+                if ((it.type === 'Allowance' || it.type === 'Add Money') && amt > 0) income += amt;
+                if (it.type === 'Purchase') {
+                    const a = Math.abs(amt);
+                    spent += a; count++;
+                    if (!biggest || a > biggest.amount) biggest = { name: it.notes || 'Purchase', amount: a, emoji: it.emoji };
+                    const t = it.tag || 'Other';
+                    tagTotals[t] = (tagTotals[t] || 0) + a;
+                }
+            });
+            return { income, spent, count, biggest, hasData: any, tags: Object.entries(tagTotals).sort((a, b) => b[1] - a[1]) };
+        }
+
+        window.showMonthlyRecap = function (cycle, compareCycle) {
+            if (!cycle) return;
+            const st = recapStats(cycle);
+            const cmp = compareCycle ? recapStats(compareCycle) : null;
+            const net = st.income - st.spent;
+
+            let delta = '';
+            if (cmp && cmp.spent > 0) {
+                const pct = Math.round((st.spent - cmp.spent) / cmp.spent * 100);
+                const up = pct > 0;
+                delta = `<div class="recap-delta" style="color:${up ? '#ff6b6b' : '#4ade80'}">${pct === 0 ? 'Same as' : (up ? '▲ ' : '▼ ') + Math.abs(pct) + '% vs'} ${admEsc((compareCycle.label || 'last month').split(' ')[0])}</div>`;
+            }
+            const top = st.tags.slice(0, 4);
+            const topMax = top.length ? top[0][1] : 1;
+            const tagsHtml = top.length ? `<div class="recap-block"><h4>Where it went</h4>${top.map(([t, v]) => `
+                <div class="recap-bar-row"><div class="top"><span>${PURCHASE_TAGS[t] || '🏷️'} ${admEsc(t)}</span><b>${v} ⃁</b></div>
+                <div class="recap-bar"><i style="width:${Math.max(4, Math.round(v / topMax * 100))}%"></i></div></div>`).join('')}</div>` : '';
+            const bigHtml = st.biggest ? `<div class="recap-block"><h4>Biggest purchase</h4>${st.biggest.emoji ? st.biggest.emoji + ' ' : ''}<b>${admEsc(st.biggest.name)}</b> — ${st.biggest.amount} ⃁</div>` : '';
+            const savingsNow = Number(balances.savings) || 0;
+            const openGoal = goals.map((g) => ({ n: g.name, a: Number(g.amount) || 0 })).filter((g) => g.a > savingsNow).sort((a, b) => a.a - b.a)[0];
+            const goalHtml = openGoal ? `<div class="recap-block"><h4>Savings goal</h4>🎯 <b>${admEsc(openGoal.n)}</b> — ${savingsNow} / ${openGoal.a} ⃁ (${Math.round(savingsNow / openGoal.a * 100)}%)</div>` : '';
+            const note = st.count === 0 ? 'No spending logged this month 🧘'
+                : net >= 0 ? 'You added more than you spent — nice work 💪' : 'You spent more than you added this month — next month is a fresh start 🌱';
+
+            document.getElementById('recapCard').innerHTML = `
+                <div class="recap-eyebrow">📅 Monthly Recap</div>
+                <div class="recap-title">${admEsc(cycle.label || 'Last month')}</div>
+                <div class="recap-hero"><span>You spent</span><b>${st.spent} ⃁</b>${delta}</div>
+                <div class="recap-grid">
+                    <div class="recap-stat"><b>${st.income} ⃁</b><span>Added</span></div>
+                    <div class="recap-stat"><b style="color:${net >= 0 ? '#4ade80' : '#ff6b6b'}">${net >= 0 ? '+' : ''}${net} ⃁</b><span>Net</span></div>
+                    <div class="recap-stat"><b>${st.count}</b><span>Purchases</span></div>
+                </div>
+                ${tagsHtml}${bigHtml}${goalHtml}
+                <div class="recap-note">${note}</div>
+                <button class="modal-btn confirm" style="width:100%" onclick="closeMonthlyRecap()">Nice! 🎉</button>`;
+            document.getElementById('recapOverlay').classList.add('active');
+        };
+
+        window.closeMonthlyRecap = function () {
+            document.getElementById('recapOverlay').classList.remove('active');
+        };
+
+        window.openRecapForSelectedMonth = function () {
+            const c = monthlyReportCycles[monthlyReportSelectedIndex];
+            if (!c) return;
+            closeModal('monthlyReportModal');
+            showMonthlyRecap(c, monthlyReportCycles[monthlyReportSelectedIndex + 1]);
+        };
+
+        function maybeShowMonthlyRecap() {
+            if (!currentUser || recapShownThisSession) return;
+            if (getCycleDayInfo().daysPassed > 7) return; // only during week 1 of the month
+            const cur = getCurrentCycle();
+            const key = `monthlyRecap_${currentUser.username}_${cur.label.replace(/\s+/g, '_')}`;
+            if (localStorage.getItem(key)) return;
+            const prev = getPreviousCycle();
+            if (!recapStats(prev).hasData) return;
+            let compare = getRecentCycles(3)[2];
+            if (compare && !(compare.startDate < prev.startDate)) compare = null;
+            recapShownThisSession = true;
+            try { localStorage.setItem(key, 'shown'); } catch (e) { }
+            setTimeout(() => showMonthlyRecap(prev, compare), 1800);
+        }
+
         function checkMonthlyReportNotification() {
             if (!currentUser) return;
 

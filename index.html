@@ -7885,9 +7885,23 @@
         // or the app gets closed a split second later), the money isn't lost:
         // flushPendingWrites() will push this exact snapshot up once we're
         // back online.
+        // Money can never be negative: anything below 0 becomes 0.
+        function clampBalances() {
+            let changed = false;
+            if (!balances) return false;
+            for (const k of Object.keys(balances)) {
+                if (typeof balances[k] === 'number' && (balances[k] < 0 || !isFinite(balances[k]))) {
+                    balances[k] = 0;
+                    changed = true;
+                }
+            }
+            return changed;
+        }
+
         function saveBalances() {
             if (!currentUser) return;
             const username = currentUser.username;
+            clampBalances();
             markBalancesDirty();
             cacheUserDataLocally(username);
             const balancesRef = ref(database, `users/${username}/balances`);
@@ -7911,6 +7925,21 @@
             } catch (e) {
                 console.log('Could not persist pending history queue:', e);
             }
+        }
+
+        // Deletes made while offline are remembered here so they still reach Firebase later.
+        function getPendingDeletes(username) {
+            try { return JSON.parse(localStorage.getItem(pendingStorageKey(username, 'deletes')) || '[]'); } catch (e) { return []; }
+        }
+        function setPendingDeletes(username, list) {
+            try { localStorage.setItem(pendingStorageKey(username, 'deletes'), JSON.stringify(list)); } catch (e) { }
+        }
+        function addPendingDelete(username, key) {
+            const list = getPendingDeletes(username);
+            if (!list.includes(key)) { list.push(key); setPendingDeletes(username, list); }
+        }
+        function removePendingDelete(username, key) {
+            setPendingDeletes(username, getPendingDeletes(username).filter((k) => k !== key));
         }
 
         let flushInProgress = false;
@@ -7956,6 +7985,12 @@
                         break; // stop here; whatever's left stays queued for next time
                     }
 
+                    // The user deleted this entry while it was being sent: remove the copy we just pushed.
+                    if (!getPendingHistoryQueue(username).some(q => q.localId === item.localId)) {
+                        set(newRef, null).catch(() => { });
+                        continue;
+                    }
+
                     // Swap the temporary local id for the real Firebase key in
                     // the live UI arrays so nothing gets duplicated once the
                     // authoritative onValue listener fires.
@@ -7991,6 +8026,17 @@
                     if (stillIdx !== -1) freshQueue.splice(stillIdx, 1);
                     setPendingHistoryQueue(username, freshQueue);
                     cacheUserDataLocally(username);
+                }
+
+                // 3) Deletes made while offline.
+                for (const key of getPendingDeletes(username)) {
+                    try {
+                        await set(ref(database, `users/${username}/history/${key}`), null);
+                        removePendingDelete(username, key);
+                    } catch (e) {
+                        console.log('Delete sync failed, will retry later:', e.message);
+                        break;
+                    }
                 }
             } finally {
                 flushInProgress = false;
@@ -10572,6 +10618,7 @@ Use the conversation history provided to you to remember what's already been sai
             onValue(balancesRef, (snapshot) => {
                 if (snapshot.exists()) {
                     balances = snapshot.val();
+                    if (clampBalances()) saveBalances(); // fixes any negative amounts already saved
                     updateUI();
                     cacheUserDataLocally(username);
                 } else {
@@ -10584,8 +10631,10 @@ Use the conversation history provided to you to remember what's already been sai
             onValue(historyRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const historyData = snapshot.val();
-                    history = Object.values(historyData).reverse();
-                    historyKeys = Object.keys(historyData).reverse();
+                    const pendDel = getPendingDeletes(username);
+                    const hKeys = Object.keys(historyData).filter(k => !pendDel.includes(k));
+                    history = hKeys.map(k => historyData[k]).reverse();
+                    historyKeys = hKeys.slice().reverse();
                     updateTransactionsList();
                     updateCharts();
                     checkMonthlyReportNotification();
@@ -10785,7 +10834,7 @@ Use the conversation history provided to you to remember what's already been sai
                     </div>
                     <div class="history-actions">
                         <button class="history-action-btn edit" onclick="openEditTransaction(${index})">✏️</button>
-                        <button class="history-action-btn delete" onclick="openDeleteModal(${index})">🗑️</button>
+                        <button class="history-action-btn delete" ${incomeUndoBlockReason(index) ? 'style="opacity:.35" title="Only the latest income can be undone"' : ''} onclick="openDeleteModal(${index})">🗑️</button>
                     </div>
                 </div>
             `).join('');
@@ -15443,7 +15492,18 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             if (text) text.textContent = 'Are you sure you want to delete this transaction? This action cannot be undone.';
         }
 
+        // Income (Allowance / Add Money) can only be undone while it is the newest
+        // transaction, i.e. nothing happened after it.
+        function incomeUndoBlockReason(index) {
+            const item = history[index];
+            if (!item || (item.type !== 'Allowance' && item.type !== 'Add Money')) return null;
+            if (index === 0) return null;
+            return 'You can only undo the latest income, and only if nothing was added after it.';
+        }
+
         window.openDeleteModal = function (index) {
+            const blocked = incomeUndoBlockReason(index);
+            if (blocked) { showNotification(blocked, true); return; }
             const key = historyKeys[index];
             document.getElementById('deleteTransactionId').value = key;
             resetDeleteConfirmStage();
@@ -15544,26 +15604,48 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         // Confirm delete
         window.confirmDelete = function () {
             const key = document.getElementById('deleteTransactionId').value;
+            const username = currentUser.username;
 
-            if (key.startsWith('local_')) {
-                showNotification("This transaction hasn't finished syncing yet — try again in a moment once you're online.", true);
+            // Get the transaction to reverse its effect on balances
+            const index = historyKeys.indexOf(key);
+            const item = history[index];
+            if (index === -1 || !item) {
                 resetDeleteConfirmStage();
                 closeModal('deleteModal');
                 return;
             }
 
-            // Get the transaction to reverse its effect on balances
-            const index = historyKeys.indexOf(key);
-            const item = history[index];
+            const blocked = incomeUndoBlockReason(index);
+            if (blocked) {
+                showNotification(blocked, true);
+                resetDeleteConfirmStage();
+                closeModal('deleteModal');
+                return;
+            }
 
             reverseTransactionEffect(item);
 
-            // Delete from Firebase
-            const transactionRef = ref(database, `users/${currentUser.username}/history/${key}`);
-            set(transactionRef, null);
+            // Remove it from the screen straight away (works offline too)
+            history.splice(index, 1);
+            historyKeys.splice(index, 1);
 
-            // Update balances
+            if (key.startsWith('local_')) {
+                // Not on the server yet: just cancel it in the offline queue
+                setPendingHistoryQueue(username, getPendingHistoryQueue(username).filter(q => q.localId !== key));
+            } else {
+                // Remember the delete so it still happens after reconnecting, and try now
+                addPendingDelete(username, key);
+                set(ref(database, `users/${username}/history/${key}`), null)
+                    .then(() => removePendingDelete(username, key))
+                    .catch(() => { });
+            }
+
+            // Update balances (never below 0)
             saveBalances();
+            updateUI();
+            updateTransactionsList();
+            updateCharts();
+            cacheUserDataLocally(username);
             checkHangoutLimit();
 
             resetDeleteConfirmStage();

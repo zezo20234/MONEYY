@@ -6844,7 +6844,9 @@
             else if (v && latestUpdateInfo && latestUpdateInfo.version) {
                 tag = isNewerVersion(latestUpdateInfo.version, v)
                     ? '<span class="adm-vtag old">behind</span>'
-                    : '<span class="adm-vtag ok">up to date</span>';
+                    : (needsVersionSync(latestUpdateInfo.version, v)
+                        ? '<span class="adm-vtag old">ahead — will go back</span>'
+                        : '<span class="adm-vtag ok">up to date</span>');
             }
             const shown = v ? `<b>${admEsc(v)}</b>` : '<b>unknown</b> <small style="opacity:.6">(hasn\'t opened the new build yet)</small>';
             return `📱 Version: ${shown}${tag}`;
@@ -6950,7 +6952,7 @@
                 const v = normalizeUpdateVersion(input.value);
                 if (!v) { showNotification('Type a version, like 1.2', true); return; }
                 if (!/Zezo UI\s*\d+(\.\d+)?$/i.test(v)) { showNotification('Use a number like 1.2', true); return; }
-                if (!confirm(`Change ${name}'s version to ${v}?` + (latestUpdateInfo && isNewerVersion(latestUpdateInfo.version, v) ? '\n\nThat is older than the latest release, so they will see the update pop-up again.' : ''))) return;
+                if (!confirm(`Change ${name}'s version to ${v}?` + (latestUpdateInfo && needsVersionSync(latestUpdateInfo.version, v) ? '\n\nThat is different from the latest release (' + latestUpdateInfo.version + '), so they will see the update pop-up and be sent back to it.' : ''))) return;
                 try {
                     await admWrite([[`users/${name}/forceVersion`, v]]);
                     u.forceVersion = v;
@@ -7746,7 +7748,7 @@
                 setInstalledVersion(v);
                 updateAllVersionReferences(v);
                 renderUpdatesSettingsUI();
-                if (latestUpdateInfo && latestUpdateInfo.version && isNewerVersion(latestUpdateInfo.version, v)) {
+                if (latestUpdateInfo && latestUpdateInfo.version && needsVersionSync(latestUpdateInfo.version, v)) {
                     showUpdateBadge(true);
                     showFullScreenUpdate(latestUpdateInfo);
                 } else {
@@ -7767,6 +7769,23 @@
             const l = extractVersion(local);
             if (isNaN(r) || isNaN(l)) return false;
             return r > l;
+        }
+
+        // True when the device's version is DIFFERENT from the latest release in
+        // either direction: behind (1.2 vs latest 1.5) or AHEAD (4.8 vs latest 4.5).
+        // Being ahead of the latest release also shows the update pop-up so the
+        // device goes back to the latest version.
+        function needsVersionSync(remote, local) {
+            const num = (v) => {
+                const m = String(v || '').match(/Zezo UI\s*(\d+\.?\d*)/i);
+                return m ? parseFloat(m[1]) : 0;
+            };
+            const r = num(remote), l = num(local);
+            if (!(r > 0) || isNaN(l)) return false;
+            return r !== l;
+        }
+        function isAheadOfLatest(remote, local) {
+            return needsVersionSync(remote, local) && !isNewerVersion(remote, local);
         }
 
         function nextSuggestedVersion(fromVersion) {
@@ -7807,12 +7826,14 @@
 
             const noteBox = document.getElementById('settingsUpdateAvailableNote');
             const noteText = document.getElementById('settingsUpdateAvailableText');
-            const hasUpdate = latestUpdateInfo && isNewerVersion(latestUpdateInfo.version, getInstalledVersion());
+            const hasUpdate = latestUpdateInfo && needsVersionSync(latestUpdateInfo.version, getInstalledVersion());
             if (noteBox) {
                 noteBox.style.display = hasUpdate ? 'block' : 'none';
             }
             if (hasUpdate && noteText) {
-                noteText.textContent = `${latestUpdateInfo.version} is available.`;
+                noteText.textContent = isAheadOfLatest(latestUpdateInfo.version, getInstalledVersion())
+                    ? `Your app (${getInstalledVersion()}) is ahead of the latest release. Tap to switch back to ${latestUpdateInfo.version}.`
+                    : `${latestUpdateInfo.version} is available.`;
             }
 
             const isZezo = currentUser && currentUser.username.toLowerCase() === 'zezo';
@@ -7853,7 +7874,7 @@
                 if (!snapshot.exists()) return;
                 latestUpdateInfo = snapshot.val();
                 renderUpdatesSettingsUI();
-                if (latestUpdateInfo.version && isNewerVersion(latestUpdateInfo.version, getInstalledVersion())) {
+                if (latestUpdateInfo.version && needsVersionSync(latestUpdateInfo.version, getInstalledVersion())) {
                     showUpdateBadge(true);
                     showFullScreenUpdate(latestUpdateInfo);
                 } else {

@@ -1433,6 +1433,12 @@
             border: 1px solid rgba(0, 245, 212, 0.35);
         }
 
+        .gt-info { font-size: 13px; color: rgba(255,255,255,0.65); margin: 6px 0 12px; }
+        .gt-new { width: 100%; margin-bottom: 14px; }
+        .gt-members { font-size: 12px; color: rgba(255,255,255,0.7); margin: 8px 0 2px; line-height: 1.7; }
+        .gt-empty { text-align: center; color: rgba(255,255,255,0.5); padding: 18px; }
+        .gt-qr { display: block; margin: 12px auto; background: #fff; padding: 10px; border-radius: 12px; width: 220px; height: 220px; }
+        .gt-link { word-break: break-all; font-size: 12px; color: rgba(255,255,255,0.6); text-align: center; }
         .goals-grid {
             display: grid;
             gap: 15px;
@@ -4311,6 +4317,10 @@
                         <span class="bottom-nav-label">AI</span>
                         <span class="offline-cross" id="aiOfflineCross">✕</span>
                     </div>
+                    <div class="bottom-nav-item" onclick="switchTab('goals')" id="nav-goals">
+                        <span class="bottom-nav-icon">🎯</span>
+                        <span class="bottom-nav-label">Goals</span>
+                    </div>
                     <div class="bottom-nav-item" onclick="switchTab('missions')" id="nav-missions"
                         style="display: none;">
                         <span class="bottom-nav-icon">🎯</span>
@@ -4605,6 +4615,16 @@
                 <button class="action-btn mission-paper-export-btn" onclick="printPaperMissions()">
                     🖨️ Print / Export Checklist
                 </button>
+            </div>
+
+            <div class="section" id="goalsSection" style="display: none;">
+                <div class="section-title">🎯 Current Goals</div>
+                <div class="gt-info" id="goalsTabInfo"></div>
+                <button class="modal-btn confirm gt-new" onclick="goalNew()">＋ New goal</button>
+                <div class="goals-grid" id="goalsMine"></div>
+                <div class="section-title" style="margin-top: 30px;">🤝 Shared Goals</div>
+                <button class="modal-btn confirm gt-new" onclick="goalNewShared()">＋ New shared goal</button>
+                <div class="goals-grid" id="goalsShared"></div>
             </div>
 
             <div class="section" id="usersSection" style="display: none;">
@@ -5785,6 +5805,23 @@
             </div>
             <button type="button" class="pin-lock-forgot" id="pinLockForgot" onclick="forgotPin()"
                 style="display:none;">Forgot PIN?</button>
+        </div>
+    </div>
+
+    <!-- Shared goal invite (QR) -->
+    <div class="modal" id="goalQrModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="goalQrTitle">Invite</div>
+                <button class="close-btn" onclick="closeModal('goalQrModal')">&times;</button>
+            </div>
+            <div class="allowance-note">Ask them to scan this with their phone camera. They'll open the app, log in, and choose how much to add each allowance.</div>
+            <img class="gt-qr" id="goalQrImg" alt="QR code">
+            <div class="gt-link" id="goalQrLink"></div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('goalQrModal')">Close</button>
+                <button class="modal-btn confirm" onclick="goalCopyLink()">Copy link</button>
+            </div>
         </div>
     </div>
 
@@ -10496,6 +10533,7 @@ Use the conversation history provided to you to remember what's already been sai
                 cacheUserDataLocally(username);
             });
 
+            listenSharedGoals(username);
             const goalsRef = ref(database, `users/${username}/goals`);
             onValue(goalsRef, (snapshot) => {
                 if (snapshot.exists()) {
@@ -10728,6 +10766,7 @@ Use the conversation history provided to you to remember what's already been sai
         // Update goals list with advanced calculations
         function updateGoalsList() {
             updateSavingsGoalWidget(false);
+            renderGoalsTab();
             const goalsList = document.getElementById('goalsList');
             if (goals.length === 0) {
                 goalsList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">No goals yet</div>';
@@ -11799,6 +11838,9 @@ Use the conversation history provided to you to remember what's already been sai
             if (paperMissionSectionEl) paperMissionSectionEl.style.display = tab === 'missions' ? 'block' : 'none';
             const usersSectionEl = document.getElementById('usersSection');
             if (usersSectionEl) usersSectionEl.style.display = tab === 'users' ? 'block' : 'none';
+            const goalsSectionEl = document.getElementById('goalsSection');
+            if (goalsSectionEl) goalsSectionEl.style.display = tab === 'goals' ? 'block' : 'none';
+            if (tab === 'goals') renderGoalsTab();
 
             if (tab === 'users') {
                 loadUsersList();
@@ -13521,6 +13563,7 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
                 case 'Add Money': return '➕';
                 case 'Transfer': return '🔄';
                 case 'Auto Transfer': return '🔁';
+                case 'Goal Deposit': return '🎯';
                 case 'Manual Edit': return '✏️';
                 case 'Purchase':
                     if (category === 'hangout') return '🛍️';
@@ -15397,6 +15440,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                     balances.savings -= amount;
                     break;
                 }
+                case 'Goal Deposit':
+                    balances.savings += Math.abs(item.amount);
+                    (item.goalDeposits || []).forEach(d => bumpGoalSaved(d.t, d.id, -d.amt));
+                    break;
                 case 'Manual Edit':
                     // This only records an absolute overwrite (old → new values in
                     // the notes), not a delta, so there's nothing safe to reverse.
@@ -15591,6 +15638,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 appliedSavings += autoMoved;
             }
 
+            const goalDep = applyGoalContributions(); // takes goal money from Savings (max 85%)
             saveBalances();
             playMoneySound();
             let allowanceNotes = `Split: ${hangout}/${savings}${userPreferences.enablePlaystation ? '/' + playstation : ''}`;
@@ -15603,6 +15651,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 splitPlaystation: appliedPlaystation,
                 ...(autoMoved > 0 ? { autoTransferred: autoMoved } : {})
             });
+            if (goalDep) recordGoalDeposit(goalDep);
 
             // Update allowance schedule for Asser
             if (currentUser.username.toLowerCase() === 'asser' && userPreferences.allowanceSchedule) {
@@ -16009,6 +16058,230 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
 
 
+
+        /* ============================================================
+           GOALS TAB — personal goals + shared goals
+           Rules: goal money only ever comes out of SAVINGS, and never more
+           than 85% of the current Savings balance at once. Each goal has an
+           amount that is added automatically every time you get allowance.
+           Personal: users/<me>/goals/<key> {name, amount, perAllowance, saved, paused}
+           Shared:   sharedGoals/<id> {name, amount, owner, closed, members:{<user>:{perAllowance, saved}}}
+           ============================================================ */
+        const GOAL_CAP = 0.85;
+        let sharedGoals = [];
+        let sharedGoalsUnsub = null;
+        const refunding = new Set();
+        const gEsc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const gSaved = (o) => Number(o && o.saved) || 0;
+        const gTotal = (g) => Object.values(g.members || {}).reduce((s, m) => s + gSaved(m), 0);
+        const gMe = () => (currentUser ? currentUser.username : null);
+        const maxFromSavings = () => Math.max(0, Math.floor(balances.savings * GOAL_CAP));
+        const gPath = (t, id) => t === 'p' ? `users/${gMe()}/goals/${id}` : `sharedGoals/${id}/members/${gMe()}`;
+
+        function bumpGoalSaved(t, id, amt) {
+            runTransaction(ref(database, gPath(t, id) + '/saved'), (v) => Math.max(0, (Number(v) || 0) + amt));
+        }
+        // Info about one goal for the current user: how much more it can take
+        function gInfo(t, id) {
+            if (t === 'p') {
+                const i = goalKeys.indexOf(id), g = goals[i];
+                return g ? { name: g.name, need: Math.max(0, g.amount - gSaved(g)), per: Number(g.perAllowance) || 0, paused: !!g.paused } : null;
+            }
+            const g = sharedGoals.find((x) => x.id === id);
+            return g ? { name: g.name, need: Math.max(0, g.amount - gTotal(g)), per: Number((g.members[gMe()] || {}).perAllowance) || 0, paused: false } : null;
+        }
+
+        // Called from commitAllowance: moves each goal's per-allowance amount out of Savings.
+        function applyGoalContributions() {
+            let left = maxFromSavings();
+            const dep = [];
+            const want = [];
+            goalKeys.forEach((k) => want.push(['p', k]));
+            sharedGoals.forEach((g) => want.push(['s', g.id]));
+            want.forEach(([t, id]) => {
+                const info = gInfo(t, id);
+                if (!info || info.paused || info.per <= 0) return;
+                const a = Math.min(info.per, info.need, left);
+                if (a > 0) { left -= a; dep.push({ t, id, name: info.name, amt: a }); }
+            });
+            if (!dep.length) return null;
+            const total = dep.reduce((s, d) => s + d.amt, 0);
+            balances.savings -= total;
+            dep.forEach((d) => bumpGoalSaved(d.t, d.id, d.amt));
+            return { dep, total };
+        }
+        function recordGoalDeposit(r) {
+            addToHistory('Goal Deposit', -r.total, 'savings', 'To goals: ' + r.dep.map((d) => `${d.name} ${d.amt}`).join(', '), null,
+                { goalDeposits: r.dep.map((d) => ({ t: d.t, id: d.id, amt: d.amt })) });
+            showNotification(`🎯 ${r.total} ⃁ moved from Savings to your goals`);
+        }
+        function refundToSavings(amt, name) {
+            if (amt <= 0) return;
+            balances.savings += amt;
+            saveBalances();
+            addToHistory('Add Money', amt, 'savings', `Refund from goal "${name}"`);
+        }
+
+        window.openGoalsModal = function () {
+            if (!currentUser) { showNotification('Please login first', true); return; }
+            switchTab('goals');
+        };
+
+        function renderGoalsTab() {
+            const mineEl = document.getElementById('goalsMine');
+            if (!mineEl) return;
+            document.getElementById('goalsTabInfo').textContent = `Savings: ${balances.savings} ⃁ · goals can take up to ${maxFromSavings()} ⃁ (85%). Goal money only comes from Savings.`;
+            const bar = (p) => `<div class="goal-progress"><div class="goal-progress-bar" style="width:${p}%"></div></div>`;
+            const perTxt = (n) => n > 0 ? `+${n} ⃁ every allowance` : 'no auto-add';
+            const btn = (cls, fn, label) => `<button class="history-action-btn ${cls}" onclick="${fn}">${label}</button>`;
+
+            mineEl.innerHTML = goals.length ? goals.map((g, i) => {
+                const k = goalKeys[i], s = gSaved(g), p = Math.min(100, Math.round(s / g.amount * 100));
+                return `<div class="goal-card" style="${g.paused ? 'opacity:.6' : ''}">
+                    <div class="goal-header"><div class="goal-name">${gEsc(g.name)}${g.paused ? ' ⏸ paused' : ''}</div><div class="goal-amount">${s} / ${g.amount} ⃁</div></div>
+                    ${bar(p)}
+                    <div class="goal-status">${p >= 100 ? '🎉 Goal reached!' : `${g.amount - s} ⃁ to go`} · ${perTxt(Number(g.perAllowance) || 0)}</div>
+                    <div class="goal-actions">
+                        ${btn('edit', `goalAdd('p','${k}')`, '＋ Add')}
+                        ${btn('edit', `goalSetPer('p','${k}')`, '💰 Per allowance')}
+                        ${btn('edit', `goalTogglePause('${k}')`, g.paused ? '▶ Resume' : '⏸ Pause')}
+                        ${btn('edit', `openEditGoal(${i})`, '✏️ Edit')}
+                        ${btn('delete', `goalDelete(${i})`, '🗑️')}
+                    </div></div>`;
+            }).join('') : '<div class="gt-empty">No goals yet</div>';
+
+            const me = gMe();
+            document.getElementById('goalsShared').innerHTML = sharedGoals.length ? sharedGoals.map((g) => {
+                const tot = gTotal(g), p = Math.min(100, Math.round(tot / g.amount * 100)), mine = g.members[me] || {};
+                const members = Object.entries(g.members).map(([n, m]) => `${gEsc(n)}${n === g.owner ? ' 👑' : ''}: ${gSaved(m)} ⃁ <span style="opacity:.6">(${perTxt(Number(m.perAllowance) || 0)})</span>`).join('<br>');
+                const owner = g.owner === me;
+                return `<div class="goal-card">
+                    <div class="goal-header"><div class="goal-name">${gEsc(g.name)}</div><div class="goal-amount">${tot} / ${g.amount} ⃁</div></div>
+                    ${bar(p)}
+                    <div class="goal-status">${p >= 100 ? '🎉 Goal reached!' : `${g.amount - tot} ⃁ to go`} · You've put in ${gSaved(mine)} ⃁</div>
+                    <div class="gt-members">${members}</div>
+                    <div class="goal-actions">
+                        ${btn('edit', `goalAdd('s','${g.id}')`, '＋ Add')}
+                        ${btn('edit', `goalSetPer('s','${g.id}')`, '💰 Per allowance')}
+                        ${owner ? btn('edit', `goalInvite('${g.id}')`, '📱 Invite (QR)') : ''}
+                        ${owner ? btn('delete', `goalDeleteShared('${g.id}')`, '🗑️ Delete') : btn('delete', `goalLeave('${g.id}')`, 'Leave')}
+                    </div></div>`;
+            }).join('') : '<div class="gt-empty">No shared goals yet</div>';
+        }
+        window.renderGoalsTab = renderGoalsTab;
+
+        const askNum = (msg, def) => { const v = prompt(msg, def); if (v === null) return null; const n = parseInt(v); return isNaN(n) || n < 0 ? null : n; };
+
+        window.goalNew = function () {
+            if (!currentUser) return;
+            const name = (prompt('Goal name (FC 27, Keyboard...)') || '').trim();
+            if (!name) return;
+            const amount = askNum('How much does it cost? (⃁)'); if (!amount) return;
+            const per = askNum('How much to add every time you get allowance? (⃁, 0 = none)', '5'); if (per === null) return;
+            push(ref(database, `users/${gMe()}/goals`), { name, amount, perAllowance: per, saved: 0, paused: false });
+            showNotification('Goal added!');
+        };
+        window.goalNewShared = async function () {
+            if (!currentUser) return;
+            const name = (prompt('Shared goal name') || '').trim();
+            if (!name) return;
+            const amount = askNum('Total target? (⃁)'); if (!amount) return;
+            const per = askNum('How much will YOU add every allowance? (⃁)', '5'); if (per === null) return;
+            const r = push(ref(database, 'sharedGoals'), { name, amount, owner: gMe(), createdAt: Date.now(), members: { [gMe()]: { perAllowance: per, saved: 0, joinedAt: Date.now() } } });
+            await r;
+            goalInvite(r.key);
+        };
+        window.goalSetPer = function (t, id) {
+            const info = gInfo(t, id); if (!info) return;
+            const n = askNum(`Add how much to "${info.name}" every allowance? (⃁, 0 = none)`, info.per); if (n === null) return;
+            update(ref(database, gPath(t, id)), { perAllowance: n });
+            showNotification('Saved');
+        };
+        window.goalTogglePause = function (k) {
+            const info = gInfo('p', k); if (!info) return;
+            update(ref(database, gPath('p', k)), { paused: !info.paused });
+        };
+        window.goalAdd = function (t, id) {
+            const info = gInfo(t, id); if (!info) return;
+            const max = Math.min(maxFromSavings(), info.need);
+            if (max <= 0) { showNotification(info.need <= 0 ? 'This goal is already full 🎉' : 'Not enough in Savings (goals can use up to 85%)', true); return; }
+            const n = askNum(`Add how much to "${info.name}" from Savings? (max ${max} ⃁)`, Math.min(max, 10)); if (!n) return;
+            if (n > max) { showNotification(`You can add at most ${max} ⃁ right now`, true); return; }
+            balances.savings -= n;
+            saveBalances();
+            bumpGoalSaved(t, id, n);
+            addToHistory('Goal Deposit', -n, 'savings', `To goals: ${info.name} ${n}`, null, { goalDeposits: [{ t, id, amt: n }] });
+            playMoneySound();
+            showNotification(`Added ${n} ⃁ to ${info.name}`);
+        };
+        window.goalDelete = function (i) {
+            const g = goals[i], k = goalKeys[i]; if (!g || !k) return;
+            if (!confirm(`Delete "${g.name}"? Its ${gSaved(g)} ⃁ goes back to Savings.`)) return;
+            refundToSavings(gSaved(g), g.name);
+            set(ref(database, `users/${gMe()}/goals/${k}`), null);
+        };
+
+        // ---- Shared goals ----
+        function listenSharedGoals(username) {
+            if (sharedGoalsUnsub) sharedGoalsUnsub();
+            sharedGoals = [];
+            sharedGoalsUnsub = onValue(ref(database, 'sharedGoals'), (snap) => {
+                const all = snap.val() || {};
+                const mine = Object.entries(all).filter(([, g]) => g && g.members && g.members[username]).map(([id, g]) => ({ id, ...g }));
+                // owner deleted the goal -> everyone gets their own money back
+                mine.filter((g) => g.closed && gSaved(g.members[username]) > 0 && !refunding.has(g.id)).forEach((g) => {
+                    refunding.add(g.id);
+                    const amt = gSaved(g.members[username]);
+                    refundToSavings(amt, g.name);
+                    set(ref(database, `sharedGoals/${g.id}/members/${username}/saved`), 0);
+                });
+                sharedGoals = mine.filter((g) => !g.closed);
+                renderGoalsTab();
+                processPendingJoin();
+            });
+        }
+        window.goalInvite = function (id) {
+            const g = sharedGoals.find((x) => x.id === id);
+            const url = location.origin + location.pathname + '?joinGoal=' + encodeURIComponent(id);
+            document.getElementById('goalQrTitle').textContent = 'Invite to ' + (g ? g.name : 'goal');
+            document.getElementById('goalQrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=' + encodeURIComponent(url);
+            document.getElementById('goalQrLink').textContent = url;
+            document.getElementById('goalQrModal').classList.add('active');
+        };
+        window.goalCopyLink = function () {
+            const url = document.getElementById('goalQrLink').textContent;
+            (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => showNotification('Link copied'), () => prompt('Copy this link:', url));
+        };
+        window.goalLeave = function (id) {
+            const g = sharedGoals.find((x) => x.id === id); if (!g) return;
+            if (!confirm(`Leave "${g.name}"? Your ${gSaved(g.members[gMe()])} ⃁ goes back to Savings.`)) return;
+            refundToSavings(gSaved(g.members[gMe()]), g.name);
+            set(ref(database, `sharedGoals/${id}/members/${gMe()}`), null);
+        };
+        window.goalDeleteShared = function (id) {
+            const g = sharedGoals.find((x) => x.id === id); if (!g) return;
+            if (!confirm(`Delete "${g.name}" for everyone? Each person's money goes back to their own Savings.`)) return;
+            update(ref(database, `sharedGoals/${id}`), { closed: true });
+        };
+        async function processPendingJoin() {
+            const id = sessionStorage.getItem('pendingJoinGoal'), me = gMe();
+            if (!id || !me) return;
+            sessionStorage.removeItem('pendingJoinGoal');
+            const g = (await get(ref(database, 'sharedGoals/' + id))).val();
+            if (!g || g.closed) { showNotification('That invite is no longer valid', true); return; }
+            if (g.members && g.members[me]) { switchTab('goals'); return; }
+            if (!confirm(`Join the shared goal "${g.name}" (${g.amount} ⃁) from ${g.owner}?`)) return;
+            const per = askNum('How much will you add every time you get allowance? (⃁)', '5');
+            if (per === null) return;
+            await set(ref(database, `sharedGoals/${id}/members/${me}`), { perAllowance: per, saved: 0, joinedAt: Date.now() });
+            showNotification('Joined! 🎉');
+            switchTab('goals');
+        }
+        // QR scan lands here with ?joinGoal=<id>; remember it until the user is logged in
+        (function () {
+            const id = new URLSearchParams(location.search).get('joinGoal');
+            if (id) { sessionStorage.setItem('pendingJoinGoal', id); window.history.replaceState({}, '', location.pathname); }
+        })();
 
         // Calculate how much has been spent on hangouts this week
         function getWeeklySpending() {

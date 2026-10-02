@@ -1435,6 +1435,13 @@
 
         .gt-info { font-size: 13px; color: rgba(255,255,255,0.65); margin: 6px 0 12px; }
         .gt-new { width: 100%; margin-bottom: 14px; }
+        .gt-row { display: flex; gap: 10px; margin-bottom: 14px; }
+        .gt-row .modal-btn { margin: 0; }
+        .gt-row .modal-btn:first-child { flex: 1; }
+        .gt-scan-box { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #000; border-radius: 14px; overflow: hidden; margin: 12px 0; }
+        .gt-scan-box video { width: 100%; height: 100%; object-fit: cover; }
+        .gt-scan-frame { position: absolute; inset: 18%; border: 3px solid rgba(0,255,220,0.9); border-radius: 16px; box-shadow: 0 0 0 999px rgba(0,0,0,0.35); pointer-events: none; }
+        .gt-scan-status { text-align: center; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
         .gt-members { font-size: 12px; color: rgba(255,255,255,0.7); margin: 8px 0 2px; line-height: 1.7; }
         .gt-empty { text-align: center; color: rgba(255,255,255,0.5); padding: 18px; }
         .gt-qr { display: block; margin: 12px auto; background: #fff; padding: 10px; border-radius: 12px; width: 220px; height: 220px; }
@@ -4423,9 +4430,6 @@
                     <button class="action-btn" onclick="switchTab('logPurchase')">
                         🛒 Log Purchase
                     </button>
-                    <button class="action-btn" onclick="openEditModal()">
-                        ✏️ Edit Money
-                    </button>
                     <button class="action-btn" onclick="openGoalsModal()">
                         🎯 Goals
                     </button>
@@ -4623,7 +4627,10 @@
                 <button class="modal-btn confirm gt-new" onclick="goalNew()">＋ New goal</button>
                 <div class="goals-grid" id="goalsMine"></div>
                 <div class="section-title" style="margin-top: 30px;">🤝 Shared Goals</div>
-                <button class="modal-btn confirm gt-new" onclick="goalNewShared()">＋ New shared goal</button>
+                <div class="gt-row">
+                    <button class="modal-btn confirm" onclick="goalNewShared()">＋ New shared goal</button>
+                    <button class="modal-btn cancel" onclick="goalOpenScanner()">📷 Join</button>
+                </div>
                 <div class="goals-grid" id="goalsShared"></div>
             </div>
 
@@ -5805,6 +5812,22 @@
             </div>
             <button type="button" class="pin-lock-forgot" id="pinLockForgot" onclick="forgotPin()"
                 style="display:none;">Forgot PIN?</button>
+        </div>
+    </div>
+
+    <!-- Shared goal: scan an invite QR -->
+    <div class="modal" id="goalScanModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Join a shared goal</div>
+                <button class="close-btn" onclick="closeModal('goalScanModal')">&times;</button>
+            </div>
+            <div class="gt-scan-box"><video id="goalScanVideo" playsinline muted></video><div class="gt-scan-frame"></div></div>
+            <div class="gt-scan-status" id="goalScanStatus">Point the camera at the invite QR code</div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('goalScanModal')">Cancel</button>
+                <button class="modal-btn confirm" onclick="goalPasteLink()">Paste link instead</button>
+            </div>
         </div>
     </div>
 
@@ -7508,6 +7531,41 @@
                 document.getElementById('admStatsBody').innerHTML = '<div class="adm-empty">Could not load this user.</div>';
             }
         };
+        window.admToggleMoneyEdit = function (open) {
+            document.getElementById('admMoneyEdit').style.display = open ? 'block' : 'none';
+            document.getElementById('admEditMoneyBtn').style.display = open ? 'none' : 'block';
+        };
+        window.admSaveMoney = async function () {
+            if (!admIsZezo() || !admStats) return;
+            const name = admStats.name;
+            const old = (admStats.node && admStats.node.balances) || {};
+            const next = {};
+            for (const inp of document.querySelectorAll('#admMoneyEdit input[data-bucket]')) {
+                const v = Number(inp.value);
+                if (!Number.isFinite(v) || v < 0) { showNotification('Enter valid amounts (0 or more)', true); return; }
+                next[inp.dataset.bucket] = Math.round(v);
+            }
+            const changes = Object.keys(next).filter((k) => (Number(old[k]) || 0) !== next[k]);
+            if (!changes.length) { admToggleMoneyEdit(false); return; }
+            if (!confirm(`Change ${name}'s money?\n` + changes.map((k) => `${k}: ${Number(old[k]) || 0} → ${next[k]}`).join('\n'))) return;
+            const btn = document.getElementById('admSaveMoneyBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
+            try {
+                await update(ref(database, `users/${name}/balances`), next);
+                await push(ref(database, `users/${name}/history`), {
+                    type: 'Manual Edit', amount: 0, category: null,
+                    notes: 'Changed by admin: ' + changes.map((k) => `${k} ${Number(old[k]) || 0}→${next[k]}`).join(', '),
+                    emoji: '✏️', date: new Date().toISOString()
+                });
+                admStats.node.balances = { ...old, ...next };
+                admRenderStats();
+                showNotification(`${name}'s money updated`);
+            } catch (e) {
+                console.error(e);
+                showNotification('Could not save: ' + e.message, true);
+                btn.disabled = false; btn.textContent = 'Save';
+            }
+        };
         window.admCloseStats = function () {
             document.getElementById('adminStatsPage').classList.remove('active');
         };
@@ -7549,7 +7607,16 @@
                 ? `<div class="adm-grid">${bucketNums.map(([k, v]) => `<div class="adm-stat"><span>${admEsc(bucketLabel[k] || admHuman(k))}</span><b>${admMoney(v)}</b></div>`).join('')}</div>`
                 : '<div class="adm-none">No buckets saved yet</div>';
             const otherBalances = Object.entries(balances).filter(([, v]) => typeof v !== 'number');
-            const bucketsHtml = buckets + (otherBalances.length ? admRows(Object.fromEntries(otherBalances)) : '');
+            const bucketsHtml = buckets + (otherBalances.length ? admRows(Object.fromEntries(otherBalances)) : '') + `
+                <button class="adm-mini" id="admEditMoneyBtn" style="width:100%; margin-top:10px;" onclick="admToggleMoneyEdit(true)">✏️ Edit money</button>
+                <div id="admMoneyEdit" style="display:none; margin-top:10px;">
+                    ${['hangout', 'savings', 'playstation'].map((k) => `<label class="adm-kv" style="align-items:center;"><span>${admEsc(bucketLabel[k])} (⃁)</span>
+                        <input class="adm-input" type="number" min="0" step="1" data-bucket="${k}" value="${Number(balances[k]) || 0}" style="width:110px; text-align:right;"></label>`).join('')}
+                    <div style="display:flex; gap:8px; margin-top:10px;">
+                        <button class="adm-mini ghost" style="flex:1" onclick="admToggleMoneyEdit(false)">Cancel</button>
+                        <button class="adm-mini" style="flex:1" id="admSaveMoneyBtn" onclick="admSaveMoney()">Save</button>
+                    </div>
+                </div>`;
 
             const goalsHtml = goals.length ? goals.map((g) => {
                 const amt = Number(g.amount) || 0;
@@ -15282,6 +15349,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             if (modalId === 'userDetailModal') {
                 detachSelectedUserListeners();
             }
+            if (modalId === 'goalScanModal' && window.goalStopScanner) {
+                window.goalStopScanner();
+            }
         };
 
         // Open edit transaction modal
@@ -16251,6 +16321,89 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         window.goalCopyLink = function () {
             const url = document.getElementById('goalQrLink').textContent;
             (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => showNotification('Link copied'), () => prompt('Copy this link:', url));
+        };
+        // ---- In-app QR scanner for joining a shared goal ----
+        let scanStream = null, scanRaf = null, scanDetector = null, scanCanvas = null;
+        function goalIdFromText(text) {
+            text = String(text || '').trim();
+            try { const id = new URL(text).searchParams.get('joinGoal'); if (id) return id; } catch (e) { }
+            const m = text.match(/[?&]joinGoal=([^&\s]+)/);
+            return m ? decodeURIComponent(m[1]) : null;
+        }
+        function loadJsQR() {
+            if (window.jsQR) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                const sc = document.createElement('script');
+                sc.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+                sc.onload = resolve; sc.onerror = reject;
+                document.head.appendChild(sc);
+            });
+        }
+        window.goalStopScanner = function () {
+            if (scanRaf) cancelAnimationFrame(scanRaf);
+            scanRaf = null;
+            if (scanStream) scanStream.getTracks().forEach((t) => t.stop());
+            scanStream = null;
+            const v = document.getElementById('goalScanVideo');
+            if (v) v.srcObject = null;
+        };
+        function goalHandleScanned(text) {
+            const id = goalIdFromText(text);
+            if (!id) { document.getElementById('goalScanStatus').textContent = "That QR isn't a shared goal invite. Try again."; return false; }
+            closeModal('goalScanModal');
+            sessionStorage.setItem('pendingJoinGoal', id);
+            processPendingJoin();
+            return true;
+        }
+        window.goalOpenScanner = async function () {
+            if (!currentUser) return;
+            const status = document.getElementById('goalScanStatus');
+            status.textContent = 'Starting camera…';
+            document.getElementById('goalScanModal').classList.add('active');
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no camera api');
+                scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+            } catch (e) {
+                status.textContent = 'Camera not available. Allow camera access, or paste the invite link.';
+                return;
+            }
+            const video = document.getElementById('goalScanVideo');
+            video.srcObject = scanStream;
+            await video.play().catch(() => { });
+            status.textContent = 'Point the camera at the invite QR code';
+            if ('BarcodeDetector' in window) {
+                try { scanDetector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { scanDetector = null; }
+            }
+            if (!scanDetector) {
+                try { await loadJsQR(); } catch (e) { status.textContent = 'Scanner could not load. Paste the invite link instead.'; return; }
+                scanCanvas = document.createElement('canvas');
+            }
+            const tick = async () => {
+                if (!scanStream) return;
+                try {
+                    if (video.readyState >= 2 && video.videoWidth) {
+                        let text = null;
+                        if (scanDetector) {
+                            const codes = await scanDetector.detect(video);
+                            if (codes.length) text = codes[0].rawValue;
+                        } else {
+                            const w = video.videoWidth, h = video.videoHeight;
+                            scanCanvas.width = w; scanCanvas.height = h;
+                            const ctx = scanCanvas.getContext('2d', { willReadFrequently: true });
+                            ctx.drawImage(video, 0, 0, w, h);
+                            const r = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h);
+                            if (r) text = r.data;
+                        }
+                        if (text && goalHandleScanned(text)) return;
+                    }
+                } catch (e) { }
+                scanRaf = requestAnimationFrame(tick);
+            };
+            tick();
+        };
+        window.goalPasteLink = function () {
+            const text = prompt('Paste the invite link:');
+            if (text) goalHandleScanned(text);
         };
         window.goalLeave = function (id) {
             const g = sharedGoals.find((x) => x.id === id); if (!g) return;

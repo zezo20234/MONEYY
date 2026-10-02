@@ -4145,6 +4145,13 @@
             font-size: 12px; font-weight: 700; color: #ff6b6b; border: 1px solid rgba(255,107,107,0.5);
             border-radius: 20px; padding: 4px 10px; background: transparent; cursor: pointer; flex: none;
         }
+        .adm-live { margin-left: auto; font-size: 12px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; color: #6b7280; }
+        .adm-live i { width: 9px; height: 9px; border-radius: 50%; background: #6b7280; display: inline-block; }
+        .adm-live.on { color: #4ade80; }
+        .adm-live.on i { background: #4ade80; box-shadow: 0 0 8px #4ade80; animation: admPulse 1.6s ease-in-out infinite; }
+        @keyframes admPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+        .adm-card.adm-flash { animation: admFlash 1.2s ease-out; }
+        @keyframes admFlash { 0% { box-shadow: 0 0 0 2px rgba(0,245,212,0.9); } 100% { box-shadow: 0 0 0 2px rgba(0,245,212,0); } }
         .adm-seen { margin: 0 14px 8px; font-size: 13px; color: rgba(255,255,255,0.65); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .adm-seen .adm-dot { width: 9px; height: 9px; border-radius: 50%; background: #6b7280; flex: none; }
         .adm-seen .adm-dot.on { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
@@ -5937,6 +5944,7 @@
             <div class="adm-top">
                 <button class="adm-back" onclick="closeAdminPanel()">← Back</button>
                 <h1 class="adm-title">Admin Panel</h1>
+                <span class="adm-live" id="admLive"><i></i><span id="admLiveText">OFFLINE</span></span>
             </div>
 
             <textarea class="adm-msg" id="admMessage" maxlength="2000" placeholder="Type here"
@@ -6644,7 +6652,7 @@
         function admSeenHtml(u) {
             const t = Number(u.lastActive) || 0;
             if (!t) return '<div class="adm-seen"><span class="adm-dot"></span>Last online: <b>never</b></div>';
-            const online = Date.now() - t < 20 * 60 * 1000; // heartbeat is every 15 min
+            const online = Date.now() - t < 5 * 60 * 1000; // heartbeat is every 2 min
             return `<div class="adm-seen"><span class="adm-dot ${online ? 'on' : ''}"></span>` +
                 (online ? '<b>Online now</b>' : `Last online: <b>${admAgo(t)}</b>`) +
                 ` <small>${admFmtFull(t)}</small></div>`;
@@ -6749,7 +6757,7 @@
             document.body.style.overflow = 'hidden';
             admLoad();
             clearInterval(admTimer);
-            admTimer = setInterval(admRenderFooters, 60000);
+            admTimer = setInterval(admTick, 20000);
         };
         window.closeAdminPanel = function () {
             const st = document.getElementById('adminStatsPage');
@@ -6758,7 +6766,185 @@
             document.body.style.overflow = '';
             clearInterval(admTimer);
             admTimer = null;
+            admStopLive();
         };
+
+        // ===== LIVE MODE =====
+        // While the Admin Panel is open, every small per-user field (last online,
+        // version, webhook, reminder timing...) and the global reminder settings
+        // are watched in real time. Cards update in place without wiping what you
+        // are typing, and new users show up on their own.
+        const ADM_FIELDS = ['discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
+            'allowanceAnchor', 'reminderIntervalDays', 'nextReminderAt', 'reminderWindows', 'reminderDayOverrides', 'appVersion', 'forceVersion'];
+        let admAll = {};
+        let admUnsubs = [];
+        let admWatched = new Set();
+        let admDiscoverTimer = null;
+        let admDirty = new Set();
+        let admDirtyAll = false;
+        let admFlushTimer = null;
+        let admListDirty = false;
+
+        function admSetLive(on) {
+            const el = document.getElementById('admLive');
+            if (!el) return;
+            el.classList.toggle('on', !!on);
+            document.getElementById('admLiveText').textContent = on ? 'LIVE' : 'OFFLINE';
+        }
+        function admUpdateSummary() {
+            const sumEl = document.getElementById('admSummary');
+            const total = Object.keys(admAll).length;
+            const without = total - admUsers.length;
+            sumEl.textContent = `${admUsers.length} user${admUsers.length === 1 ? '' : 's'} with Discord connected` +
+                (without > 0 ? ` · ${without} without (hidden)` : '');
+        }
+        function admCardEl(name) {
+            return Array.from(document.querySelectorAll('#admUserList .adm-card')).find((c) => c.dataset.user === name) || null;
+        }
+        function admIsTyping() {
+            const a = document.activeElement;
+            return !!(a && a.closest && a.closest('#admUserList') && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA'));
+        }
+        // Refresh one card's changing parts without rebuilding it (keeps typed text, open sections, focus).
+        function admRefreshCard(name, flash) {
+            const u = admAll[name];
+            const card = admCardEl(name);
+            if (!u || !card) return;
+            const seen = card.querySelector('.adm-seen');
+            if (seen) seen.outerHTML = admSeenHtml(u);
+            const vl = card.querySelector('.adm-vline');
+            if (vl) vl.innerHTML = admVersionHtml(u);
+            const chip = card.querySelector('.adm-chiphold');
+            if (chip) chip.innerHTML = (u.nextReminderAt || u.reminderIntervalDays || admHasHours(u)) ? '<span class="adm-chip">custom timing</span>' : '';
+            const foot = card.querySelector('.adm-next');
+            if (foot) foot.innerHTML = admFooterHtml(u);
+            const setIfIdle = (sel, val) => {
+                const inp = card.querySelector(sel);
+                if (inp && document.activeElement !== inp) inp.value = val;
+            };
+            setIfIdle('[data-f="days"]', u.reminderIntervalDays || '');
+            setIfIdle('[data-f="next"]', u.nextReminderAt ? admToInput(u.nextReminderAt) : '');
+            if (flash) {
+                card.classList.remove('adm-flash');
+                void card.offsetWidth;
+                card.classList.add('adm-flash');
+            }
+        }
+        function admRefreshAllCards() {
+            admUsers.forEach((u) => admRefreshCard(u.name, false));
+        }
+        // Rebuild the list only when somebody joins/leaves the Discord list; typed text is kept.
+        function admRebuildListKeepingInputs() {
+            const keep = {};
+            document.querySelectorAll('#admUserList .adm-card').forEach((c) => {
+                c.querySelectorAll('[data-f]').forEach((i) => { if (i.value) keep[c.dataset.user + '|' + i.dataset.f] = i.value; });
+            });
+            admRenderList();
+            document.querySelectorAll('#admUserList .adm-card').forEach((c) => {
+                c.querySelectorAll('[data-f]').forEach((i) => {
+                    const v = keep[c.dataset.user + '|' + i.dataset.f];
+                    if (v !== undefined && (i.dataset.f === 'ver')) i.value = v;
+                });
+            });
+        }
+        function admFlush() {
+            admFlushTimer = null;
+            if (!document.getElementById('adminPage').classList.contains('active')) return;
+            if (admListDirty) {
+                if (admIsTyping()) { admFlushTimer = setTimeout(admFlush, 1500); return; }
+                admListDirty = false;
+                admUpdateSummary();
+                admRebuildListKeepingInputs();
+                admDirty.clear();
+            }
+            if (admDirtyAll) { admDirtyAll = false; admRefreshAllCards(); admRenderHoursSummary(); }
+            admDirty.forEach((n) => admRefreshCard(n, true));
+            admDirty.clear();
+        }
+        function admQueueFlush() {
+            if (!admFlushTimer) admFlushTimer = setTimeout(admFlush, 250);
+        }
+        function admRecomputeMembers() {
+            const before = admUsers.map((u) => u.name).join(',');
+            admUsers = Object.keys(admAll).sort().map((n) => admAll[n]).filter((u) => u.discordWebhook);
+            // keep the order the list was first shown in as far as possible
+            return before !== admUsers.map((u) => u.name).join(',');
+        }
+        function admWatchUser(name) {
+            if (admWatched.has(name)) return;
+            admWatched.add(name);
+            if (!admAll[name]) admAll[name] = { name };
+            const u = admAll[name];
+            ADM_FIELDS.forEach((f) => {
+                const off = onValue(ref(database, `users/${name}/${f}`), (sn) => {
+                    const val = sn.exists() ? sn.val() : null;
+                    if (JSON.stringify(u[f] ?? null) === JSON.stringify(val)) return; // first fire / no change
+                    u[f] = val;
+                    if (f === 'discordWebhook') {
+                        if (admRecomputeMembers()) admListDirty = true;
+                    }
+                    admDirty.add(name);
+                    admQueueFlush();
+                });
+                admUnsubs.push(off);
+            });
+        }
+        function admStartLive() {
+            admStopLive();
+            Object.keys(admAll).forEach(admWatchUser);
+
+            // global reminder settings + the financial month (affects "allowance day" timing)
+            const g = (path, apply) => admUnsubs.push(onValue(ref(database, path), (sn) => { apply(sn.exists() ? sn.val() : null); admDirtyAll = true; admQueueFlush(); }));
+            g('reminderSettings/intervalDays', (v) => {
+                const gd = Number(v);
+                admGlobalDays = gd >= 1 ? gd : 3;
+                const inp = document.getElementById('admGlobalDays');
+                if (inp && document.activeElement !== inp) inp.value = admGlobalDays;
+            });
+            g('reminderSettings/windows', (v) => { admGWins = v || {}; });
+            g('reminderSettings/dayOverrides', (v) => { admGDays = v || {}; });
+            g('financialCycle/history', (v) => {
+                const cycles = Object.values(v || {});
+                const latest = cycles.map((c) => new Date(c.startDate).getTime()).filter(Boolean).sort((a, b) => a - b).pop();
+                const today = riyadhDayString(riyadhNow());
+                admCycleStartDay = latest ? riyadhDayString(new Date(latest + RIYADH_OFFSET_MS)) : today.slice(0, 8) + '01';
+            });
+
+            // connection indicator
+            admUnsubs.push(onValue(ref(database, '.info/connected'), (sn) => admSetLive(sn.val() === true)));
+
+            // pick up brand-new users every 30s (Firebase cannot "watch" a list of names cheaply)
+            admDiscoverTimer = setInterval(async () => {
+                try {
+                    const names = Object.keys((await fetch(`${firebaseConfig.databaseURL}/users.json?shallow=true`).then((r) => r.json())) || {});
+                    let added = false;
+                    names.forEach((n) => { if (!admWatched.has(n)) { admWatchUser(n); added = true; } });
+                    if (added) { admListDirty = true; admQueueFlush(); }
+                } catch (e) { /* offline: the indicator already shows it */ }
+            }, 30000);
+        }
+        function admStopLive() {
+            admUnsubs.forEach((off) => { try { off(); } catch (e) { } });
+            admUnsubs = [];
+            admWatched = new Set();
+            clearInterval(admDiscoverTimer);
+            admDiscoverTimer = null;
+            clearTimeout(admFlushTimer);
+            admFlushTimer = null;
+            admDirty.clear();
+            admDirtyAll = false;
+            admListDirty = false;
+            admSetLive(false);
+        }
+        // Every 20s: tick countdowns and the "online now / x min ago" text.
+        function admTick() {
+            admRenderFooters();
+            document.querySelectorAll('#admUserList .adm-card').forEach((card) => {
+                const u = admAll[card.dataset.user];
+                const seen = card.querySelector('.adm-seen');
+                if (u && seen) seen.outerHTML = admSeenHtml(u);
+            });
+        }
 
         async function admLoad() {
             const listEl = document.getElementById('admUserList');
@@ -6796,14 +6982,15 @@
                     if (u.reminderOverride) { set(ref(database, `users/${u.name}/reminderOverride`), null).catch(() => { }); }
                     delete u.reminderOverride;
                 });
+                admAll = {};
+                all.forEach((u) => { admAll[u.name] = u; });
                 admUsers = all.filter((u) => u.discordWebhook);
-                const without = all.length - admUsers.length;
-                sumEl.textContent = `${admUsers.length} user${admUsers.length === 1 ? '' : 's'} with Discord connected` +
-                    (without > 0 ? ` · ${without} without (hidden)` : '');
+                admUpdateSummary();
                 document.getElementById('admGlobalDays').value = admGlobalDays;
                 document.getElementById('admGlobalNext').value = '';
                 admRenderList();
                 admRenderHoursSummary();
+                admStartLive();
             } catch (e) {
                 console.error('Admin panel load failed:', e);
                 sumEl.textContent = '';
@@ -6863,11 +7050,11 @@
                 return `<div class="adm-card" data-user="${admEsc(u.name)}">
                     <div class="adm-card-head">
                         <label class="adm-pick"><input type="checkbox" data-act="pick" ${admSelected.has(u.name) ? 'checked' : ''}><span>${admEsc(u.name)}</span></label>
-                        ${custom ? '<span class="adm-chip">custom timing</span>' : ''}
+                        <span class="adm-chiphold">${custom ? '<span class="adm-chip">custom timing</span>' : ''}</span>
                     </div>
                     ${admSeenHtml(u)}
                     <div class="adm-ver">
-                        ${admVersionHtml(u)}
+                        <div class="adm-vline">${admVersionHtml(u)}</div>
                         <div class="adm-row">
                             <input class="adm-input" data-f="ver" type="text" placeholder="e.g. 1.2" value="">
                             <button class="adm-mini" data-act="setVer">Change</button>
@@ -7873,6 +8060,7 @@
             onValue(updateRef, (snapshot) => {
                 if (!snapshot.exists()) return;
                 latestUpdateInfo = snapshot.val();
+                if (typeof admRefreshAllCards === 'function') { try { admRefreshAllCards(); } catch (e) { } }
                 renderUpdatesSettingsUI();
                 if (latestUpdateInfo.version && needsVersionSync(latestUpdateInfo.version, getInstalledVersion())) {
                     showUpdateBadge(true);
@@ -10105,8 +10293,8 @@ Use the conversation history provided to you to remember what's already been sai
             // the PWA open for a while (or reopen it briefly) and we want
             // "3 days inactive" to mean 3 days since they were truly last here.
             setInterval(() => {
-                if (currentUser) markUserActive(currentUser.username);
-            }, 15 * 60 * 1000); // every 15 minutes while open
+                if (currentUser && !document.hidden) markUserActive(currentUser.username);
+            }, 2 * 60 * 1000); // every 2 minutes while the app is on screen
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden && currentUser) {
                     // Stamp the moment they leave so "last online" is accurate.

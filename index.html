@@ -4280,7 +4280,7 @@
             </div>
             <div class="auth-buttons">
                 <button class="auth-btn login" onclick="openLoginModal()">Login</button>
-                <button class="auth-btn signup" onclick="openSignupModal()">Sign Up</button>
+                <button class="auth-btn signup" id="signupBtn" onclick="openSignupModal()">Sign Up</button>
             </div>
         </div>
 
@@ -5129,7 +5129,7 @@
                 <button class="modal-btn cancel" onclick="closeModal('loginModal')">Cancel</button>
                 <button class="modal-btn confirm" onclick="login()">Login</button>
             </div>
-            <div style="text-align: center; margin-top: 15px;">
+            <div id="loginSignupPrompt" style="text-align: center; margin-top: 15px;">
                 <span style="color: rgba(255,255,255,0.6);">Don't have an account? </span>
                 <a href="#" onclick="closeModal('loginModal'); openSignupModal();" style="color: var(--accent-3, #667eea);">Sign up</a>
             </div>
@@ -14634,8 +14634,42 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             });
         };
 
+        // ---- Account limit: at most MAX_USERS accounts. Once reached, Sign Up disappears. ----
+        const MAX_USERS = 3;
+        async function countAccounts() {
+            // shallow=true returns only the usernames (no passwords are downloaded)
+            const base = String(database.app.options.databaseURL).replace(/\/$/, '');
+            const res = await fetch(`${base}/users_auth.json?shallow=true`);
+            if (!res.ok) throw new Error('status ' + res.status);
+            const data = await res.json();
+            return data ? Object.keys(data).length : 0;
+        }
+        async function refreshSignupAvailability() {
+            try {
+                const full = (await countAccounts()) >= MAX_USERS;
+                const btn = document.getElementById('signupBtn');
+                const prompt = document.getElementById('loginSignupPrompt');
+                if (btn) btn.style.display = full ? 'none' : '';
+                if (prompt) prompt.style.display = full ? 'none' : '';
+                if (full) closeModal('signupModal');
+                return full;
+            } catch (e) {
+                console.warn('Could not check account limit:', e);
+                return false;
+            }
+        }
+        refreshSignupAvailability();
+
         // Signup function
-        window.signup = function () {
+        window.signup = async function () {
+            // Re-check right before creating, in case someone else just took the last spot
+            if (await refreshSignupAvailability()) {
+                showNotification('Sign up is closed - the maximum of ' + MAX_USERS + ' users has been reached', true);
+                return;
+            }
+            return signupInner();
+        };
+        const signupInner = function () {
             const username = document.getElementById('signupUsername').value;
             const password = document.getElementById('signupPassword').value;
             const confirmPassword = document.getElementById('signupConfirmPassword').value;

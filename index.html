@@ -8324,19 +8324,38 @@
             return v.toLowerCase().startsWith('zezo ui') ? v : `Zezo UI ${v}`;
         }
         // Asks whichever AI provider this device uses (Groq or Gemini) and returns plain text.
+        // Same model logic as the rest of the app: reuse the model that already worked, otherwise try the
+        // list, and for Gemini ask Google which models exist now. Reports the most useful error, not just the last.
         async function callActiveAIText(prompt) {
-            if (getAIProvider() === 'gemini') {
-                let last;
-                for (const m of GEMINI_MODELS_TO_TRY) {
-                    try { return await callGemini(m, prompt); } catch (e) { last = e; if (e.status === 401 || e.status === 403) break; }
+            const gemini = getAIProvider() === 'gemini';
+            const call = gemini ? callGemini : callGroq;
+            const remembered = gemini ? workingGeminiModel : workingGroqModel;
+            let candidates = [remembered, ...(gemini ? GEMINI_MODELS_TO_TRY : ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant'])].filter(Boolean);
+            const tried = new Set();
+            let discovered = false, firstReal = null, last = null;
+            while (candidates.length) {
+                const m = candidates.shift();
+                if (tried.has(m)) continue;
+                tried.add(m);
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    try {
+                        const text = await call(m, prompt);
+                        if (gemini) workingGeminiModel = m; else workingGroqModel = m;
+                        return text;
+                    } catch (e) {
+                        last = e;
+                        if (e.status !== 404 && !firstReal) firstReal = e; // 404 = retired model, not the real problem
+                        if (e.status === 401 || e.status === 403 || (gemini && e.status === 400)) throw e; // bad key
+                        if ((e.status === 429 || e.status === 503) && attempt === 0) { await new Promise((r) => setTimeout(r, 2500)); continue; }
+                        break;
+                    }
                 }
-                throw last || new Error('AI not reachable');
+                if (gemini && !candidates.length && !discovered) {
+                    discovered = true;
+                    candidates = await discoverGeminiFlashModels();
+                }
             }
-            let last;
-            for (const m of ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant']) {
-                try { return await callGroq(m, prompt); } catch (e) { last = e; if (e.status === 401 || e.status === 403) break; }
-            }
-            throw last || new Error('AI not reachable');
+            throw firstReal || last || new Error('AI not reachable');
         }
 
         window.makeAIDoUpdate = async function () {

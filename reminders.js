@@ -32,19 +32,19 @@ const get = async (path, query = '') => {
 const patch = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
 const del = (path) => fetch(`${DB}/${path}.json`, { method: 'DELETE' });
 
-// Allowance day = today is the 4th Friday of the 4-week cycle (same rule as the app).
+// Allowance day is the SAME for every user: every 4th Friday counted from the shared anchor
+// (the latest month-cycle start, or the day Zezo last set the week, whichever is later).
+// Exactly the same rule as the app's Week counter. Per-user anchors are ignored.
 function isAllowanceDay(cycleStartDay, anchor, todayStr) {
-    let start = cycleStartDay;
-    if (anchor && anchor > start) start = anchor;
-    const d = new Date(start + 'T00:00:00Z');
-    let fridays = 0, fourth = null;
-    for (let i = 0; i < 400; i++) {
+    const d = new Date(anchor + 'T00:00:00Z');
+    let fridays = 0, last = null;
+    for (let i = 0; i < 800; i++) {
         d.setUTCDate(d.getUTCDate() + 1);
         const s = d.toISOString().slice(0, 10);
         if (s > todayStr) break;
-        if (d.getUTCDay() === 5 && ++fridays === 4) fourth = s;
+        if (d.getUTCDay() === 5 && ++fridays % 4 === 0) last = s;
     }
-    return fourth === todayStr;
+    return last === todayStr;
 }
 
 const MESSAGES = [
@@ -126,6 +126,10 @@ async function run(force) {
     const cycles = Object.values((await get('financialCycle/history')) || {});
     const latestCycle = cycles.map((c) => new Date(c.startDate).getTime()).filter(Boolean).sort((a, b) => a - b).pop();
     const cycleStartDay = latestCycle ? dayStr(new Date(latestCycle + OFFSET_MS)) : today.slice(0, 8) + '01';
+    const cycleStartMs = latestCycle || (Date.parse(today.slice(0, 8) + '01T00:00:00Z') - OFFSET_MS);
+    const wk = await get('financialCycle/weekAnchor');
+    const sharedAnchor = wk && wk.day && wk.setAt >= cycleStartMs ? wk.day : cycleStartDay;
+    const allowanceToday = isAllowanceDay(cycleStartDay, sharedAnchor, today);
 
     const update = force ? null : await publishScheduledUpdate(nowMs);
 
@@ -179,12 +183,12 @@ async function run(force) {
         } else if (nextReminderAt) {
             if (nowMs < nextReminderAt) return false;
             usedCustomTime = true;
-            msg = buildMessage(name, isAllowanceDay(cycleStartDay, anchor, today), nextIdx);
+            msg = buildMessage(name, allowanceToday, nextIdx);
         } else {
             const win = resolveWindow(today, dow, userWins, userDayWins, gWins, gDays);
             if (nowMin < win.s || nowMin >= win.e) return false;
             if (lastReminderDay === today) return false;
-            if (isAllowanceDay(cycleStartDay, anchor, today)) {
+            if (allowanceToday) {
                 msg = buildMessage(name, true, nextIdx);
             } else if (isThursday) {
                 msg = buildMessage(name, false, nextIdx);

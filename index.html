@@ -1443,6 +1443,14 @@
         .gt-scan-frame { position: absolute; inset: 18%; border: 3px solid rgba(0,255,220,0.9); border-radius: 16px; box-shadow: 0 0 0 999px rgba(0,0,0,0.35); pointer-events: none; }
         .gt-scan-status { text-align: center; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
         .gt-members { font-size: 12px; color: rgba(255,255,255,0.7); margin: 8px 0 2px; line-height: 1.7; }
+        .gt-split-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,0.15); margin: 10px 0 4px; }
+        .gt-split-bar > div { height: 100%; transition: width .25s ease; }
+        .gt-eta { margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: 13px; background: rgba(0,245,212,0.08); border: 1px solid rgba(0,245,212,0.25); }
+        .gt-eta b { color: var(--accent-1, #00f5d4); }
+        .gt-mrow { margin: 14px 0; }
+        .gt-mrow .gt-mtop { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+        .gt-mrow input[type=range] { width: 100%; }
+        .gt-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
         .gt-empty { text-align: center; color: rgba(255,255,255,0.5); padding: 18px; }
         .gt-qr { display: block; margin: 12px auto; background: #fff; padding: 10px; border-radius: 12px; width: 220px; height: 220px; }
         .gt-link { word-break: break-all; font-size: 12px; color: rgba(255,255,255,0.6); text-align: center; }
@@ -1516,12 +1524,19 @@
         .savings-ring.done .ring-fg { stroke: #feca57; }
         .savings-ring { cursor: pointer; }
         .savings-ring .ring-info small { display: block; color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+        .tag-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag-opt { padding: 7px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
+        .tag-opt.active { border-color: var(--accent-1, #00f5d4); background: rgba(0,245,212,0.16); font-weight: 700; }
+        .tag-opt.ai { border-style: dashed; }
+        .recap-rank { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .recap-rank:last-child { border-bottom: 0; }
+        .recap-rank span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tag-chip { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px;
             color: var(--accent-1, #00f5d4); border: 1px solid rgba(0,245,212,0.35); background: rgba(0,245,212,0.08); }
-        .recap-overlay { position: fixed; inset: 0; z-index: 10050; display: none; align-items: center; justify-content: center; padding: 18px;
+        .recap-overlay { position: fixed; inset: 0; z-index: 10050; display: none; align-items: flex-start; justify-content: center; padding: 18px;
             background: rgba(0,0,0,0.78); backdrop-filter: blur(6px); overflow-y: auto; }
         .recap-overlay.active { display: flex; }
-        .recap-card { width: 100%; max-width: 380px; border-radius: 26px; padding: 24px 20px 20px; color: #fff;
+        .recap-card { width: 100%; max-width: 380px; margin: auto; border-radius: 26px; padding: 24px 20px 20px; color: #fff;
             background: linear-gradient(160deg, #0f2a3d 0%, #1a1a2e 55%, #2a1a4a 100%); border: 1px solid rgba(0,245,212,0.35);
             box-shadow: 0 0 40px rgba(0,245,212,0.18); animation: rankUpPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .recap-eyebrow { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-1, #00f5d4); font-weight: 800; text-align: center; }
@@ -4468,6 +4483,12 @@
                     <input type="text" class="form-input" id="quickPurchaseName" placeholder="Lunch, Game, etc.">
                 </div>
 
+                <!-- Tag: where did this money go? (shows up in the monthly recap) -->
+                <div class="form-group">
+                    <label class="form-label">Tag</label>
+                    <div class="tag-picker" id="purchaseTagPicker"></div>
+                </div>
+
                 <!-- Quick-Amount Grid -->
                 <div style="margin-bottom: 24px;">
                     <label class="form-label" style="margin-bottom: 12px;">Quick Amount</label>
@@ -5623,6 +5644,16 @@
                     <small style="color: rgba(255,255,255,0.5); display:block; margin: 4px 0 10px;">Everyone, including
                         you, will get an update popup right away.</small>
                     <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+                        <div style="padding:12px; border:1px dashed rgba(0,245,212,0.4); border-radius:12px; background:rgba(0,245,212,0.06);">
+                            <label style="font-size: 12px; color: rgba(255,255,255,0.75);">🤖 Let the AI write the update</label>
+                            <textarea class="form-input" id="aiUpdatePrompt" rows="3"
+                                placeholder="Tell it what changed, e.g. shared goals now have sliders, purchases have tags, new top 5 in the recap"
+                                style="resize:vertical; font-family:inherit; margin-top:6px;"></textarea>
+                            <button type="button" class="modal-btn confirm" id="aiUpdateBtn"
+                                style="width:100%; padding:11px; font-size:14px; margin-top:6px;"
+                                onclick="makeAIDoUpdate()">🤖 Make AI do the update</button>
+                            <small style="color: rgba(255,255,255,0.45); display:block; margin-top:4px;">Fills the slides and the Discord message below. Check them and edit anything, then send.</small>
+                        </div>
                         <div>
                             <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Version (e.g., 1.1)</label>
                             <input type="text" class="form-input" id="sendUpdateVersion" placeholder="1.1">
@@ -5831,6 +5862,36 @@
         </div>
     </div>
 
+    <!-- Change the tag of a purchase you already logged -->
+    <div class="modal" id="tagEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Change tag</div>
+                <button class="close-btn" onclick="closeModal('tagEditModal')">&times;</button>
+            </div>
+            <div class="allowance-note" id="tagEditName"></div>
+            <div class="tag-picker" id="tagEditPicker"></div>
+        </div>
+    </div>
+
+    <!-- Shared goal: leader sets what each member pays per allowance -->
+    <div class="modal" id="goalSplitModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="goalSplitTitle">Who pays what</div>
+                <button class="close-btn" onclick="closeModal('goalSplitModal')">&times;</button>
+            </div>
+            <div class="allowance-note">Drag each slider to choose how much that person pays every allowance. Everyone sees the result.</div>
+            <div id="goalSplitRows"></div>
+            <div class="gt-split-bar" id="goalSplitBar"></div>
+            <div class="gt-eta" id="goalSplitEta"></div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="goalSplitEven()">Split evenly</button>
+                <button class="modal-btn confirm" onclick="goalSplitSave()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Shared goal invite (QR) -->
     <div class="modal" id="goalQrModal">
         <div class="modal-content">
@@ -5838,7 +5899,7 @@
                 <div class="modal-title" id="goalQrTitle">Invite</div>
                 <button class="close-btn" onclick="closeModal('goalQrModal')">&times;</button>
             </div>
-            <div class="allowance-note">Ask them to scan this with their phone camera. They'll open the app, log in, and choose how much to add each allowance.</div>
+            <div class="allowance-note">Ask them to scan this with their phone camera. They'll open the app and log in. Then you set who pays what with the sliders.</div>
             <img class="gt-qr" id="goalQrImg" alt="QR code">
             <div class="gt-link" id="goalQrLink"></div>
             <div class="modal-actions">
@@ -6444,8 +6505,8 @@
         function riyadhDayOf(dateLike) {
             return riyadhDayString(new Date(new Date(dateLike).getTime() + RIYADH_OFFSET_MS));
         }
-        function getWeekInfo() {
-            const today = riyadhDayString(riyadhNow());
+        function getWeekInfo(todayOverride) {
+            const today = todayOverride || riyadhDayString(riyadhNow());
             const cycle = getCurrentCycle();
             let anchor = riyadhDayOf(cycle.startDate);
             if (weekAnchorGlobal && weekAnchorGlobal.day && weekAnchorGlobal.setAt >= cycle.startDate.getTime()) {
@@ -6462,7 +6523,23 @@
             const n = fridays.length;
             const m = Math.floor(n / 4) * 4; // Fridays that were allowance days so far
             const allowanceFriday = m >= 4 ? fridays[m - 1] : null;
-            return { today, anchor, week: (n % 4) + 1, allowanceFriday };
+            return { today, anchor, week: (n % 4) + 1, allowanceFriday, n };
+        }
+        // ONE allowance schedule for everybody (shared anchor, every 4th Friday).
+        // Nth upcoming allowance (1 = the next one; counts today's if it is not handled yet).
+        function allowanceDateNth(N) {
+            const w = getWeekInfo();
+            const due = isAllowanceDue();
+            if (due && N === 1) return w.allowanceFriday;
+            const idx = N - (due ? 1 : 0);               // 1 = next allowance after today
+            const k = (Math.floor(w.n / 4) + idx) * 4;   // which Friday (counted from the anchor)
+            const d = new Date(w.anchor + 'T00:00:00Z');
+            do { d.setUTCDate(d.getUTCDate() + 1); } while (d.getUTCDay() !== 5);
+            d.setUTCDate(d.getUTCDate() + 7 * (k - 1));
+            return d.toISOString().slice(0, 10);
+        }
+        function fmtAllowanceDay(str) {
+            return new Date(str + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
         }
         function isAllowanceDue() {
             const w = getWeekInfo();
@@ -6745,18 +6822,10 @@
         }
 
         // Same allowance-day rule as scripts/discord-reminders.mjs
+        // Everyone gets allowance on the SAME day, so this ignores any per-user anchor
+        // and uses the shared schedule (same rule as the app's Week counter).
         function admIsAllowanceDay(cycleStartDay, anchor, todayStr) {
-            let start = cycleStartDay;
-            if (anchor && anchor > start) start = anchor;
-            const d = new Date(start + 'T00:00:00Z');
-            let fridays = 0, fourth = null;
-            for (let i = 0; i < 400; i++) {
-                d.setUTCDate(d.getUTCDate() + 1);
-                const str = d.toISOString().slice(0, 10);
-                if (str > todayStr) break;
-                if (d.getUTCDay() === 5 && ++fridays === 4) fourth = str;
-            }
-            return fourth === todayStr;
+            return getWeekInfo(todayStr).allowanceFriday === todayStr;
         }
 
         // When will this user next be reminded?
@@ -8009,7 +8078,7 @@
                         }).catch(() => { });
                     }
 
-                    if (item.entry.type === 'Purchase' && !item.entry.tag) {
+                    if (item.entry.type === 'Purchase' && !item.entry.tag && userHasAI()) {
                         getAITagForPurchase(item.entry.notes, item.entry.category).then(tag => {
                             if (!tag) return;
                             update(newRef, { tag });
@@ -8254,6 +8323,62 @@
             if (!v) return '';
             return v.toLowerCase().startsWith('zezo ui') ? v : `Zezo UI ${v}`;
         }
+        // Asks whichever AI provider this device uses (Groq or Gemini) and returns plain text.
+        async function callActiveAIText(prompt) {
+            if (getAIProvider() === 'gemini') {
+                let last;
+                for (const m of GEMINI_MODELS_TO_TRY) {
+                    try { return await callGemini(m, prompt); } catch (e) { last = e; if (e.status === 401 || e.status === 403) break; }
+                }
+                throw last || new Error('AI not reachable');
+            }
+            let last;
+            for (const m of ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant']) {
+                try { return await callGroq(m, prompt); } catch (e) { last = e; if (e.status === 401 || e.status === 403) break; }
+            }
+            throw last || new Error('AI not reachable');
+        }
+
+        window.makeAIDoUpdate = async function () {
+            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') { showNotification('Only Zezo can do this', true); return; }
+            if (!getActiveApiKey()) { showNotification('Add an AI key in Settings first', true); return; }
+            const notes = (document.getElementById('aiUpdatePrompt').value || '').trim();
+            if (!notes) { showNotification('Tell the AI what changed first', true); return; }
+            const btn = document.getElementById('aiUpdateBtn');
+            btn.disabled = true; btn.textContent = '🤖 Writing...';
+            const version = normalizeUpdateVersion(document.getElementById('sendUpdateVersion').value) || 'the new version';
+            const prompt = `You write the "What's New" pages for an update of a personal money-tracking app (name: Zezo UI). Users are mostly teenagers.
+
+What changed, in the developer's own words:
+"""${notes}"""
+
+Reply with ONLY valid JSON (no markdown, no code fences) in exactly this shape:
+{"slides":[{"icon":"one emoji","title":"2-4 word title","body":"1-2 short, friendly sentences about what the user can now do"}],"announcement":"a short Discord message announcing the update"}
+
+Rules:
+- 2 to 6 slides, one per feature. Do not invent features that are not in the developer's notes.
+- Plain simple words. No hype, no long sentences.
+- The announcement starts with a rocket emoji, says {version} where the version number goes, lists the features briefly with bold titles (Discord **bold**), and ends with: Open the app and tap the update pop-up to get it.
+- Version label for reference: ${version}`;
+            try {
+                const text = await callActiveAIText(prompt);
+                const m = text.match(/\{[\s\S]*\}/);
+                if (!m) throw new Error('The AI did not answer in the right format - try again');
+                const out = JSON.parse(m[0]);
+                const slides = (Array.isArray(out.slides) ? out.slides : []).filter((x) => x && (x.title || x.body)).slice(0, 8);
+                if (!slides.length) throw new Error('The AI gave no slides - try again');
+                const list = document.getElementById('updateSlidesList');
+                list.innerHTML = '';
+                slides.forEach((x) => addUpdateSlideField({ icon: String(x.icon || '').slice(0, 4), title: String(x.title || ''), body: String(x.body || '') }));
+                if (out.announcement) document.getElementById('sendUpdateMessage').value = String(out.announcement).replace(/\*\*\{version\}\*\*/g, '{version}');
+                showNotification('AI wrote the update - check it, then send');
+            } catch (e) {
+                showNotification('AI update failed: ' + e.message, true);
+            } finally {
+                btn.disabled = false; btn.textContent = '🤖 Make AI do the update';
+            }
+        };
+
         window.fillDefaultUpdateMessage = function () {
             const version = normalizeUpdateVersion(document.getElementById('sendUpdateVersion').value) || 'Zezo UI';
             document.getElementById('sendUpdateMessage').value = defaultUpdateAnnouncement(version, collectUpdateSlidesFromForm());
@@ -8472,6 +8597,32 @@
 
         const UPDATE_WELCOME_PAYLOAD_KEY = 'zezoUpdateWelcomePayload';
         let updateCarouselState = { mode: 'available', slides: [], index: 0, version: '' };
+        // Before installing an update, after each Next the user must wait 3 seconds (so they actually read it).
+        // After the update ("welcome" mode) there is no wait.
+        const UPDATE_NEXT_WAIT_MS = 3000;
+        let updateNextLockUntil = 0, updateNextTicker = null;
+        function updateNextLocked() {
+            return updateCarouselState.mode === 'available' && Date.now() < updateNextLockUntil;
+        }
+        function startUpdateNextLock() {
+            updateNextLockUntil = Date.now() + UPDATE_NEXT_WAIT_MS;
+            clearInterval(updateNextTicker);
+            updateNextTicker = setInterval(() => {
+                syncUpdateNextButton();
+                if (Date.now() >= updateNextLockUntil) { clearInterval(updateNextTicker); updateNextTicker = null; }
+            }, 250);
+            syncUpdateNextButton();
+        }
+        function syncUpdateNextButton() {
+            const btn = document.getElementById('updatePrimaryBtn');
+            const { slides, index, mode } = updateCarouselState;
+            if (!btn || !slides.length) return;
+            const isLast = index >= slides.length - 1;
+            const base = mode === 'welcome' ? (isLast ? 'Continue' : 'Next') : (isLast ? 'Update Now' : 'Next');
+            const left = Math.ceil((updateNextLockUntil - Date.now()) / 1000);
+            if (mode === 'available' && left > 0) { btn.disabled = true; btn.textContent = `${base} (${left})`; }
+            else { btn.disabled = false; btn.textContent = base; }
+        }
 
         const UPDATE_SLIDE_EMOJIS = ['✨', '🚀', '📊', '💡', '🎯', '🔔', '📱', '💰', '🛡️', '⚡'];
 
@@ -8706,24 +8857,23 @@
             void btn.offsetWidth;
             btn.classList.add('pulse');
             btn.classList.toggle('continue-mode', isLast && (mode === 'welcome' || isWelcome));
-            if (mode === 'welcome') {
-                btn.textContent = isLast ? 'Continue' : 'Next';
-            } else {
-                btn.textContent = isLast ? 'Update Now' : 'Next';
-            }
+            syncUpdateNextButton();
         }
 
         function goUpdateSlide(delta) {
             const { slides, index } = updateCarouselState;
             const next = Math.max(0, Math.min(slides.length - 1, index + delta));
             if (next === index) return;
+            if (delta > 0 && updateNextLocked()) return; // still waiting (button or swipe)
             updateCarouselState.index = next;
+            if (delta > 0 && updateCarouselState.mode === 'available') startUpdateNextLock();
             syncUpdateCarouselView();
         }
 
         function onUpdatePrimaryClick() {
             const { slides, index, mode } = updateCarouselState;
             const isLast = index >= slides.length - 1;
+            if (updateNextLocked()) return;
             if (!isLast) {
                 goUpdateSlide(1);
                 return;
@@ -8751,6 +8901,8 @@
                 slides: buildUpdateSlideList(data, mode),
                 index: 0
             };
+            updateNextLockUntil = 0; // fresh pop-up: the wait only starts after the first Next
+            clearInterval(updateNextTicker); updateNextTicker = null;
 
             track.innerHTML = updateCarouselState.slides.map(renderUpdateSlideHtml).join('');
             resetUpdateConfetti();
@@ -13711,10 +13863,64 @@ If you genuinely cannot find any tasks on the page, respond with exactly: []`;
         // ===== AI category tags for purchases =====
         const PURCHASE_TAGS = { Food: '🍔', Drinks: '🥤', Snacks: '🍿', Games: '🎮', Entertainment: '🎬', Shopping: '🛍️', Clothes: '👕', Tech: '💻', Transport: '🚗', Gifts: '🎁', Education: '📚', Health: '💊', Other: '📦' };
 
+        // "Has AI" = this device has an AI key saved (Settings). Only then can the AI add tags.
+        function userHasAI() { return !!getActiveApiKey(); }
+
+        // Tag chip on a purchase. Tap it to change the tag.
         function tagChipHtml(item) {
-            if (!item || item.type !== 'Purchase' || !item.tag) return '';
-            return `<div><span class="tag-chip">${PURCHASE_TAGS[item.tag] || '🏷️'} ${admEsc(item.tag)}</span></div>`;
+            if (!item || item.type !== 'Purchase') return '';
+            const i = history.indexOf(item);
+            const label = item.tag ? `${PURCHASE_TAGS[item.tag] || '🏷️'} ${admEsc(item.tag)}` : '＋ tag';
+            const click = i >= 0 ? ` style="cursor:pointer" onclick="event.stopPropagation();openTagEditor(${i})"` : '';
+            return `<div><span class="tag-chip"${click}>${label}</span></div>`;
         }
+
+        function tagPickerHtml(selected, fn) {
+            const opts = Object.entries(PURCHASE_TAGS).map(([t, e]) => `<button type="button" class="tag-opt${selected === t ? ' active' : ''}" onclick="${fn}('${t}')">${e} ${t}</button>`);
+            if (userHasAI()) opts.unshift(`<button type="button" class="tag-opt ai${selected === 'auto' ? ' active' : ''}" onclick="${fn}('auto')">✨ Auto (AI)</button>`);
+            return opts.join('');
+        }
+
+        // --- tag for the purchase being logged ---
+        let selectedPurchaseTag = 'auto';
+        function renderPurchaseTagPicker() {
+            if (selectedPurchaseTag === 'auto' && !userHasAI()) selectedPurchaseTag = 'Other';
+            const el = document.getElementById('purchaseTagPicker');
+            if (el) el.innerHTML = tagPickerHtml(selectedPurchaseTag, 'pickPurchaseTag');
+        }
+        window.pickPurchaseTag = function (t) { selectedPurchaseTag = t; renderPurchaseTagPicker(); };
+        // the tag to save with a new purchase, or null = let the AI choose later
+        function takePurchaseTag() {
+            const t = selectedPurchaseTag;
+            selectedPurchaseTag = userHasAI() ? 'auto' : 'Other';
+            renderPurchaseTagPicker();
+            return t === 'auto' ? (userHasAI() ? null : 'Other') : t;
+        }
+
+        // --- change the tag of an existing purchase ---
+        let tagEditIndex = -1;
+        window.openTagEditor = function (i) {
+            const it = history[i]; if (!it) return;
+            tagEditIndex = i;
+            document.getElementById('tagEditName').textContent = `${it.notes || 'Purchase'} · ${Math.abs(it.amount)} ⃁`;
+            document.getElementById('tagEditPicker').innerHTML = tagPickerHtml(it.tag || '', 'applyTagEdit');
+            document.getElementById('tagEditModal').classList.add('active');
+        };
+        window.applyTagEdit = async function (t) {
+            const it = history[tagEditIndex], key = historyKeys[tagEditIndex];
+            if (!it || !currentUser) return;
+            if (!key || String(key).startsWith('local_')) { showNotification('Still saving this purchase - try again in a moment', true); return; }
+            closeModal('tagEditModal');
+            if (t === 'auto') {
+                showNotification('Asking the AI...');
+                t = await getAITagForPurchase(it.notes, it.category);
+                if (!t) { showNotification('The AI could not pick a tag right now', true); return; }
+            }
+            it.tag = t;
+            update(ref(database, `users/${currentUser.username}/history/${key}`), { tag: t }).catch(() => { });
+            updateTransactionsList();
+            showNotification(`Tagged as ${t}`);
+        };
 
         // Asks the AI to file a purchase under ONE tag from the fixed list above.
         async function getAITagForPurchase(name, category) {
@@ -13744,7 +13950,7 @@ Reply with ONLY the tag word from the list. Nothing else.`;
         let tagBackfillRunning = false;
         const tagBackfillTried = new Set();
         async function backfillPurchaseTags() {
-            if (!currentUser || tagBackfillRunning) return;
+            if (!currentUser || tagBackfillRunning || !userHasAI()) return;
             tagBackfillRunning = true;
             const username = currentUser.username;
             try {
@@ -16041,7 +16247,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             // UI never blocks on the AI or on being online. Once we're actually
             // connected, flushPendingWrites() looks up a proper AI-picked emoji
             // for it and patches the saved entry in place.
-            addToHistory('Purchase', -cost, selectedPurchaseCategory, name, null, null, true);
+            const chosenTag = takePurchaseTag();
+            addToHistory('Purchase', -cost, selectedPurchaseCategory, name, null, chosenTag ? { tag: chosenTag } : null, true);
 
             // Clear form
             document.getElementById('quickPurchaseName').value = '';
@@ -16052,6 +16259,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
         // Initialize the Log Purchase tab
         function initLogPurchaseTab() {
+            renderPurchaseTagPicker();
             selectPurchaseCategory('hangout');
             validatePurchaseAmount();
         }
@@ -16126,7 +16334,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             // UI never blocks on the AI or on being online. Once we're actually
             // connected, flushPendingWrites() looks up a proper AI-picked emoji
             // for it and patches the saved entry in place.
-            addToHistory('Purchase', -cost, category, name, null, null, true);
+            const chosenTag = takePurchaseTag();
+            addToHistory('Purchase', -cost, category, name, null, chosenTag ? { tag: chosenTag } : null, true);
             closeModal('purchaseModal');
             showNotification(`Purchase "${name}" recorded`);
         };
@@ -16339,20 +16548,40 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const me = gMe();
             document.getElementById('goalsShared').innerHTML = sharedGoals.length ? sharedGoals.map((g) => {
                 const tot = gTotal(g), p = Math.min(100, Math.round(tot / g.amount * 100)), mine = g.members[me] || {};
-                const members = Object.entries(g.members).map(([n, m]) => `${gEsc(n)}${n === g.owner ? ' 👑' : ''}: ${gSaved(m)} ⃁ <span style="opacity:.6">(${perTxt(Number(m.perAllowance) || 0)})</span>`).join('<br>');
                 const owner = g.owner === me;
+                const entries = Object.entries(g.members);
+                const perTotal = entries.reduce((a, [, m]) => a + (Number(m.perAllowance) || 0), 0);
+                const splitBar = perTotal > 0 ? `<div class="gt-split-bar">${entries.map(([n, m], i) => `<div title="${gEsc(n)}" style="width:${(Number(m.perAllowance) || 0) / perTotal * 100}%;background:${GT_COLORS[i % GT_COLORS.length]}"></div>`).join('')}</div>` : '';
+                const members = entries.map(([n, m], i) => `<span class="gt-dot" style="background:${GT_COLORS[i % GT_COLORS.length]}"></span>${gEsc(n)}${n === g.owner ? ' 👑' : ''}: ${gSaved(m)} ⃁ <span style="opacity:.6">(${perTxt(Number(m.perAllowance) || 0)})</span>`).join('<br>');
                 return `<div class="goal-card">
                     <div class="goal-header"><div class="goal-name">${gEsc(g.name)}</div><div class="goal-amount">${tot} / ${g.amount} ⃁</div></div>
                     ${bar(p)}
                     <div class="goal-status">${p >= 100 ? '🎉 Goal reached!' : `${g.amount - tot} ⃁ to go`} · You've put in ${gSaved(mine)} ⃁</div>
+                    ${splitBar}
                     <div class="gt-members">${members}</div>
+                    ${gEtaHtml(g, perTotal)}
                     <div class="goal-actions">
                         ${btn('edit', `goalAdd('s','${g.id}')`, '＋ Add')}
-                        ${btn('edit', `goalSetPer('s','${g.id}')`, '💰 Per allowance')}
+                        ${owner ? btn('edit', `goalSplit('${g.id}')`, '🎚️ Who pays what') : ''}
                         ${owner ? btn('edit', `goalInvite('${g.id}')`, '📱 Invite (QR)') : ''}
                         ${owner ? btn('delete', `goalDeleteShared('${g.id}')`, '🗑️ Delete') : btn('delete', `goalLeave('${g.id}')`, 'Leave')}
                     </div></div>`;
             }).join('') : '<div class="gt-empty">No shared goals yet</div>';
+        }
+        const GT_COLORS = ['#00f5d4', '#feca57', '#ff6b9d', '#6c8cff', '#a78bfa', '#ff9f43'];
+        // "N allowances to reach it" + the date of the last one (everyone shares the same allowance day)
+        function gEtaCalc(g, perTotal) {
+            const left = Math.max(0, g.amount - gTotal(g));
+            if (left <= 0) return { done: true };
+            if (perTotal <= 0) return { none: true, left };
+            const N = Math.ceil(left / perTotal);
+            return { N, left, date: allowanceDateNth(N) };
+        }
+        function gEtaHtml(g, perTotal) {
+            const e = gEtaCalc(g, perTotal);
+            if (e.done) return '';
+            if (e.none) return `<div class="gt-eta">${g.owner === gMe() ? 'Use 🎚️ Who pays what to set the amounts.' : 'Waiting for the leader to set who pays what.'}</div>`;
+            return `<div class="gt-eta">Together <b>${perTotal} ⃁</b> per allowance → reached in <b>${e.N} allowance${e.N > 1 ? 's' : ''}</b> (${fmtAllowanceDay(e.date)})</div>`;
         }
         window.renderGoalsTab = renderGoalsTab;
 
@@ -16372,12 +16601,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const name = (prompt('Shared goal name') || '').trim();
             if (!name) return;
             const amount = askNum('Total target? (⃁)'); if (!amount) return;
-            const per = askNum('How much will YOU add every allowance? (⃁)', '5'); if (per === null) return;
-            const r = push(ref(database, 'sharedGoals'), { name, amount, owner: gMe(), createdAt: Date.now(), members: { [gMe()]: { perAllowance: per, saved: 0, joinedAt: Date.now() } } });
+            const r = push(ref(database, 'sharedGoals'), { name, amount, owner: gMe(), createdAt: Date.now(), members: { [gMe()]: { perAllowance: 0, saved: 0, joinedAt: Date.now() } } });
             await r;
-            goalInvite(r.key);
+            goalInvite(r.key); // after people join, use "Who pays what" to set the amounts
         };
         window.goalSetPer = function (t, id) {
+            if (t === 's') { goalSplit(id); return; }
             const info = gInfo(t, id); if (!info) return;
             const n = askNum(`Add how much to "${info.name}" every allowance? (⃁, 0 = none)`, info.per); if (n === null) return;
             update(ref(database, gPath(t, id)), { perAllowance: n });
@@ -16405,6 +16634,54 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             if (!confirm(`Delete "${g.name}"? Its ${gSaved(g)} ⃁ goes back to Savings.`)) return;
             refundToSavings(gSaved(g), g.name);
             set(ref(database, `users/${gMe()}/goals/${k}`), null);
+        };
+
+        // ---- Leader's "who pays what" sliders ----
+        let splitGoalId = null, splitVals = {};
+        function splitMax(g) { return Math.max(1, Math.min(150, g.amount - gTotal(g))); }
+        window.goalSplit = function (id) {
+            const g = sharedGoals.find((x) => x.id === id); if (!g) return;
+            if (g.owner !== gMe()) { showNotification('Only the leader can change this', true); return; }
+            splitGoalId = id; splitVals = {};
+            Object.entries(g.members).forEach(([n, m]) => { splitVals[n] = Math.min(splitMax(g), Number(m.perAllowance) || 0); });
+            document.getElementById('goalSplitTitle').textContent = g.name + ' - who pays what';
+            document.getElementById('goalSplitRows').innerHTML = Object.keys(g.members).map((n, i) => `
+                <div class="gt-mrow"><div class="gt-mtop"><span><span class="gt-dot" style="background:${GT_COLORS[i % GT_COLORS.length]}"></span>${gEsc(n)}${n === g.owner ? ' 👑' : ''}</span><b id="gsv_${i}">${splitVals[n]} ⃁</b></div>
+                <input type="range" class="slider" min="0" max="${splitMax(g)}" step="1" value="${splitVals[n]}" oninput="goalSplitSet(${i}, this.value)"></div>`).join('');
+            goalSplitPreview();
+            document.getElementById('goalSplitModal').classList.add('active');
+        };
+        window.goalSplitSet = function (i, v) {
+            const g = sharedGoals.find((x) => x.id === splitGoalId); if (!g) return;
+            const n = Object.keys(g.members)[i];
+            splitVals[n] = parseInt(v) || 0;
+            document.getElementById('gsv_' + i).textContent = splitVals[n] + ' ⃁';
+            goalSplitPreview();
+        };
+        function goalSplitPreview() {
+            const g = sharedGoals.find((x) => x.id === splitGoalId); if (!g) return;
+            const names = Object.keys(g.members);
+            const total = names.reduce((a, n) => a + (splitVals[n] || 0), 0);
+            document.getElementById('goalSplitBar').innerHTML = total > 0 ? names.map((n, i) => `<div style="width:${(splitVals[n] || 0) / total * 100}%;background:${GT_COLORS[i % GT_COLORS.length]}"></div>`).join('') : '';
+            const e = gEtaCalc(g, total);
+            document.getElementById('goalSplitEta').innerHTML = e.done ? '🎉 Goal already reached'
+                : e.none ? 'Move the sliders to see how many allowances it takes.'
+                : `Together <b>${total} ⃁</b> per allowance → <b>${e.N} allowance${e.N > 1 ? 's' : ''}</b> to reach it (${fmtAllowanceDay(e.date)})`;
+        }
+        window.goalSplitEven = function () {
+            const g = sharedGoals.find((x) => x.id === splitGoalId); if (!g) return;
+            const names = Object.keys(g.members);
+            const each = Math.max(0, Math.min(splitMax(g), Math.round(Math.min(g.amount - gTotal(g), 60 * names.length) / names.length / 5) * 5));
+            names.forEach((n, i) => { splitVals[n] = each; const r = document.querySelectorAll('#goalSplitRows input')[i]; if (r) r.value = each; document.getElementById('gsv_' + i).textContent = each + ' ⃁'; });
+            goalSplitPreview();
+        };
+        window.goalSplitSave = function () {
+            const g = sharedGoals.find((x) => x.id === splitGoalId); if (!g) return;
+            const upd = {};
+            Object.keys(g.members).forEach((n) => { upd[`${n}/perAllowance`] = splitVals[n] || 0; });
+            update(ref(database, `sharedGoals/${g.id}/members`), upd)
+                .then(() => { closeModal('goalSplitModal'); showNotification('Saved - everyone can see it now'); })
+                .catch((e) => showNotification('Could not save: ' + e.message, true));
         };
 
         // ---- Shared goals ----
@@ -16540,10 +16817,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             if (!g || g.closed) { showNotification('That invite is no longer valid', true); return; }
             if (g.members && g.members[me]) { switchTab('goals'); return; }
             if (!confirm(`Join the shared goal "${g.name}" (${g.amount} ⃁) from ${g.owner}?`)) return;
-            const per = askNum('How much will you add every time you get allowance? (⃁)', '5');
-            if (per === null) return;
-            await set(ref(database, `sharedGoals/${id}/members/${me}`), { perAllowance: per, saved: 0, joinedAt: Date.now() });
-            showNotification('Joined! 🎉');
+            await set(ref(database, `sharedGoals/${id}/members/${me}`), { perAllowance: 0, saved: 0, joinedAt: Date.now() });
+            showNotification('Joined! 🎉 The leader will set how much each person pays.');
             switchTab('goals');
         }
         // QR scan lands here with ?joinGoal=<id>; remember it until the user is logged in
@@ -17253,7 +17528,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
         function recapStats(cycle) {
             let income = 0, spent = 0, count = 0, biggest = null;
-            const tagTotals = {};
+            const tagTotals = {}, purchases = [];
             let any = false;
             history.forEach((it) => {
                 if (!isDateInCycle(it.date, cycle)) return;
@@ -17263,16 +17538,43 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 if (it.type === 'Purchase') {
                     const a = Math.abs(amt);
                     spent += a; count++;
+                    purchases.push({ name: it.notes || 'Purchase', amount: a, emoji: it.emoji, tag: it.tag });
                     if (!biggest || a > biggest.amount) biggest = { name: it.notes || 'Purchase', amount: a, emoji: it.emoji };
                     const t = it.tag || 'Other';
                     tagTotals[t] = (tagTotals[t] || 0) + a;
                 }
             });
-            return { income, spent, count, biggest, hasData: any, tags: Object.entries(tagTotals).sort((a, b) => b[1] - a[1]) };
+            const top5 = purchases.sort((a, b) => b.amount - a.amount).slice(0, 5);
+            return { income, spent, count, biggest, top5, hasData: any, tags: Object.entries(tagTotals).sort((a, b) => b[1] - a[1]) };
         }
 
-        window.showMonthlyRecap = function (cycle, compareCycle) {
+        let recapTaggingBusy = false;
+        async function tagCycleUntagged(cycle) {
+            if (!userHasAI() || recapTaggingBusy || !currentUser) return false;
+            recapTaggingBusy = true;
+            let changed = false;
+            try {
+                const me = currentUser.username;
+                const todo = history.map((it, i) => ({ it, key: historyKeys[i] }))
+                    .filter(({ it, key }) => it && it.type === 'Purchase' && !it.tag && key && !String(key).startsWith('local_') && isDateInCycle(it.date, cycle))
+                    .slice(0, 30);
+                for (const { it, key } of todo) {
+                    const tag = await getAITagForPurchase(it.notes, it.category);
+                    if (!tag) break;
+                    it.tag = tag; changed = true;
+                    update(ref(database, `users/${me}/history/${key}`), { tag }).catch(() => { });
+                }
+            } catch (e) { /* ignore */ } finally { recapTaggingBusy = false; }
+            return changed;
+        }
+
+        window.showMonthlyRecap = function (cycle, compareCycle, skipTagging) {
             if (!cycle) return;
+            if (!skipTagging) {
+                tagCycleUntagged(cycle).then((changed) => {
+                    if (changed && document.getElementById('recapOverlay').classList.contains('active')) showMonthlyRecap(cycle, compareCycle, true);
+                });
+            }
             const st = recapStats(cycle);
             const cmp = compareCycle ? recapStats(compareCycle) : null;
             const net = st.income - st.spent;
@@ -17283,12 +17585,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 const up = pct > 0;
                 delta = `<div class="recap-delta" style="color:${up ? '#ff6b6b' : '#4ade80'}">${pct === 0 ? 'Same as' : (up ? '▲ ' : '▼ ') + Math.abs(pct) + '% vs'} ${admEsc((compareCycle.label || 'last month').split(' ')[0])}</div>`;
             }
-            const top = st.tags.slice(0, 4);
+            const top = st.tags; // every tag, biggest first
             const topMax = top.length ? top[0][1] : 1;
             const tagsHtml = top.length ? `<div class="recap-block"><h4>Where it went</h4>${top.map(([t, v]) => `
-                <div class="recap-bar-row"><div class="top"><span>${PURCHASE_TAGS[t] || '🏷️'} ${admEsc(t)}</span><b>${v} ⃁</b></div>
+                <div class="recap-bar-row"><div class="top"><span>${PURCHASE_TAGS[t] || '🏷️'} ${admEsc(t)}</span><b>${v} ⃁ <span style="opacity:.6;font-weight:400">${st.spent ? Math.round(v / st.spent * 100) : 0}%</span></b></div>
                 <div class="recap-bar"><i style="width:${Math.max(4, Math.round(v / topMax * 100))}%"></i></div></div>`).join('')}</div>` : '';
-            const bigHtml = st.biggest ? `<div class="recap-block"><h4>Biggest purchase</h4>${st.biggest.emoji ? st.biggest.emoji + ' ' : ''}<b>${admEsc(st.biggest.name)}</b> — ${st.biggest.amount} ⃁</div>` : '';
+            const bigHtml = st.top5.length ? `<div class="recap-block"><h4>Top ${st.top5.length} biggest purchase${st.top5.length > 1 ? 's' : ''}</h4>${st.top5.map((b, i) => `
+                <div class="recap-rank"><span>${i + 1}. ${b.emoji ? b.emoji + ' ' : ''}${admEsc(b.name)}${b.tag ? ` <small style="opacity:.55">${PURCHASE_TAGS[b.tag] || ''} ${admEsc(b.tag)}</small>` : ''}</span><b>${b.amount} ⃁</b></div>`).join('')}</div>` : '';
             const savingsNow = Number(balances.savings) || 0;
             const openGoal = goals.map((g) => ({ n: g.name, a: Number(g.amount) || 0 })).filter((g) => g.a > savingsNow).sort((a, b) => a.a - b.a)[0];
             const goalHtml = openGoal ? `<div class="recap-block"><h4>Savings goal</h4>🎯 <b>${admEsc(openGoal.n)}</b> — ${savingsNow} / ${openGoal.a} ⃁ (${Math.round(savingsNow / openGoal.a * 100)}%)</div>` : '';

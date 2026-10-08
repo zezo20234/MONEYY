@@ -4277,6 +4277,38 @@
         .adm-tx-a.neg { color: #ff6b6b; }
         .adm-raw { margin: 10px 0 0; max-height: 420px; overflow: auto; font-size: 11px; line-height: 1.5; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
     </style>
+    <style>
+        /* ===== Rewards (points for logging purchases) ===== */
+        .rw-chip { display:inline-flex; align-items:center; gap:6px; margin:8px 4px 0; padding:6px 12px; border-radius:999px;
+            background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); font-size:13px; font-weight:700; cursor:pointer; color:inherit; }
+        .rw-title-badge { display:none; margin-top:6px; font-size:13px; font-weight:700; color: var(--accent-1, #00f5d4); letter-spacing:.3px; }
+        .rw-balance { text-align:center; padding:22px 16px; border-radius:20px; margin-bottom:14px;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--accent-1,#00f5d4) 22%, transparent), color-mix(in srgb, var(--accent-3,#667eea) 22%, transparent));
+            border:1px solid rgba(255,255,255,0.14); }
+        .rw-balance .rw-num { font-size:46px; font-weight:800; line-height:1.1; }
+        .rw-balance .rw-lbl { font-size:13px; opacity:.75; margin-top:2px; }
+        .rw-card { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:14px; margin-bottom:14px; }
+        .rw-card h4 { margin:0 0 8px; font-size:15px; }
+        .rw-card p, .rw-card li { font-size:13px; opacity:.85; line-height:1.5; margin:4px 0; }
+        .rw-card ul { margin:6px 0 0; padding-left:18px; }
+        .rw-bar { height:8px; border-radius:6px; background: rgba(255,255,255,0.1); overflow:hidden; margin:4px 0 10px; }
+        .rw-bar i { display:block; height:100%; background: linear-gradient(90deg, var(--accent-1,#00f5d4), var(--accent-3,#667eea)); }
+        .rw-row { display:flex; justify-content:space-between; font-size:13px; }
+        .rw-group-title { font-size:14px; font-weight:800; margin:18px 2px 8px; opacity:.9; }
+        .rw-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+        .rw-item { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:12px; text-align:center; display:flex; flex-direction:column; gap:6px; }
+        .rw-item.equipped { border-color: var(--accent-1,#00f5d4); box-shadow: 0 0 0 1px var(--accent-1,#00f5d4) inset; }
+        .rw-item .rw-ico { font-size:30px; }
+        .rw-item .rw-name { font-weight:700; font-size:14px; }
+        .rw-item .rw-desc { font-size:12px; opacity:.7; flex:1; }
+        .rw-swatch { height:10px; border-radius:6px; margin:0 auto; width:80%; }
+        .rw-btn { border:none; border-radius:10px; padding:8px 10px; font-weight:700; font-size:13px; cursor:pointer; color:#000;
+            background: linear-gradient(135deg, var(--accent-1,#00f5d4), var(--accent-2,#00d9f5)); }
+        .rw-btn.ghost { background: rgba(255,255,255,0.12); color:inherit; }
+        .rw-btn[disabled] { opacity:.4; cursor:not-allowed; }
+        .rw-fx { position:fixed; top:-30px; z-index:99999; pointer-events:none; animation: rwFall linear forwards; }
+        @keyframes rwFall { to { transform: translateY(110vh) rotate(540deg); opacity:.9; } }
+    </style>
 </head>
 
 <body>
@@ -4343,6 +4375,10 @@
                         <span class="bottom-nav-icon">🎯</span>
                         <span class="bottom-nav-label">Goals</span>
                     </div>
+                    <div class="bottom-nav-item" onclick="switchTab('rewards')" id="nav-rewards">
+                        <span class="bottom-nav-icon">⭐</span>
+                        <span class="bottom-nav-label">Rewards</span>
+                    </div>
                     <div class="bottom-nav-item" onclick="switchTab('missions')" id="nav-missions"
                         style="display: none;">
                         <span class="bottom-nav-icon">🎯</span>
@@ -4360,6 +4396,8 @@
                 <div class="header">
                     <div class="header-logo">💰</div>
                     <h1 id="homeHeader">Zezo UI 1.0</h1>
+                    <div class="rw-title-badge" id="rewardTitleBadge"></div>
+                    <div class="rw-chip" id="rewardPointsChip" onclick="switchTab('rewards')">⭐ <span id="rewardChipNum">0</span> pts</div>
                     <div class="total-label">Total Balance</div>
                     <div class="total-balance" id="totalBalance">0 ⃁</div>
                     <div class="allowance-countdown" id="allowanceCountdown" style="display: none;">
@@ -4640,6 +4678,11 @@
                 <button class="action-btn mission-paper-export-btn" onclick="printPaperMissions()">
                     🖨️ Print / Export Checklist
                 </button>
+            </div>
+
+            <div class="section" id="rewardsSection" style="display: none;">
+                <div class="section-title">⭐ Rewards</div>
+                <div id="rewardsBody"></div>
             </div>
 
             <div class="section" id="goalsSection" style="display: none;">
@@ -7552,7 +7595,7 @@
         // ---- Full stats page ----
         const ADM_KNOWN_KEYS = ['balances', 'preferences', 'goals', 'history', 'missions', 'points', 'missionPrestige',
             'discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
-            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt'];
+            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards'];
         let admStats = null; // { name, node, txs, filter, search, limit }
 
         function admHuman(k) {
@@ -10260,6 +10303,8 @@ Use the conversation history provided to you to remember what's already been sai
         // Global sound effect function for money operations
         function playMoneySound() {
             try {
+                const eqSnd = rewardsState && rewardsState.equipped && rewardsState.equipped.sound;
+                if (eqSnd) { rewardPlaySound(eqSnd); return; }
                 const audio = new Audio('money.mp3');
                 audio.play().catch(err => {
                     console.log('Sound effect failed to play:', err);
@@ -10669,6 +10714,10 @@ Use the conversation history provided to you to remember what's already been sai
             // Show/hide the Missions tab and the allowance mode toggle — Zezo only
             applyZezoOnlyUI();
 
+            // Rewards: reset, then load this user's owned/equipped items
+            rewardsState = { owned: {}, equipped: {} };
+            rewardListen(username);
+
             // Reset missions state before loading the new user's data
             missions = [];
             missionPoints = 0;
@@ -10944,6 +10993,7 @@ Use the conversation history provided to you to remember what's already been sai
 
         // Update the full Transactions tab list, applying the search filter if any
         function updateTransactionsList() {
+            try { renderRewardHeader(); } catch (e) { }
             const list = document.getElementById('transactionsList');
             if (!list) return;
 
@@ -12109,6 +12159,224 @@ Use the conversation history provided to you to remember what's already been sai
         };
 
         // Main tab switching
+
+        // =====================================================================
+        // ===== REWARDS: points for logging purchases + a shop to spend them ==
+        // =====================================================================
+        // Points are NOT stored as a number. Every earning Purchase carries a `pts`
+        // field in its own history entry, and the balance is always
+        //     (sum of pts on purchases still in history) - (cost of owned rewards)
+        // so deleting a purchase removes its points automatically. If points were
+        // already spent, the balance goes negative until you earn it back.
+        // Earning is deliberately slow (see REWARD_RULES).
+        const REWARD_RULES = {
+            minAmount: 5,      // purchase must be at least this many ⃁ to count
+            perPurchase: 1,    // points per counted purchase
+            cooldownMin: 60,   // minutes between two point-earning purchases
+            dailyCap: 2,       // max points per day
+            weeklyCap: 8       // max points per rolling 7 days
+        };
+        const REWARD_ITEMS = [
+            // type: title | theme | effect | sound
+            { id: 'title_penny', type: 'title', icon: '🪙', name: 'Penny Pincher', cost: 8, desc: 'Title shown on your home screen.', label: '🪙 Penny Pincher' },
+            { id: 'title_boss', type: 'title', icon: '📊', name: 'Budget Boss', cost: 20, desc: 'Title shown on your home screen.', label: '📊 Budget Boss' },
+            { id: 'title_sage', type: 'title', icon: '🧠', name: 'Saver Sage', cost: 35, desc: 'Title shown on your home screen.', label: '🧠 Saver Sage' },
+            { id: 'title_master', type: 'title', icon: '👑', name: 'Money Master', cost: 60, desc: 'The rarest title.', label: '👑 Money Master' },
+
+            { id: 'snd_register', type: 'sound', icon: '🧾', name: 'Cash Register', cost: 15, desc: 'New sound when you log money stuff.' },
+            { id: 'snd_chime', type: 'sound', icon: '🔔', name: 'Coin Chime', cost: 15, desc: 'Soft rising chime.' },
+            { id: 'snd_retro', type: 'sound', icon: '👾', name: 'Retro Blip', cost: 20, desc: '8-bit arcade sound.' },
+
+            { id: 'fx_confetti', type: 'effect', icon: '🎉', name: 'Confetti Burst', cost: 30, desc: 'Confetti falls when you log a purchase.' },
+            { id: 'fx_coins', type: 'effect', icon: '💸', name: 'Coin Rain', cost: 45, desc: 'Coins rain down when you log a purchase.' },
+
+            { id: 'th_aurora', type: 'theme', icon: '🌌', name: 'Aurora', cost: 25, desc: 'Exclusive theme.',
+              colors: { bg: '#050d14', bg2: '#0e2233', accent1: '#7efff5', accent2: '#4cc9f0', accent3: '#9d4edd', accent4: '#3a0ca3' } },
+            { id: 'th_crimson', type: 'theme', icon: '🩸', name: 'Crimson Night', cost: 25, desc: 'Exclusive theme.',
+              colors: { bg: '#120305', bg2: '#2a0a10', accent1: '#ff4d6d', accent2: '#ff758f', accent3: '#c9184a', accent4: '#800f2f' } },
+            { id: 'th_emerald', type: 'theme', icon: '💎', name: 'Emerald Vault', cost: 40, desc: 'Exclusive theme.',
+              colors: { bg: '#03110b', bg2: '#0a2a1c', accent1: '#50fa7b', accent2: '#00e5a0', accent3: '#ffd166', accent4: '#06a77d' } },
+            { id: 'th_holo', type: 'theme', icon: '🔮', name: 'Holographic', cost: 70, desc: 'Legendary theme.',
+              colors: { bg: '#0a0614', bg2: '#1b1033', accent1: '#ff9ff3', accent2: '#00f5d4', accent3: '#feca57', accent4: '#54a0ff' } }
+        ];
+        const REWARD_GROUPS = [['title', '🏷️ Titles'], ['theme', '🎨 Exclusive themes'], ['effect', '✨ Purchase effects'], ['sound', '🔊 Sounds']];
+        let rewardsState = { owned: {}, equipped: {} };
+
+        function rewardItem(id) { return REWARD_ITEMS.find(i => i.id === id); }
+        function rewardEarnedTotal() { return (history || []).reduce((s, h) => s + (h && h.type === 'Purchase' && h.pts > 0 ? Number(h.pts) : 0), 0); }
+        function rewardSpentTotal() { return Object.values(rewardsState.owned || {}).reduce((s, o) => s + (Number(o && o.cost) || 0), 0); }
+        function rewardBalance() { return rewardEarnedTotal() - rewardSpentTotal(); }
+        function rewardCacheKey() { return currentUser ? `mm_rewards_${currentUser.username}` : null; }
+        function rewardCacheSave() { try { const k = rewardCacheKey(); if (k) localStorage.setItem(k, JSON.stringify(rewardsState)); } catch (e) { } }
+
+        // Earning status right now (also used to explain why a purchase got no point).
+        function rewardStatus() {
+            const R = REWARD_RULES, now = Date.now();
+            const earned = (history || []).filter(h => h && h.type === 'Purchase' && h.pts > 0);
+            const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+            const today = earned.filter(h => new Date(h.date) >= dayStart).reduce((s, h) => s + h.pts, 0);
+            const week = earned.filter(h => now - new Date(h.date).getTime() < 7 * 86400000).reduce((s, h) => s + h.pts, 0);
+            const last = earned.reduce((m, h) => Math.max(m, new Date(h.date).getTime()), 0);
+            const cdLeftMs = Math.max(0, last + R.cooldownMin * 60000 - now);
+            return { today, week, cdLeftMin: Math.ceil(cdLeftMs / 60000) };
+        }
+        function rewardCalcPurchasePoints(cost, name) {
+            const R = REWARD_RULES, now = Date.now(), st = rewardStatus();
+            if (!(cost >= R.minAmount)) return { pts: 0, reason: `Purchases under ${R.minAmount} ⃁ don't earn points` };
+            if (st.today + R.perPurchase > R.dailyCap) return { pts: 0, reason: 'Daily points limit reached' };
+            if (st.week + R.perPurchase > R.weeklyCap) return { pts: 0, reason: 'Weekly points limit reached' };
+            if (st.cdLeftMin > 0) return { pts: 0, reason: `Next point in ${st.cdLeftMin} min` };
+            const n = String(name || '').trim().toLowerCase();
+            const dup = (history || []).some(h => h && h.type === 'Purchase' && now - new Date(h.date).getTime() < 86400000 &&
+                String(h.notes || '').trim().toLowerCase() === n && Math.abs(h.amount) === cost);
+            if (dup) return { pts: 0, reason: 'Same purchase already logged in the last 24h' };
+            return { pts: R.perPurchase };
+        }
+
+        function renderRewardHeader() {
+            const bal = rewardBalance();
+            const num = document.getElementById('rewardChipNum');
+            if (num) num.textContent = bal;
+            const badge = document.getElementById('rewardTitleBadge');
+            if (badge) {
+                const t = rewardItem((rewardsState.equipped || {}).title);
+                badge.style.display = t ? 'block' : 'none';
+                badge.textContent = t ? t.label : '';
+            }
+        }
+
+        function renderRewards() {
+            const body = document.getElementById('rewardsBody');
+            if (!body) return;
+            const R = REWARD_RULES, st = rewardStatus(), bal = rewardBalance();
+            const eq = rewardsState.equipped || {}, owned = rewardsState.owned || {};
+            const pct = (v, max) => Math.min(100, Math.round(v / max * 100));
+            let h = `
+                <div class="rw-balance">
+                    <div class="rw-num">⭐ ${bal}</div>
+                    <div class="rw-lbl">${bal < 0 ? 'Negative: you deleted purchases whose points were already spent' : 'points available'}</div>
+                    <div class="rw-lbl" style="margin-top:6px">Lifetime earned: ${rewardEarnedTotal()} • Spent: ${rewardSpentTotal()}</div>
+                </div>
+                <div class="rw-card">
+                    <h4>How to earn</h4>
+                    <div class="rw-row"><span>Today</span><b>${st.today} / ${R.dailyCap}</b></div>
+                    <div class="rw-bar"><i style="width:${pct(st.today, R.dailyCap)}%"></i></div>
+                    <div class="rw-row"><span>Last 7 days</span><b>${st.week} / ${R.weeklyCap}</b></div>
+                    <div class="rw-bar"><i style="width:${pct(st.week, R.weeklyCap)}%"></i></div>
+                    <p>${st.cdLeftMin > 0 ? `⏳ Next point available in ${st.cdLeftMin} min` : '✅ Your next purchase can earn a point'}</p>
+                    <ul>
+                        <li>${R.perPurchase} point per logged purchase of ${R.minAmount} ⃁ or more</li>
+                        <li>Max ${R.dailyCap} per day and ${R.weeklyCap} per week, ${R.cooldownMin} min apart</li>
+                        <li>Logging the same item + price twice in 24h only counts once</li>
+                        <li>Delete a purchase and its point is taken back</li>
+                    </ul>
+                </div>`;
+            REWARD_GROUPS.forEach(([type, label]) => {
+                h += `<div class="rw-group-title">${label}</div><div class="rw-grid">`;
+                REWARD_ITEMS.filter(i => i.type === type).forEach(i => {
+                    const has = !!owned[i.id];
+                    const isEq = has && i.type !== 'theme' && eq[i.type] === i.id;
+                    let btn;
+                    if (!has) btn = `<button class="rw-btn" ${bal >= i.cost ? '' : 'disabled'} onclick="redeemReward('${i.id}')">${i.cost} pts</button>`;
+                    else if (i.type === 'theme') btn = `<button class="rw-btn ghost" onclick="equipReward('${i.id}')">Apply</button>`;
+                    else btn = `<button class="rw-btn ${isEq ? 'ghost' : ''}" onclick="equipReward('${i.id}')">${isEq ? 'Equipped ✓' : 'Equip'}</button>`;
+                    const sw = i.colors ? `<div class="rw-swatch" style="background:linear-gradient(90deg,${i.colors.accent1},${i.colors.accent2},${i.colors.accent3},${i.colors.accent4})"></div>` : '';
+                    h += `<div class="rw-item ${isEq ? 'equipped' : ''}"><div class="rw-ico">${i.icon}</div><div class="rw-name">${i.name}</div>${sw}<div class="rw-desc">${i.desc}</div>${btn}</div>`;
+                });
+                h += `</div>`;
+            });
+            body.innerHTML = h;
+            renderRewardHeader();
+        }
+
+        window.redeemReward = function (id) {
+            const item = rewardItem(id);
+            if (!item || !currentUser) return;
+            if ((rewardsState.owned || {})[id]) return;
+            if (rewardBalance() < item.cost) { showNotification('Not enough points yet', true); return; }
+            if (!confirm(`Spend ${item.cost} points on "${item.name}"?`)) return;
+            const rec = { at: Date.now(), cost: item.cost };
+            rewardsState.owned = { ...(rewardsState.owned || {}), [id]: rec };
+            rewardCacheSave();
+            set(ref(database, `users/${currentUser.username}/rewards/owned/${id}`), rec).catch(() => { });
+            showNotification(`🎁 Unlocked ${item.name}!`);
+            renderRewards();
+        };
+
+        window.equipReward = function (id) {
+            const item = rewardItem(id);
+            if (!item || !currentUser || !(rewardsState.owned || {})[id]) return;
+            if (item.type === 'theme') {
+                const c = item.colors;
+                const theme = { bg: c.bg, bg2: c.bg2, accent1: c.accent1, accent2: c.accent2, accent3: c.accent3, accent4: c.accent4 };
+                localStorage.setItem(THEME_STORAGE, JSON.stringify(theme));
+                applyTheme(theme);
+                try { populateAppearanceInputs(); renderThemePresets(); } catch (e) { }
+                showNotification(`🎨 ${item.name} applied`);
+                return;
+            }
+            const cur = (rewardsState.equipped || {})[item.type];
+            const next = cur === id ? null : id; // tapping again un-equips
+            rewardsState.equipped = { ...(rewardsState.equipped || {}), [item.type]: next };
+            rewardCacheSave();
+            set(ref(database, `users/${currentUser.username}/rewards/equipped/${item.type}`), next).catch(() => { });
+            if (item.type === 'sound' && next) rewardPlaySound(next);
+            if (item.type === 'effect' && next) rewardSpawnFx(next);
+            renderRewards();
+        };
+
+        function rewardListen(username) {
+            try {
+                const cached = JSON.parse(localStorage.getItem(`mm_rewards_${username}`) || 'null');
+                if (cached) rewardsState = { owned: cached.owned || {}, equipped: cached.equipped || {} };
+            } catch (e) { }
+            renderRewardHeader();
+            onValue(ref(database, `users/${username}/rewards`), (snap) => {
+                if (!currentUser || currentUser.username !== username) return;
+                const v = snap.val() || {};
+                rewardsState = { owned: v.owned || {}, equipped: v.equipped || {} };
+                rewardCacheSave();
+                renderRewardHeader();
+                const sec = document.getElementById('rewardsSection');
+                if (sec && sec.style.display !== 'none') renderRewards();
+            });
+        }
+
+        // ---- Effects & sounds (cosmetic only) ----
+        function rewardSpawnFx(id) {
+            const coins = id === 'fx_coins';
+            const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#1dd1a1', '#f368e0', '#a29bfe'];
+            for (let i = 0; i < (coins ? 18 : 42); i++) {
+                const el = document.createElement('div');
+                el.className = 'rw-fx';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
+                el.style.animationDelay = (Math.random() * 0.5) + 's';
+                if (coins) { el.textContent = '🪙'; el.style.fontSize = (20 + Math.random() * 14) + 'px'; }
+                else { el.style.width = '8px'; el.style.height = '14px'; el.style.background = colors[i % colors.length]; el.style.borderRadius = '2px'; }
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 4000);
+            }
+        }
+        function rewardPlaySound(id) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const t0 = ctx.currentTime;
+                const tone = (freq, start, dur, type, vol) => {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = type; o.frequency.setValueAtTime(freq, t0 + start);
+                    g.gain.setValueAtTime(vol, t0 + start);
+                    g.gain.exponentialRampToValueAtTime(0.0001, t0 + start + dur);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(t0 + start); o.stop(t0 + start + dur + 0.02);
+                };
+                if (id === 'snd_register') { tone(1800, 0, 0.12, 'triangle', 0.3); tone(2400, 0.12, 0.5, 'triangle', 0.3); }
+                else if (id === 'snd_chime') { [784, 988, 1175].forEach((f, i) => tone(f, i * 0.12, 0.5, 'sine', 0.25)); }
+                else if (id === 'snd_retro') { [440, 660, 880, 1320].forEach((f, i) => tone(f, i * 0.07, 0.09, 'square', 0.12)); }
+                setTimeout(() => ctx.close().catch(() => { }), 1500);
+            } catch (e) { }
+        }
+
         window.switchTab = function (tab) {
             // Update bottom navigation
             document.querySelectorAll('.bottom-nav-item').forEach(item => item.classList.remove('active'));
@@ -12127,6 +12395,9 @@ Use the conversation history provided to you to remember what's already been sai
             if (usersSectionEl) usersSectionEl.style.display = tab === 'users' ? 'block' : 'none';
             const goalsSectionEl = document.getElementById('goalsSection');
             if (goalsSectionEl) goalsSectionEl.style.display = tab === 'goals' ? 'block' : 'none';
+            const rewardsSectionEl = document.getElementById('rewardsSection');
+            if (rewardsSectionEl) rewardsSectionEl.style.display = tab === 'rewards' ? 'block' : 'none';
+            if (tab === 'rewards') renderRewards();
             if (tab === 'goals') renderGoalsTab();
 
             if (tab === 'users') {
@@ -14038,6 +14309,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         function addToHistory(type, amount, category = null, notes = null, emoji = null, extra = null, needsAIEmoji = false) {
             if (!currentUser) return null;
             const username = currentUser.username;
+            // Rewards: work out the point (if any) BEFORE adding this entry to history.
+            let rewardInfo = null;
+            if (type === 'Purchase') {
+                rewardInfo = rewardCalcPurchasePoints(Math.abs(Number(amount)) || 0, notes);
+                if (rewardInfo.pts > 0) extra = { ...(extra || {}), pts: rewardInfo.pts };
+            }
             const newEntry = {
                 type,
                 amount,
@@ -14059,6 +14336,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             // Powers the "don't forget to add your purchases" reminder — only
             // resets the clock on actual purchases, not allowance/transfers/etc.
             if (type === 'Purchase') markPurchaseLogged(username);
+
+            if (type === 'Purchase') {
+                renderRewardHeader();
+                const fx = rewardsState.equipped && rewardsState.equipped.effect;
+                if (fx) rewardSpawnFx(fx);
+                if (rewardInfo && rewardInfo.pts > 0) setTimeout(() => showNotification(`⭐ +${rewardInfo.pts} point earned`), 1400);
+            }
 
             // Durably queue it, then try to sync immediately (no-ops instantly
             // if we're offline — it'll get picked up by flushPendingWrites()
@@ -15909,7 +16193,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             resetDeleteConfirmStage();
             closeModal('deleteModal');
-            showNotification('Transaction deleted');
+            renderRewardHeader();
+            const rwSec = document.getElementById('rewardsSection');
+            if (rwSec && rwSec.style.display !== 'none') renderRewards();
+            showNotification(item.type === 'Purchase' && item.pts > 0 ? `Transaction deleted • −${item.pts} point removed` : 'Transaction deleted');
         };
 
         // Select allowance amount

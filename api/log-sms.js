@@ -104,11 +104,15 @@ async function saveOne(text, user, queryTime) {
     try {
         const webhook = await (await fetch(`${DB}/users/${u}/discordWebhook.json`)).json();
         if (webhook) {
-            await fetch(webhook, {
+            const hookUrl = webhook + (webhook.includes('?') ? '&' : '?') + 'wait=true';
+            const hr = await fetch(hookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: 'Money', content: `💳 UrPay purchase: ${amount} ⃁ at ${store}. Open the app to choose where it comes from.`, allowed_mentions: { parse: [] } }),
             });
+            // Remember the message id so reminders.js can delete it after 14 days.
+            const hm = await hr.json().catch(() => null);
+            if (hm && hm.id) await fetch(`${DB}/users/${u}/sentMessages/${hm.id}.json`, { method: 'PUT', body: JSON.stringify({ at: Date.now() }) });
         }
     } catch { /* ignore */ }
 

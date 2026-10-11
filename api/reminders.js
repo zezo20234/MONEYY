@@ -31,20 +31,66 @@ const get = async (path, query = '') => {
 };
 const patch = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
 const del = (path) => fetch(`${DB}/${path}.json`, { method: 'DELETE' });
+const put = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PUT', body: JSON.stringify(body) });
+const KEEP_MS = 14 * DAY_MS; // webhook messages are deleted after this long
 
-// Allowance day = today is the 4th Friday of the 4-week cycle (same rule as the app).
+// Posts to a user's webhook and remembers the message id so it can be deleted later.
+async function sendHook(hook, u, content) {
+    const url = hook + (hook.includes('?') ? '&' : '?') + 'wait=true';
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'Money', content, allowed_mentions: { parse: [] } }),
+    }).catch(() => null);
+    if (res && res.ok) {
+        try {
+            const m = await res.json();
+            if (m && m.id) await put(`users/${u}/sentMessages/${m.id}`, { at: Date.now() });
+        } catch { /* ignore */ }
+    }
+    return res;
+}
+
+// Deletes webhook messages older than 14 days. Runs at most once every 6 hours.
+async function cleanupOldMessages(usernames, nowMs) {
+    const last = Number(await get('reminderSettings/lastCleanupAt')) || 0;
+    if (nowMs - last < 6 * 60 * 60 * 1000) return { skipped: true };
+    await put('reminderSettings/lastCleanupAt', nowMs);
+
+    let deleted = 0;
+    for (const name of usernames) {
+        const u = encodeURIComponent(name);
+        const hook = await get(`users/${u}/discordWebhook`);
+        const msgs = (await get(`users/${u}/sentMessages`)) || {};
+        const [base, qs] = hook ? String(hook).split('?') : [null, ''];
+        for (const [id, m] of Object.entries(msgs)) {
+            if (!m || nowMs - m.at < KEEP_MS) continue;
+            if (base) {
+                const res = await fetch(`${base}/messages/${id}${qs ? '?' + qs : ''}`, { method: 'DELETE' }).catch(() => null);
+                if (res && res.status === 429) return { deleted, rateLimited: true }; // try again next time
+                if (!res || (!res.ok && res.status !== 404)) continue;               // keep it, retry later
+            }
+            await del(`users/${u}/sentMessages/${id}`);
+            deleted++;
+            if (deleted >= 40) return { deleted, more: true };
+        }
+    }
+    return { deleted };
+}
+
+// Allowance day is the SAME for every user: every 4th Friday counted from the shared anchor
+// (the latest month-cycle start, or the day Zezo last set the week, whichever is later).
+// Exactly the same rule as the app's Week counter. Per-user anchors are ignored.
 function isAllowanceDay(cycleStartDay, anchor, todayStr) {
-    let start = cycleStartDay;
-    if (anchor && anchor > start) start = anchor;
-    const d = new Date(start + 'T00:00:00Z');
-    let fridays = 0, fourth = null;
-    for (let i = 0; i < 400; i++) {
+    const d = new Date(anchor + 'T00:00:00Z');
+    let fridays = 0, last = null;
+    for (let i = 0; i < 800; i++) {
         d.setUTCDate(d.getUTCDate() + 1);
         const s = d.toISOString().slice(0, 10);
         if (s > todayStr) break;
-        if (d.getUTCDay() === 5 && ++fridays === 4) fourth = s;
+        if (d.getUTCDay() === 5 && ++fridays % 4 === 0) last = s;
     }
-    return fourth === todayStr;
+    return last === todayStr;
 }
 
 const MESSAGES = [
@@ -126,10 +172,30 @@ async function run(force) {
     const cycles = Object.values((await get('financialCycle/history')) || {});
     const latestCycle = cycles.map((c) => new Date(c.startDate).getTime()).filter(Boolean).sort((a, b) => a - b).pop();
     const cycleStartDay = latestCycle ? dayStr(new Date(latestCycle + OFFSET_MS)) : today.slice(0, 8) + '01';
+    const cycleStartMs = latestCycle || (Date.parse(today.slice(0, 8) + '01T00:00:00Z') - OFFSET_MS);
+    const wk = await get('financialCycle/weekAnchor');
+    const sharedAnchor = wk && wk.day && wk.setAt >= cycleStartMs ? wk.day : cycleStartDay;
+    const allowanceToday = isAllowanceDay(cycleStartDay, sharedAnchor, today);
 
     const update = force ? null : await publishScheduledUpdate(nowMs);
 
     const usernames = Object.keys((await get('users', '?shallow=true')) || {});
+
+    // Manual scheduled messages (Admin Panel): scheduledMessages/<id> = { to: username | '*', text, sendAt }
+    let manual = 0;
+    if (!force) {
+        const msgs = (await get('scheduledMessages')) || {};
+        for (const [id, m] of Object.entries(msgs)) {
+            if (!m || !m.text || !m.sendAt || m.sendAt > nowMs) continue;
+            await del(`scheduledMessages/${id}`); // claim it first so it is never sent twice
+            for (const name of m.to === '*' ? usernames : [m.to]) {
+                const hook = await get(`users/${encodeURIComponent(name)}/discordWebhook`);
+                if (!hook) continue;
+                const res = await sendHook(hook, encodeURIComponent(name), String(m.text).slice(0, 1900));
+                if (res && res.ok) manual++;
+            }
+        }
+    }
 
     async function handleUser(name) {
         const u = encodeURIComponent(name);
@@ -159,12 +225,12 @@ async function run(force) {
         } else if (nextReminderAt) {
             if (nowMs < nextReminderAt) return false;
             usedCustomTime = true;
-            msg = buildMessage(name, isAllowanceDay(cycleStartDay, anchor, today), nextIdx);
+            msg = buildMessage(name, allowanceToday, nextIdx);
         } else {
             const win = resolveWindow(today, dow, userWins, userDayWins, gWins, gDays);
             if (nowMin < win.s || nowMin >= win.e) return false;
             if (lastReminderDay === today) return false;
-            if (isAllowanceDay(cycleStartDay, anchor, today)) {
+            if (allowanceToday) {
                 msg = buildMessage(name, true, nextIdx);
             } else if (isThursday) {
                 msg = buildMessage(name, false, nextIdx);
@@ -179,12 +245,8 @@ async function run(force) {
 
         // Mark as sent BEFORE posting so two overlapping runs can't double-send.
         if (!force) await patch(`users/${u}`, { lastReminderDay: today, lastReminderAt: nowMs, reminderMsgIndex: nextIdx });
-        const res = await fetch(webhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'Money', content: msg, allowed_mentions: { parse: [] } }),
-        });
-        if (res.ok) {
+        const res = await sendHook(webhook, u, msg);
+        if (res && res.ok) {
             if (usedCustomTime) await del(`users/${u}/nextReminderAt`);
             return true;
         }
@@ -198,7 +260,8 @@ async function run(force) {
         const results = await Promise.all(usernames.slice(i, i + 10).map((n) => handleUser(n).catch(() => false)));
         sent += results.filter(Boolean).length;
     }
-    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, scheduledUpdate: update };
+    const cleanup = force ? null : await cleanupOldMessages(usernames, nowMs).catch((e) => ({ error: e.message }));
+    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, manualMessages: manual, scheduledUpdate: update, cleanup };
 }
 
 export default async function handler(req, res) {

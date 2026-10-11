@@ -31,6 +31,52 @@ const get = async (path, query = '') => {
 };
 const patch = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
 const del = (path) => fetch(`${DB}/${path}.json`, { method: 'DELETE' });
+const put = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PUT', body: JSON.stringify(body) });
+const KEEP_MS = 14 * DAY_MS; // webhook messages are deleted after this long
+
+// Posts to a user's webhook and remembers the message id so it can be deleted later.
+async function sendHook(hook, u, content) {
+    const url = hook + (hook.includes('?') ? '&' : '?') + 'wait=true';
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'Money', content, allowed_mentions: { parse: [] } }),
+    }).catch(() => null);
+    if (res && res.ok) {
+        try {
+            const m = await res.json();
+            if (m && m.id) await put(`users/${u}/sentMessages/${m.id}`, { at: Date.now() });
+        } catch { /* ignore */ }
+    }
+    return res;
+}
+
+// Deletes webhook messages older than 14 days. Runs at most once every 6 hours.
+async function cleanupOldMessages(usernames, nowMs) {
+    const last = Number(await get('reminderSettings/lastCleanupAt')) || 0;
+    if (nowMs - last < 6 * 60 * 60 * 1000) return { skipped: true };
+    await put('reminderSettings/lastCleanupAt', nowMs);
+
+    let deleted = 0;
+    for (const name of usernames) {
+        const u = encodeURIComponent(name);
+        const hook = await get(`users/${u}/discordWebhook`);
+        const msgs = (await get(`users/${u}/sentMessages`)) || {};
+        const [base, qs] = hook ? String(hook).split('?') : [null, ''];
+        for (const [id, m] of Object.entries(msgs)) {
+            if (!m || nowMs - m.at < KEEP_MS) continue;
+            if (base) {
+                const res = await fetch(`${base}/messages/${id}${qs ? '?' + qs : ''}`, { method: 'DELETE' }).catch(() => null);
+                if (res && res.status === 429) return { deleted, rateLimited: true }; // try again next time
+                if (!res || (!res.ok && res.status !== 404)) continue;               // keep it, retry later
+            }
+            await del(`users/${u}/sentMessages/${id}`);
+            deleted++;
+            if (deleted >= 40) return { deleted, more: true };
+        }
+    }
+    return { deleted };
+}
 
 // Allowance day is the SAME for every user: every 4th Friday counted from the shared anchor
 // (the latest month-cycle start, or the day Zezo last set the week, whichever is later).
@@ -145,11 +191,7 @@ async function run(force) {
             for (const name of m.to === '*' ? usernames : [m.to]) {
                 const hook = await get(`users/${encodeURIComponent(name)}/discordWebhook`);
                 if (!hook) continue;
-                const res = await fetch(hook, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: 'Money', content: String(m.text).slice(0, 1900), allowed_mentions: { parse: [] } }),
-                }).catch(() => null);
+                const res = await sendHook(hook, encodeURIComponent(name), String(m.text).slice(0, 1900));
                 if (res && res.ok) manual++;
             }
         }
@@ -203,12 +245,8 @@ async function run(force) {
 
         // Mark as sent BEFORE posting so two overlapping runs can't double-send.
         if (!force) await patch(`users/${u}`, { lastReminderDay: today, lastReminderAt: nowMs, reminderMsgIndex: nextIdx });
-        const res = await fetch(webhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'Money', content: msg, allowed_mentions: { parse: [] } }),
-        });
-        if (res.ok) {
+        const res = await sendHook(webhook, u, msg);
+        if (res && res.ok) {
             if (usedCustomTime) await del(`users/${u}/nextReminderAt`);
             return true;
         }
@@ -222,7 +260,8 @@ async function run(force) {
         const results = await Promise.all(usernames.slice(i, i + 10).map((n) => handleUser(n).catch(() => false)));
         sent += results.filter(Boolean).length;
     }
-    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, manualMessages: manual, scheduledUpdate: update };
+    const cleanup = force ? null : await cleanupOldMessages(usernames, nowMs).catch((e) => ({ error: e.message }));
+    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, manualMessages: manual, scheduledUpdate: update, cleanup };
 }
 
 export default async function handler(req, res) {

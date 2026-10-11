@@ -71,6 +71,54 @@ function parseReceivedTime(text, queryTime) {
     return sane(ms) ? ms : null;
 }
 
+// Saves ONE SMS as a pending purchase. Returns a small result object (never throws for "ignored" texts).
+async function saveOne(text, user, queryTime) {
+    if (/\botp\b|one.?time|verification|code\s*[:：]/i.test(text)) return { ignored: 'looks like a code message' };
+    if (/refund|reversal|return|credit/i.test(text)) return { ignored: 'refund/credit not handled yet' };
+    if (!/purchase|\bpos\b|mada|apple\s*pay|online|payment/i.test(text)) return { ignored: 'not a purchase message' };
+    const amount = parseAmount(text);
+    if (!amount) return { ignored: 'no amount found' };
+    const store = parseStore(text);
+
+    const smsTime = parseSmsTime(text);
+    const givenTime = smsTime || parseReceivedTime(text, queryTime);
+    const purchasedAt = givenTime || Date.now();
+    const hasRealTime = !!givenTime;
+
+    const u = encodeURIComponent(user);
+    // The "received:" line is not part of the SMS, so it is left out of the duplicate check.
+    const hashText = text.replace(/^\s*received\s*[:：].*$/im, '').replace(/\s+/g, ' ').trim();
+    const hash = createHash('sha1').update(hashText + (smsTime ? '' : '|' + purchasedAt)).digest('hex').slice(0, 12);
+
+    // A text that carries its real purchase time can only be saved ONCE (so a queued text that was sent
+    // twice, e.g. the phone lost Wi-Fi halfway, never makes a double purchase). A text with no time at all
+    // is only treated as a repeat inside 2 minutes (a phone retry), as before.
+    const lastSeen = Number(await (await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`)).json()) || 0;
+    const dupWindow = hasRealTime ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 1000;
+    if (Date.now() - lastSeen < dupWindow) return { ignored: 'same message already received' };
+    await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`, { method: 'PUT', body: JSON.stringify(Date.now()) });
+    const id = hash + Date.now().toString(36);
+    await fetch(`${DB}/users/${u}/pendingSms/${id}.json`, { method: 'PUT', body: JSON.stringify({ amount, store, createdAt: Date.now(), purchasedAt }) });
+
+    // Optional heads-up on Discord (never fails the request).
+    try {
+        const webhook = await (await fetch(`${DB}/users/${u}/discordWebhook.json`)).json();
+        if (webhook) {
+            const hookUrl = webhook + (webhook.includes('?') ? '&' : '?') + 'wait=true';
+            const hr = await fetch(hookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'Money', content: `💳 UrPay purchase: ${amount} ⃁ at ${store}. Open the app to choose where it comes from.`, allowed_mentions: { parse: [] } }),
+            });
+            // Remember the message id so reminders.js can delete it after 14 days.
+            const hm = await hr.json().catch(() => null);
+            if (hm && hm.id) await fetch(`${DB}/users/${u}/sentMessages/${hm.id}.json`, { method: 'PUT', body: JSON.stringify({ at: Date.now() }) });
+        }
+    } catch { /* ignore */ }
+
+    return { pending: true, amount, store };
+}
+
 export default async function handler(req, res) {
     try {
         if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ error: 'use POST' });
@@ -83,47 +131,17 @@ export default async function handler(req, res) {
 
         const text = readBody(req) || String((req.query && req.query.text) || '');
         if (!text.trim()) return res.status(400).json({ error: 'empty message' });
+        const queryTime = req.query && req.query.time;
 
-        if (/\botp\b|one.?time|verification|code\s*[:：]/i.test(text)) return res.status(200).json({ ignored: 'looks like a code message' });
-        if (/refund|reversal|return|credit/i.test(text)) return res.status(200).json({ ignored: 'refund/credit not handled yet' });
-        if (!/purchase|\bpos\b|mada|apple\s*pay|online|payment/i.test(text)) return res.status(200).json({ ignored: 'not a purchase message' });
-        const amount = parseAmount(text);
-        if (!amount) return res.status(200).json({ ignored: 'no amount found' });
-        const store = parseStore(text);
+        // The whole queue file can be sent in ONE request: the saved texts are separated by a line "~~~".
+        if (text.includes('~~~')) {
+            const records = text.split('~~~').map((t) => t.trim()).filter((t) => t.length > 10);
+            const results = [];
+            for (const r of records) results.push(await saveOne(r, user, queryTime));
+            return res.status(200).json({ ok: true, batch: true, saved: results.filter((r) => r.pending).length, total: records.length, results });
+        }
 
-        const smsTime = parseSmsTime(text);
-        const givenTime = smsTime || parseReceivedTime(text, req.query && req.query.time);
-        const purchasedAt = givenTime || Date.now();
-        const hasRealTime = !!givenTime;
-
-        const u = encodeURIComponent(user);
-        // The "received:" line is not part of the SMS, so it is left out of the duplicate check.
-        const hashText = text.replace(/^\s*received\s*[:：].*$/im, '').replace(/\s+/g, ' ').trim();
-        const hash = createHash('sha1').update(hashText + (smsTime ? '' : '|' + purchasedAt)).digest('hex').slice(0, 12);
-
-        // A text that carries its real purchase time can only be saved ONCE (so a queued text that was sent
-        // twice, e.g. the phone lost Wi-Fi halfway, never makes a double purchase). A text with no time at all
-        // is only treated as a repeat inside 2 minutes (a phone retry), as before.
-        const lastSeen = Number(await (await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`)).json()) || 0;
-        const dupWindow = hasRealTime ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 1000;
-        if (Date.now() - lastSeen < dupWindow) return res.status(200).json({ ignored: 'same message already received' });
-        await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`, { method: 'PUT', body: JSON.stringify(Date.now()) });
-        const id = hash + Date.now().toString(36);
-        await fetch(`${DB}/users/${u}/pendingSms/${id}.json`, { method: 'PUT', body: JSON.stringify({ amount, store, createdAt: Date.now(), purchasedAt }) });
-
-        // Optional heads-up on Discord (never fails the request).
-        try {
-            const webhook = await (await fetch(`${DB}/users/${u}/discordWebhook.json`)).json();
-            if (webhook) {
-                await fetch(webhook, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: 'Money', content: `💳 UrPay purchase: ${amount} ⃁ at ${store}. Open the app to choose where it comes from.`, allowed_mentions: { parse: [] } }),
-                });
-            }
-        } catch { /* ignore */ }
-
-        return res.status(200).json({ pending: true, amount, store });
+        return res.status(200).json({ ok: true, ...(await saveOne(text, user, queryTime)) });
     } catch (e) {
         return res.status(500).json({ error: e.message });
     }

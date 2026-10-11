@@ -10952,6 +10952,19 @@ Use the conversation history provided to you to remember what's already been sai
             });
         }
 
+        const smsDraft = {}; // id -> { desc, tag }  (kept so a new SMS arriving doesn't wipe what you typed)
+        const smsDefaultTag = () => (userHasAI() ? 'auto' : 'Other');
+        function smsGetDraft(id) { return smsDraft[id] || (smsDraft[id] = { desc: '', tag: smsDefaultTag() }); }
+
+        window.smsSetTag = function (id, t) {
+            smsGetDraft(id).tag = t;
+            document.querySelectorAll('#smsPopup [data-smstag]').forEach((b) => {
+                const on = b.getAttribute('data-smstag') === t;
+                b.style.background = on ? 'rgba(46,213,115,.25)' : 'rgba(255,255,255,.08)';
+                b.style.borderColor = on ? '#2ed573' : 'rgba(255,255,255,.18)';
+            });
+        };
+
         function renderSmsPopup() {
             const old = document.getElementById('smsPopup');
             const item = smsQueue[0];
@@ -10965,17 +10978,27 @@ Use the conversation history provided to you to remember what's already been sai
             if (old) old.remove();
             smsShownKey = key;
 
+            const draft = smsGetDraft(item.id);
             const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
             const btn = (bucket, label, bg) => `<button onclick="smsPick('${item.id}','${bucket}')" style="width:100%;padding:14px;margin-top:10px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:${bg};cursor:pointer;">${label} <span style="opacity:.8;font-weight:500;">(${r2(balances[bucket])} ⃁)</span></button>`;
+            const chip = (t, label) => {
+                const on = draft.tag === t;
+                return `<button data-smstag="${esc(t)}" onclick="smsSetTag('${item.id}','${esc(t)}')" style="padding:7px 11px;border-radius:999px;font-size:13px;color:#fff;cursor:pointer;border:1px solid ${on ? '#2ed573' : 'rgba(255,255,255,.18)'};background:${on ? 'rgba(46,213,115,.25)' : 'rgba(255,255,255,.08)'};">${label}</button>`;
+            };
+            const tagChips = (userHasAI() ? chip('auto', '✨ Auto') : '') + Object.entries(PURCHASE_TAGS).map(([t, e]) => chip(t, `${e} ${t}`)).join('');
+
             const el = document.createElement('div');
             el.id = 'smsPopup';
-            el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+            el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
             el.innerHTML = `
-                <div style="width:100%;max-width:380px;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;">
-                    <div style="font-size:40px;">💳</div>
-                    <div style="font-size:14px;opacity:.7;margin-top:4px;">New UrPay purchase${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
-                    <div style="font-size:34px;font-weight:800;margin:6px 0;">${item.amount} ⃁</div>
-                    <div style="font-size:15px;opacity:.85;word-break:break-word;">${esc(item.store)}</div>
+                <div style="width:100%;max-width:380px;max-height:92vh;overflow-y:auto;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;">
+                    <div style="font-size:34px;">💳</div>
+                    <div style="font-size:13px;opacity:.7;margin-top:2px;">New UrPay purchase${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
+                    <div style="font-size:32px;font-weight:800;margin:4px 0;">${item.amount} ⃁</div>
+                    <div style="font-size:14px;opacity:.8;word-break:break-word;">${esc(item.store)}</div>
+                    <input id="smsDesc" type="text" maxlength="60" placeholder="What was it? (e.g. chips)" value="${esc(draft.desc)}"
+                        style="width:100%;box-sizing:border-box;margin-top:14px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:16px;">
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;">${tagChips}</div>
                     <div style="font-size:13px;opacity:.6;margin:14px 0 0;">Where should it come out of?</div>
                     ${btn('hangout', '🎉 Hangout', 'linear-gradient(135deg,#2ed573,#17a85a)')}
                     ${btn('savings', '💰 Savings', 'linear-gradient(135deg,#667eea,#4a5fd0)')}
@@ -10983,6 +11006,8 @@ Use the conversation history provided to you to remember what's already been sai
                     <button onclick="smsDecline('${item.id}')" style="width:100%;padding:12px;margin-top:14px;border:1px solid rgba(255,255,255,.25);border-radius:14px;font-size:15px;color:#ff6b6b;background:transparent;cursor:pointer;">✖ Decline — this was a mistake</button>
                 </div>`;
             document.body.appendChild(el);
+            const inp = document.getElementById('smsDesc');
+            inp.addEventListener('input', () => { smsGetDraft(item.id).desc = inp.value; });
         }
 
         window.smsPick = async function (id, bucket) {
@@ -10992,6 +11017,10 @@ Use the conversation history provided to you to remember what's already been sai
             const have = r2(balances[bucket]);
             const cost = r2(Math.min(have, item.amount));
             if (cost <= 0) { showNotification(`There is no money in ${bucket} — pick another one`, true); return; }
+            const inp = document.getElementById('smsDesc');
+            const draft = smsGetDraft(id);
+            const desc = ((inp ? inp.value : draft.desc) || '').trim();
+            const tag = draft.tag === 'auto' ? (userHasAI() ? null : 'Other') : draft.tag;
             smsBusy = true;
             try {
                 // Claim it first, so it can never be logged twice (even from two phones).
@@ -11000,8 +11029,10 @@ Use the conversation history provided to you to remember what's already been sai
                 balances[bucket] = r2(have - cost);
                 saveBalances();
                 playMoneySound();
-                const note = cost < item.amount ? `${item.store} (only ${cost} of ${item.amount} was in ${bucket})` : item.store;
-                addToHistory('Purchase', -cost, bucket, note, null, null, true);
+                const base = desc || item.store;
+                const note = cost < item.amount ? `${base} (only ${cost} of ${item.amount} was in ${bucket})` : base;
+                addToHistory('Purchase', -cost, bucket, note, null, tag ? { tag } : null, true);
+                delete smsDraft[id];
                 showNotification(`Logged ${cost} ⃁ from ${bucket}`);
             } catch (e) {
                 console.error(e);

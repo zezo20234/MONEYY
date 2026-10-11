@@ -10946,7 +10946,7 @@ Use the conversation history provided to you to remember what's already been sai
                 const v = snap.val() || {};
                 smsQueue = Object.entries(v)
                     .filter(([, p]) => p && Number(p.amount) > 0)
-                    .map(([id, p]) => ({ id, amount: r2(p.amount), store: String(p.store || 'UrPay purchase'), at: Number(p.createdAt) || 0 }))
+                    .map(([id, p]) => ({ id, amount: r2(p.amount), store: String(p.store || 'UrPay purchase'), at: Number(p.purchasedAt) || Number(p.createdAt) || 0 }))
                     .sort((a, b) => a.at - b.at);
                 renderSmsPopup();
             });
@@ -11007,6 +11007,7 @@ Use the conversation history provided to you to remember what's already been sai
                     <div style="font-size:13px;opacity:.7;margin-top:2px;">New UrPay purchase${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
                     <div style="font-size:32px;font-weight:800;margin:4px 0;">${item.amount} ⃁</div>
                     <div style="font-size:14px;opacity:.8;word-break:break-word;">${esc(item.store)}</div>
+                    ${item.at ? `<div style="font-size:12px;opacity:.55;margin-top:4px;">${esc(new Date(item.at).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }))}</div>` : ''}
                     <input id="smsDesc" type="text" maxlength="60" placeholder="What was it? (e.g. chips)" value="${esc(draft.desc)}"
                         style="width:100%;box-sizing:border-box;margin-top:14px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:16px;">
                     <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;">${tagChips}</div>
@@ -11042,7 +11043,9 @@ Use the conversation history provided to you to remember what's already been sai
                 playMoneySound();
                 const base = desc || item.store;
                 const note = cost < item.amount ? `${base} (only ${cost} of ${item.amount} was in ${bucket})` : base;
-                addToHistory('Purchase', -cost, bucket, note, null, tag ? { tag } : null, true);
+                // Use the time the purchase really happened (it may have been queued on the phone while offline).
+                const when = item.at && item.at < Date.now() ? { date: new Date(item.at).toISOString() } : {};
+                addToHistory('Purchase', -cost, bucket, note, null, { ...(tag ? { tag } : {}), ...when }, true);
                 delete smsDraft[id];
                 showNotification(`Logged ${cost} ⃁ from ${bucket}`);
             } catch (e) {

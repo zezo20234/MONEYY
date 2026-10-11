@@ -12,12 +12,23 @@ import { createHash } from 'node:crypto';
 const DB = (process.env.FIREBASE_DATABASE_URL || 'https://money-e560a-default-rtdb.firebaseio.com').replace(/\/$/, '');
 const r2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
+// Accepts plain text, {"text": "..."} or anything else Shortcuts sends: it collects every piece of text it can find.
+function collectText(v, out = []) {
+    if (v == null) return out;
+    if (typeof v === 'string') out.push(v);
+    else if (Array.isArray(v)) v.forEach((x) => collectText(x, out));
+    else if (typeof v === 'object') Object.values(v).forEach((x) => collectText(x, out));
+    return out;
+}
 function readBody(req) {
-    const b = req.body;
+    let b = req.body;
     if (!b) return '';
-    if (typeof b === 'string') return b;
-    if (Buffer.isBuffer(b)) return b.toString('utf8');
-    return String(b.text || b.message || b.body || b.sms || '');
+    if (Buffer.isBuffer(b)) b = b.toString('utf8');
+    if (typeof b === 'string') {
+        try { const j = JSON.parse(b); if (j && typeof j === 'object') return collectText(j).join('\n'); } catch { /* plain text */ }
+        return b;
+    }
+    return collectText(b).join('\n');
 }
 
 // "amount:13:13.49" -> 13.49
@@ -55,12 +66,14 @@ export default async function handler(req, res) {
         const store = parseStore(text);
 
         const u = encodeURIComponent(user);
-        const id = createHash('sha1').update(text.replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 20);
+        const hash = createHash('sha1').update(text.replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 12);
 
-        // The same SMS twice (phone retry) must only count once.
-        const seen = await (await fetch(`${DB}/users/${u}/smsSeen/${id}.json`)).json();
-        if (seen) return res.status(200).json({ ignored: 'already received' });
-        await fetch(`${DB}/users/${u}/smsSeen/${id}.json`, { method: 'PUT', body: JSON.stringify(Date.now()) });
+        // Only a REPEAT within 2 minutes (a phone retry) is ignored. Two real purchases with the same
+        // price and store are both kept (the SMS also has the time, and each one gets its own id).
+        const lastSeen = Number(await (await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`)).json()) || 0;
+        if (Date.now() - lastSeen < 2 * 60 * 1000) return res.status(200).json({ ignored: 'same message received a moment ago' });
+        await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`, { method: 'PUT', body: JSON.stringify(Date.now()) });
+        const id = hash + Date.now().toString(36);
         await fetch(`${DB}/users/${u}/pendingSms/${id}.json`, { method: 'PUT', body: JSON.stringify({ amount, store, createdAt: Date.now() }) });
 
         // Optional heads-up on Discord (never fails the request).

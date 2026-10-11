@@ -6198,7 +6198,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, set, get, update, onValue, push, remove, query, orderByChild, equalTo, runTransaction } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, set, get, update, onValue, push, remove, query, orderByChild, equalTo, runTransaction, goOnline } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyCugS0qHKstGZArd5vEBzm-DaLZAIDugo",
@@ -10951,6 +10951,17 @@ Use the conversation history provided to you to remember what's already been sai
                 renderSmsPopup();
             });
         }
+
+        // When the phone wakes the app up (switch back to it, unlock, etc.) the live connection may have been
+        // frozen by iOS. Reconnect and re-subscribe so a waiting UrPay purchase pops up straight away.
+        function smsWake() {
+            if (document.visibilityState === 'hidden') return;
+            try { goOnline(database); } catch (e) { }
+            if (currentUser && currentUser.username) listenPendingSms(currentUser.username);
+        }
+        document.addEventListener('visibilitychange', smsWake);
+        window.addEventListener('focus', smsWake);
+        window.addEventListener('pageshow', smsWake);
 
         const smsDraft = {}; // id -> { desc, tag }  (kept so a new SMS arriving doesn't wipe what you typed)
         const smsDefaultTag = () => (userHasAI() ? 'auto' : 'Other');

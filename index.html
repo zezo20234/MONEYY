@@ -4545,7 +4545,7 @@
                 <!-- Main Amount Input -->
                 <div class="form-group">
                     <label class="form-label">Custom Amount (⃁)</label>
-                    <input type="number" class="form-input" id="quickPurchaseAmount" placeholder="Enter amount"
+                    <input type="number" class="form-input" id="quickPurchaseAmount" step="any" inputmode="decimal" placeholder="Enter amount"
                         oninput="validatePurchaseAmount()">
                 </div>
 
@@ -4816,7 +4816,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Total Amount (⃁)</label>
-                    <input type="number" class="form-input" id="allowanceAmount" inputmode="numeric" min="1" step="1"
+                    <input type="number" class="form-input" id="allowanceAmount" inputmode="decimal" min="0.01" step="any"
                         value="60" placeholder="60" oninput="autoCalculateSplit()">
                 </div>
                 <div class="slider-container">
@@ -4824,7 +4824,7 @@
                         <span>Hangout (<span id="hangoutPercentLabel">50%</span>)</span>
                         <span id="hangoutSplit">35 ⃁</span>
                     </div>
-                    <input type="range" class="slider" id="hangoutSlider" min="0" max="120" value="35"
+                    <input type="range" class="slider" id="hangoutSlider" min="0" max="120" step="0.01" value="35"
                         oninput="updateAllowanceSplit()">
                 </div>
                 <div class="slider-container">
@@ -4832,7 +4832,7 @@
                         <span>Savings (<span id="savingsPercentLabel">37.5%</span>)</span>
                         <span id="savingsSplit">25 ⃁</span>
                     </div>
-                    <input type="range" class="slider" id="savingsSlider" min="0" max="120" value="25"
+                    <input type="range" class="slider" id="savingsSlider" min="0" max="120" step="0.01" value="25"
                         oninput="updateAllowanceSplit()">
                 </div>
                 <div class="slider-container" id="playstationSliderContainer">
@@ -4840,7 +4840,7 @@
                         <span>PlayStation / Mobily (<span id="playstationPercentLabel">12.5%</span>)</span>
                         <span id="playstationSplit">0 ⃁</span>
                     </div>
-                    <input type="range" class="slider" id="playstationSlider" min="0" max="120" value="0"
+                    <input type="range" class="slider" id="playstationSlider" min="0" max="120" step="0.01" value="0"
                         oninput="updateAllowanceSplit()">
                 </div>
                 <div class="modal-actions">
@@ -4985,7 +4985,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Amount (⃁)</label>
-                    <input type="number" class="form-input" id="addMoneyAmount" placeholder="50">
+                    <input type="number" class="form-input" id="addMoneyAmount" step="any" inputmode="decimal" placeholder="50">
                 </div>
                 <div class="modal-actions">
                     <button class="modal-btn cancel" onclick="closeModal('addMoneyModal')">Cancel</button>
@@ -5019,7 +5019,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Amount (⃁)</label>
-                    <input type="number" class="form-input" id="transferAmount" placeholder="30">
+                    <input type="number" class="form-input" id="transferAmount" step="any" inputmode="decimal" placeholder="30">
                 </div>
                 <div class="ai-advice-section">
                     <button class="ai-advice-btn" onclick="askTransferAdviceFromModal()">🤖 Ask AI if this transfer is a
@@ -5043,15 +5043,15 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Hangout Balance (⃁)</label>
-                    <input type="number" class="form-input" id="editHangout" placeholder="Current balance">
+                    <input type="number" class="form-input" id="editHangout" step="any" inputmode="decimal" placeholder="Current balance">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Savings Balance (⃁)</label>
-                    <input type="number" class="form-input" id="editSavings" placeholder="Current balance">
+                    <input type="number" class="form-input" id="editSavings" step="any" inputmode="decimal" placeholder="Current balance">
                 </div>
                 <div class="form-group">
                     <label class="form-label">PlayStation Balance (⃁)</label>
-                    <input type="number" class="form-input" id="editPlaystation" placeholder="Current balance">
+                    <input type="number" class="form-input" id="editPlaystation" step="any" inputmode="decimal" placeholder="Current balance">
                 </div>
                 <div class="modal-actions">
                     <button class="modal-btn cancel" onclick="closeModal('editModal')">Cancel</button>
@@ -5111,7 +5111,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Amount (⃁)</label>
-                <input type="number" class="form-input" id="editTransactionAmount">
+                <input type="number" class="form-input" id="editTransactionAmount" step="any" inputmode="decimal">
             </div>
             <div class="form-group" id="editTransactionCategoryGroup">
                 <label class="form-label">Category</label>
@@ -7595,7 +7595,7 @@
         // ---- Full stats page ----
         const ADM_KNOWN_KEYS = ['balances', 'preferences', 'goals', 'history', 'missions', 'points', 'missionPrestige',
             'discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
-            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards'];
+            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards', 'pendingSms', 'smsSeen'];
         let admStats = null; // { name, node, txs, filter, search, limit }
 
         function admHuman(k) {
@@ -7655,9 +7655,9 @@
             for (const inp of document.querySelectorAll('#admMoneyEdit input[data-bucket]')) {
                 const v = Number(inp.value);
                 if (!Number.isFinite(v) || v < 0) { showNotification('Enter valid amounts (0 or more)', true); return; }
-                next[inp.dataset.bucket] = Math.round(v);
+                next[inp.dataset.bucket] = r2(v);
             }
-            const changes = Object.keys(next).filter((k) => (Number(old[k]) || 0) !== next[k]);
+            const changes = Object.keys(next).filter((k) => r2(Number(old[k]) || 0) !== next[k]);
             if (!changes.length) { admToggleMoneyEdit(false); return; }
             if (!confirm(`Change ${name}'s money?\n` + changes.map((k) => `${k}: ${Number(old[k]) || 0} → ${next[k]}`).join('\n'))) return;
             const btn = document.getElementById('admSaveMoneyBtn');
@@ -7723,7 +7723,7 @@
                 <button class="adm-mini" id="admEditMoneyBtn" style="width:100%; margin-top:10px;" onclick="admToggleMoneyEdit(true)">✏️ Edit money</button>
                 <div id="admMoneyEdit" style="display:none; margin-top:10px;">
                     ${['hangout', 'savings', 'playstation'].map((k) => `<label class="adm-kv" style="align-items:center;"><span>${admEsc(bucketLabel[k])} (⃁)</span>
-                        <input class="adm-input" type="number" min="0" step="1" data-bucket="${k}" value="${Number(balances[k]) || 0}" style="width:110px; text-align:right;"></label>`).join('')}
+                        <input class="adm-input" type="number" min="0" step="any" inputmode="decimal" data-bucket="${k}" value="${Number(balances[k]) || 0}" style="width:110px; text-align:right;"></label>`).join('')}
                     <div style="display:flex; gap:8px; margin-top:10px;">
                         <button class="adm-mini ghost" style="flex:1" onclick="admToggleMoneyEdit(false)">Cancel</button>
                         <button class="adm-mini" style="flex:1" id="admSaveMoneyBtn" onclick="admSaveMoney()">Save</button>
@@ -7955,7 +7955,7 @@
                 const raw = localStorage.getItem(`mm_cache_${username}`);
                 if (!raw) return;
                 const cached = JSON.parse(raw);
-                if (cached.balances) { balances = cached.balances; updateUI(); }
+                if (cached.balances) { balances = cached.balances; clampBalances(); updateUI(); }
                 if (cached.history) { history = cached.history; historyKeys = cached.historyKeys || []; updateTransactionsList(); updateCharts(); }
                 if (cached.goals) { goals = cached.goals; goalKeys = cached.goalKeys || []; updateGoalsList(); }
                 if (cached.userPreferences) { userPreferences = cached.userPreferences; updateUIForPreferences(); }
@@ -7998,13 +7998,16 @@
         // flushPendingWrites() will push this exact snapshot up once we're
         // back online.
         // Money can never be negative: anything below 0 becomes 0.
+        // Rounds money to 2 decimals so floating-point junk like 7.78000000000001 never appears.
+        function r2(n) { n = Number(n); return isFinite(n) ? Math.round((n + Number.EPSILON) * 100) / 100 : 0; }
+        window.r2 = r2;
         function clampBalances() {
             let changed = false;
             if (!balances) return false;
             for (const k of Object.keys(balances)) {
-                if (typeof balances[k] === 'number' && (balances[k] < 0 || !isFinite(balances[k]))) {
-                    balances[k] = 0;
-                    changed = true;
+                if (typeof balances[k] === 'number') {
+                    let v = (balances[k] < 0 || !isFinite(balances[k])) ? 0 : r2(balances[k]);
+                    if (v !== balances[k]) { balances[k] = v; changed = true; }
                 }
             }
             return changed;
@@ -9512,21 +9515,23 @@ Rules:
             return {
                 userProfile: {
                     username: currentUser?.username || 'User',
-                    totalBalance: totalBalance,
+                    totalBalance: r2(totalBalance),
                     balances: {
-                        hangout: balances.hangout,
-                        savings: balances.savings,
-                        playstation: balances.playstation
+                        hangout: r2(balances.hangout),
+                        savings: r2(balances.savings),
+                        playstation: r2(balances.playstation)
                     },
                     preferences: userPreferences
                 },
                 spendingAnalysis: {
-                    monthlySpending: monthlySpending,
-                    weeklySpending: weeklySpending,
+                    monthlySpending: r2(monthlySpending),
+                    weeklySpending: r2(weeklySpending),
                     currentMonth: thisMonth,
                     financialMonthStarted: cycle.startDate.toISOString(),
                     hangoutLimit: userPreferences.hangoutLimit,
-                    hangoutRemaining: userPreferences.hangoutLimit - balances.hangout,
+                    // Money actually left in Hangout (it used to be limit - balance, which showed 0 when you were AT the limit)
+                    hangoutRemaining: r2(balances.hangout),
+                    hangoutRoomUnderLimit: r2(Math.max(0, userPreferences.hangoutLimit - balances.hangout)),
                     enhancedAnalysis: enhancedAnalysis
                 },
                 recentActivity: recentTransactions,
@@ -10869,6 +10874,7 @@ Use the conversation history provided to you to remember what's already been sai
                 cacheUserDataLocally(username);
             });
 
+            listenPendingSms(username);
             listenSharedGoals(username);
             const goalsRef = ref(database, `users/${username}/goals`);
             onValue(goalsRef, (snapshot) => {
@@ -10922,13 +10928,111 @@ Use the conversation history provided to you to remember what's already been sai
             }
         }
 
+
+        // ===== UrPay SMS purchases =====
+        // Your iPhone Shortcut sends each UrPay text to /api/log-sms, which saves it as a "pending" purchase.
+        // Here the app shows a pop-up for each one: pick Hangout / Savings / PlayStation, or Decline if it was a mistake.
+        // Nothing changes your money until you choose a bucket.
+        let smsQueue = [];
+        let smsWatching = null;
+        let smsUnsub = null;
+        let smsShownKey = '';
+        let smsBusy = false;
+
+        function listenPendingSms(username) {
+            if (smsUnsub) { try { smsUnsub(); } catch (e) { } }
+            smsWatching = username;
+            smsUnsub = onValue(ref(database, `users/${username}/pendingSms`), (snap) => {
+                const v = snap.val() || {};
+                smsQueue = Object.entries(v)
+                    .filter(([, p]) => p && Number(p.amount) > 0)
+                    .map(([id, p]) => ({ id, amount: r2(p.amount), store: String(p.store || 'UrPay purchase'), at: Number(p.createdAt) || 0 }))
+                    .sort((a, b) => a.at - b.at);
+                renderSmsPopup();
+            });
+        }
+
+        function renderSmsPopup() {
+            const old = document.getElementById('smsPopup');
+            const item = smsQueue[0];
+            if (!currentUser || currentUser.username !== smsWatching || !item) {
+                if (old) old.remove();
+                smsShownKey = '';
+                return;
+            }
+            const key = item.id + '|' + smsQueue.length + '|' + (userPreferences.enablePlaystation ? 1 : 0);
+            if (old && smsShownKey === key) return;
+            if (old) old.remove();
+            smsShownKey = key;
+
+            const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            const btn = (bucket, label, bg) => `<button onclick="smsPick('${item.id}','${bucket}')" style="width:100%;padding:14px;margin-top:10px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:${bg};cursor:pointer;">${label} <span style="opacity:.8;font-weight:500;">(${r2(balances[bucket])} ⃁)</span></button>`;
+            const el = document.createElement('div');
+            el.id = 'smsPopup';
+            el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+            el.innerHTML = `
+                <div style="width:100%;max-width:380px;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;">
+                    <div style="font-size:40px;">💳</div>
+                    <div style="font-size:14px;opacity:.7;margin-top:4px;">New UrPay purchase${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
+                    <div style="font-size:34px;font-weight:800;margin:6px 0;">${item.amount} ⃁</div>
+                    <div style="font-size:15px;opacity:.85;word-break:break-word;">${esc(item.store)}</div>
+                    <div style="font-size:13px;opacity:.6;margin:14px 0 0;">Where should it come out of?</div>
+                    ${btn('hangout', '🎉 Hangout', 'linear-gradient(135deg,#2ed573,#17a85a)')}
+                    ${btn('savings', '💰 Savings', 'linear-gradient(135deg,#667eea,#4a5fd0)')}
+                    ${userPreferences.enablePlaystation ? btn('playstation', '🎮 PlayStation', 'linear-gradient(135deg,#8e7cf0,#6a4fd6)') : ''}
+                    <button onclick="smsDecline('${item.id}')" style="width:100%;padding:12px;margin-top:14px;border:1px solid rgba(255,255,255,.25);border-radius:14px;font-size:15px;color:#ff6b6b;background:transparent;cursor:pointer;">✖ Decline — this was a mistake</button>
+                </div>`;
+            document.body.appendChild(el);
+        }
+
+        window.smsPick = async function (id, bucket) {
+            if (smsBusy || !currentUser) return;
+            const item = smsQueue.find((x) => x.id === id);
+            if (!item || !BUCKETS.includes(bucket)) return;
+            const have = r2(balances[bucket]);
+            const cost = r2(Math.min(have, item.amount));
+            if (cost <= 0) { showNotification(`There is no money in ${bucket} — pick another one`, true); return; }
+            smsBusy = true;
+            try {
+                // Claim it first, so it can never be logged twice (even from two phones).
+                const r = await runTransaction(ref(database, `users/${currentUser.username}/pendingSms/${id}`), (cur) => cur ? null : undefined);
+                if (!r.committed) return;
+                balances[bucket] = r2(have - cost);
+                saveBalances();
+                playMoneySound();
+                const note = cost < item.amount ? `${item.store} (only ${cost} of ${item.amount} was in ${bucket})` : item.store;
+                addToHistory('Purchase', -cost, bucket, note, null, null, true);
+                showNotification(`Logged ${cost} ⃁ from ${bucket}`);
+            } catch (e) {
+                console.error(e);
+                showNotification('Could not save it — check your connection and try again', true);
+            } finally {
+                smsBusy = false;
+            }
+        };
+
+        window.smsDecline = async function (id) {
+            if (smsBusy || !currentUser) return;
+            smsBusy = true;
+            try {
+                await remove(ref(database, `users/${currentUser.username}/pendingSms/${id}`));
+                showNotification('Declined — nothing was changed');
+            } catch (e) {
+                console.error(e);
+                showNotification('Could not decline — check your connection and try again', true);
+            } finally {
+                smsBusy = false;
+            }
+        };
+
         // Update UI
         function updateUI() {
-            const total = balances.hangout + balances.savings + balances.playstation;
+            clampBalances(); // rounds to 2 decimals (no more 48.980000000000004)
+            const total = r2(balances.hangout + balances.savings + balances.playstation);
             document.getElementById('totalBalance').textContent = `${total} ⃁`;
-            document.getElementById('hangoutBalance').textContent = `${balances.hangout} ⃁`;
-            document.getElementById('savingsBalance').textContent = `${balances.savings} ⃁`;
-            document.getElementById('playstationBalance').textContent = `${balances.playstation} ⃁`;
+            document.getElementById('hangoutBalance').textContent = `${r2(balances.hangout)} ⃁`;
+            document.getElementById('savingsBalance').textContent = `${r2(balances.savings)} ⃁`;
+            document.getElementById('playstationBalance').textContent = `${r2(balances.playstation)} ⃁`;
 
             // Update budget progress
             updateBudgetProgress();
@@ -10939,9 +11043,9 @@ Use the conversation history provided to you to remember what's already been sai
             // Check Hangout limit
             const hangoutLimit = document.getElementById('hangoutLimit');
             if (balances.hangout > userPreferences.hangoutLimit) {
-                hangoutLimit.innerHTML = `<span class="limit-warning">⚠️ Over limit! ${balances.hangout - userPreferences.hangoutLimit} ⃁ should move to Savings</span>`;
+                hangoutLimit.innerHTML = `<span class="limit-warning">⚠️ Over limit! ${r2(balances.hangout - userPreferences.hangoutLimit)} ⃁ should move to Savings</span>`;
             } else {
-                hangoutLimit.textContent = `Limit: ${userPreferences.hangoutLimit} ⃁ (${userPreferences.hangoutLimit - balances.hangout} ⃁ remaining)`;
+                hangoutLimit.textContent = `Limit: ${userPreferences.hangoutLimit} ⃁ (${r2(userPreferences.hangoutLimit - balances.hangout)} ⃁ remaining)`;
             }
 
             // Check Savings minimum for Asser
@@ -10949,9 +11053,9 @@ Use the conversation history provided to you to remember what's already been sai
             const minimumSavings = userPreferences.minimumSavings || 0;
             if (minimumSavings > 0) {
                 if (balances.savings < minimumSavings) {
-                    savingsLimit.innerHTML = `<span class="limit-warning">⚠️ Below minimum! ${minimumSavings - balances.savings} ⃁ below required ${minimumSavings} ⃁</span>`;
+                    savingsLimit.innerHTML = `<span class="limit-warning">⚠️ Below minimum! ${r2(minimumSavings - balances.savings)} ⃁ below required ${minimumSavings} ⃁</span>`;
                 } else {
-                    savingsLimit.textContent = `Min: ${minimumSavings} ⃁ (${balances.savings - minimumSavings} ⃁ available)`;
+                    savingsLimit.textContent = `Min: ${minimumSavings} ⃁ (${r2(balances.savings - minimumSavings)} ⃁ available)`;
                 }
             } else {
                 savingsLimit.textContent = 'Flexible savings';
@@ -10963,9 +11067,9 @@ Use the conversation history provided to you to remember what's already been sai
             if (countdownElement) countdownElement.style.display = 'none';
 
             // Update edit modal with current values
-            document.getElementById('editHangout').placeholder = balances.hangout;
-            document.getElementById('editSavings').placeholder = balances.savings;
-            document.getElementById('editPlaystation').placeholder = balances.playstation;
+            document.getElementById('editHangout').placeholder = r2(balances.hangout);
+            document.getElementById('editSavings').placeholder = r2(balances.savings);
+            document.getElementById('editPlaystation').placeholder = r2(balances.playstation);
 
             // Savings goal ring (and goal-reached celebration)
             updateSavingsGoalWidget(true);
@@ -12004,7 +12108,7 @@ Use the conversation history provided to you to remember what's already been sai
                     <div style="margin-bottom: 12px;">
                         <div style="display:flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
                             <span>${c.label}</span>
-                            <span>${spent} / ${budget} ⃁${over ? ' ⚠️' : ''}</span>
+                            <span>${r2(spent)} / ${r2(budget)} ⃁${over ? ' ⚠️' : ''}</span>
                         </div>
                         <div style="background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; overflow: hidden;">
                             <div style="height: 100%; width: ${pct}%; background: ${barColor}; transition: width 0.3s ease;"></div>
@@ -14843,7 +14947,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const el = document.getElementById('savingsRing');
             if (!el || !currentUser) return;
             el.style.display = 'flex';
-            const savings = Number(balances.savings) || 0;
+            const savings = r2(balances.savings);
             const list = goals.map((g, i) => ({ name: g.name, amt: Number(g.amount) || 0, key: goalKeys[i] })).filter((x) => x.amt > 0);
             const C = 2 * Math.PI * 34;
             const ring = (pct, center) => `
@@ -14867,7 +14971,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             el.innerHTML = ring(pct, done ? '🏆' : pct + '%') + `
                 <div class="ring-info">
                     <b>${done ? 'All goals reached!' : '🎯 ' + admEsc(target.name)}</b>
-                    ${done ? `${list.length} goal${list.length === 1 ? '' : 's'} done` : `${savings} / ${target.amt} ⃁`}
+                    ${done ? `${list.length} goal${list.length === 1 ? '' : 's'} done` : `${r2(savings)} / ${r2(target.amt)} ⃁`}
                     ${more}
                 </div>`;
             if (celebrate) checkGoalsReached(list, savings);
@@ -15880,7 +15984,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             document.getElementById('budgetProgressAmount').textContent = `${progressPercent.toFixed(0)}%`;
             document.getElementById('budgetProgressBar').style.width = `${progressPercent}%`;
-            document.getElementById('budgetProgressText').textContent = `${monthlySpending} / ${budgetTarget} ⃁ spent this month (${remaining} ⃁ remaining)`;
+            document.getElementById('budgetProgressText').textContent = `${r2(monthlySpending)} / ${budgetTarget} ⃁ spent this month (${r2(remaining)} ⃁ remaining)`;
 
             // Change color based on threshold
             const alertThreshold = userPreferences.budgetAlertThreshold || 80;
@@ -15977,7 +16081,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 return;
             }
 
-            const amount = parseInt(document.getElementById('editTransactionAmount').value);
+            const amount = r2(parseFloat(document.getElementById('editTransactionAmount').value));
             const category = document.getElementById('editTransactionCategory').value;
             const notes = document.getElementById('editTransactionNotes').value;
 
@@ -16219,30 +16323,30 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                     hangout = p.fixedHangoutAmount || 35;
                     const baseSavings = p.fixedSavingsAmount || 25;
                     playstation = 0;
-                    savings = total - hangout;
+                    savings = r2(total - hangout);
                     if (savings < baseSavings) savings = baseSavings; // safety floor
                 } else {
-                    hangout = Math.round(total * ((p.hangoutPercent != null ? p.hangoutPercent : 50) / 100));
+                    hangout = r2(total * ((p.hangoutPercent != null ? p.hangoutPercent : 50) / 100));
                     playstation = 0;
-                    savings = total - hangout;
+                    savings = r2(total - hangout);
                 }
             } else if (p.useFixedAmounts) {
                 hangout = p.fixedHangoutAmount || 35;
                 savings = p.fixedSavingsAmount || 25;
                 if (p.enablePlaystation) {
-                    playstation = total - hangout - savings;
+                    playstation = r2(total - hangout - savings);
                 } else {
                     playstation = 0;
-                    savings = total - hangout;
+                    savings = r2(total - hangout);
                 }
             } else {
-                hangout = Math.round(total * ((p.hangoutPercent != null ? p.hangoutPercent : 50) / 100));
+                hangout = r2(total * ((p.hangoutPercent != null ? p.hangoutPercent : 50) / 100));
                 if (p.enablePlaystation) {
-                    savings = Math.round(total * ((p.savingsPercent != null ? p.savingsPercent : 37.5) / 100));
-                    playstation = total - hangout - savings;
+                    savings = r2(total * ((p.savingsPercent != null ? p.savingsPercent : 37.5) / 100));
+                    playstation = r2(total - hangout - savings);
                 } else {
                     playstation = 0;
-                    savings = total - hangout;
+                    savings = r2(total - hangout);
                 }
             }
 
@@ -16251,12 +16355,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             if (playstation < 0) { savings += playstation; playstation = 0; }
             if (savings < 0) { hangout += savings; savings = 0; }
             if (hangout < 0) hangout = 0;
-            return { hangout, savings, playstation };
+            return { hangout: r2(hangout), savings: r2(savings), playstation: r2(playstation) };
         }
 
         // Fill the sliders in the "Different" modal from the usual split
         window.autoCalculateSplit = function () {
-            const total = parseInt(document.getElementById('allowanceAmount').value);
+            const total = r2(parseFloat(document.getElementById('allowanceAmount').value));
             if (isNaN(total) || total <= 0) return;
 
             const { hangout, savings, playstation } = computeAllowanceSplit(total, allowanceMode);
@@ -16275,10 +16379,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
         // Update allowance split display
         window.updateAllowanceSplit = function () {
-            const total = parseInt(document.getElementById('allowanceAmount').value) || 120;
-            const hangout = parseInt(document.getElementById('hangoutSlider').value);
-            const savings = parseInt(document.getElementById('savingsSlider').value);
-            const playstation = parseInt(document.getElementById('playstationSlider').value);
+            const total = r2(parseFloat(document.getElementById('allowanceAmount').value)) || 120;
+            const hangout = r2(parseFloat(document.getElementById('hangoutSlider').value));
+            const savings = r2(parseFloat(document.getElementById('savingsSlider').value));
+            const playstation = r2(parseFloat(document.getElementById('playstationSlider').value));
 
             document.getElementById('hangoutSplit').textContent = `${hangout} ⃁`;
             document.getElementById('savingsSplit').textContent = `${savings} ⃁`;
@@ -16292,10 +16396,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 return;
             }
 
-            const total = parseInt(document.getElementById('allowanceAmount').value);
-            const hangout = parseInt(document.getElementById('hangoutSlider').value);
-            const savings = parseInt(document.getElementById('savingsSlider').value);
-            const playstation = parseInt(document.getElementById('playstationSlider').value);
+            const total = r2(parseFloat(document.getElementById('allowanceAmount').value));
+            const hangout = r2(parseFloat(document.getElementById('hangoutSlider').value));
+            const savings = r2(parseFloat(document.getElementById('savingsSlider').value));
+            const playstation = r2(parseFloat(document.getElementById('playstationSlider').value));
 
             if (isNaN(total) || total <= 0) {
                 showNotification('Please enter a valid amount', true);
@@ -16329,7 +16433,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             let autoMoved = 0;
             const limit = userPreferences.hangoutLimit;
             if (limit != null && balances.hangout > limit) {
-                autoMoved = balances.hangout - limit;
+                autoMoved = r2(balances.hangout - limit);
                 balances.hangout = limit;
                 balances.savings += autoMoved;
                 appliedHangout -= autoMoved;
@@ -16383,7 +16487,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
 
             const bucket = document.getElementById('addMoneyBucket').value;
-            const amount = parseInt(document.getElementById('addMoneyAmount').value);
+            const amount = r2(parseFloat(document.getElementById('addMoneyAmount').value));
 
             if (isNaN(amount) || amount <= 0) {
                 showNotification('Please enter a valid amount', true);
@@ -16408,7 +16512,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             const from = document.getElementById('transferFrom').value;
             const to = document.getElementById('transferTo').value;
-            const amount = parseInt(document.getElementById('transferAmount').value);
+            const amount = r2(parseFloat(document.getElementById('transferAmount').value));
 
             if (isNaN(amount) || amount <= 0) {
                 showNotification('Please enter a valid amount', true);
@@ -16492,7 +16596,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
 
             const name = document.getElementById('quickPurchaseName').value;
-            const cost = parseFloat(document.getElementById('quickPurchaseAmount').value);
+            const cost = r2(parseFloat(document.getElementById('quickPurchaseAmount').value));
 
             if (!name || isNaN(cost) || cost <= 0) {
                 showNotification('Please fill in all fields', true);
@@ -16578,7 +16682,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             }
 
             const name = document.getElementById('purchaseName').value;
-            const cost = parseInt(document.getElementById('purchaseCost').value);
+            const cost = r2(parseFloat(document.getElementById('purchaseCost').value));
             const category = document.getElementById('purchaseCategory').value;
 
             if (!name || isNaN(cost) || cost <= 0) {
@@ -16653,9 +16757,9 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 return;
             }
 
-            const hangout = parseInt(document.getElementById('editHangout').value);
-            const savings = parseInt(document.getElementById('editSavings').value);
-            const playstation = parseInt(document.getElementById('editPlaystation').value);
+            const hangout = r2(parseFloat(document.getElementById('editHangout').value));
+            const savings = r2(parseFloat(document.getElementById('editSavings').value));
+            const playstation = r2(parseFloat(document.getElementById('editPlaystation').value));
 
             if (isNaN(hangout) || isNaN(savings) || isNaN(playstation) ||
                 hangout < 0 || savings < 0 || playstation < 0) {
@@ -16773,8 +16877,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         let sharedGoalsUnsub = null;
         const refunding = new Set();
         const gEsc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const gSaved = (o) => Number(o && o.saved) || 0;
-        const gTotal = (g) => Object.values(g.members || {}).reduce((s, m) => s + gSaved(m), 0);
+        const gSaved = (o) => r2(Number(o && o.saved) || 0);
+        const gTotal = (g) => r2(Object.values(g.members || {}).reduce((s, m) => s + gSaved(m), 0));
         const gMe = () => (currentUser ? currentUser.username : null);
         const maxFromSavings = () => Math.max(0, Math.floor(balances.savings * GOAL_CAP));
         const gPath = (t, id) => t === 'p' ? `users/${gMe()}/goals/${id}` : `sharedGoals/${id}/members/${gMe()}`;
@@ -17898,7 +18002,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 <div class="recap-bar"><i style="width:${Math.max(4, Math.round(v / topMax * 100))}%"></i></div></div>`).join('')}</div>` : '';
             const bigHtml = st.top5.length ? `<div class="recap-block"><h4>Top ${st.top5.length} biggest purchase${st.top5.length > 1 ? 's' : ''}</h4>${st.top5.map((b, i) => `
                 <div class="recap-rank"><span>${i + 1}. ${b.emoji ? b.emoji + ' ' : ''}${admEsc(b.name)}${b.tag ? ` <small style="opacity:.55">${PURCHASE_TAGS[b.tag] || ''} ${admEsc(b.tag)}</small>` : ''}</span><b>${b.amount} ⃁</b></div>`).join('')}</div>` : '';
-            const savingsNow = Number(balances.savings) || 0;
+            const savingsNow = r2(balances.savings);
             const openGoal = goals.map((g) => ({ n: g.name, a: Number(g.amount) || 0 })).filter((g) => g.a > savingsNow).sort((a, b) => a.a - b.a)[0];
             const goalHtml = openGoal ? `<div class="recap-block"><h4>Savings goal</h4>🎯 <b>${admEsc(openGoal.n)}</b> — ${savingsNow} / ${openGoal.a} ⃁ (${Math.round(savingsNow / openGoal.a * 100)}%)</div>` : '';
             const note = st.count === 0 ? 'No spending logged this month 🧘'

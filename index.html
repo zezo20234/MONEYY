@@ -6137,7 +6137,7 @@
                     <button class="adm-mini" onclick="admSaveKeepDays()">Save</button>
                 </div>
                 <div class="adm-row"><button class="adm-mini ghost" onclick="admClearDiscordNow()">🧹 Clear all app messages from Discord now</button></div>
-                <small class="adm-hint">Deletes every message the app sent (reminders and purchase alerts) within about 5 minutes. It can't delete messages the app didn't send.</small>
+                <small class="adm-hint">Deletes every message the app sent (reminders and purchase alerts) instantly. Messages sent before this update are cleared by the background job within about 5 minutes. It can't delete messages the app didn't send.</small>
                 <div class="adm-lab">Next reminder time (Riyadh)</div>
                 <div class="adm-row">
                     <input class="adm-input" id="admGlobalNext" type="datetime-local">
@@ -6474,13 +6474,24 @@
             const k = discordStorageKey();
             try { return k ? (localStorage.getItem(k) || '') : ''; } catch (e) { return ''; }
         }
+        // Remember every message id we send so the admin "Clear now" button can delete them instantly.
+        function logDiscordMessage(user, id) {
+            try {
+                if (!user || !id) return;
+                set(ref(database, `discordLog/${user}/${id}`), Date.now()).catch(() => { });
+            } catch (e) { }
+        }
         async function postToDiscord(url, content) {
-            const res = await fetch(url, {
+            const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'wait=true', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: 'Money', content })
             });
             if (!res.ok) throw new Error(res.status === 404 ? 'Webhook not found (was it deleted?)' : `Discord replied ${res.status}`);
+            try {
+                const m = await res.json();
+                if (currentUser) logDiscordMessage(currentUser.username, m && m.id);
+            } catch (e) { }
         }
         // Use this anywhere in the app to message the user's Discord.
         // Resolves true if sent, false if no webhook is set or sending failed.
@@ -7366,10 +7377,51 @@
         };
         window.admClearDiscordNow = async function () {
             if (!confirm('Delete ALL Discord messages the app has sent to everyone? This cannot be undone.')) return;
+            const btn = document.querySelector('[onclick="admClearDiscordNow()"]');
+            const label = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+            let deleted = 0, failed = 0;
             try {
-                await admWrite([['reminderSettings/clearNow', { at: Date.now(), by: (currentUser && currentUser.username) || 'admin' }]]);
-                showNotification('Clearing started. It finishes within about 5 minutes');
-            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+                // Old messages (sent before ids were tracked) are still cleared by the background job.
+                admWrite([['reminderSettings/clearNow', { at: Date.now(), by: (currentUser && currentUser.username) || 'admin' }]]).catch(() => { });
+                const snap = await get(ref(database, 'discordLog'));
+                const log = snap.exists() ? snap.val() : {};
+                const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+                async function delOne(url, id) {
+                    for (let attempt = 0; attempt < 5; attempt++) {
+                        const res = await fetch(`${url.split('?')[0]}/messages/${id}`, { method: 'DELETE' });
+                        if (res.ok || res.status === 404) return true;      // gone (or already gone)
+                        if (res.status === 429) {
+                            let wait = 1000;
+                            try { const j = await res.json(); wait = Math.ceil((Number(j.retry_after) || 1) * 1000) + 50; } catch (e) { }
+                            await sleep(wait);
+                            continue;
+                        }
+                        return false;
+                    }
+                    return false;
+                }
+                await Promise.all(Object.keys(log).map(async (name) => {
+                    let url = admAll[name] && admAll[name].discordWebhook;
+                    if (!url) {
+                        try { const w = await get(ref(database, `users/${name}/discordWebhook`)); url = w.exists() ? w.val() : null; } catch (e) { }
+                    }
+                    const ids = Object.keys(log[name] || {});
+                    if (!url) { failed += ids.length; return; }
+                    // each webhook has its own rate limit, so users run in parallel and messages go in small batches
+                    for (let k = 0; k < ids.length; k += 5) {
+                        const chunk = ids.slice(k, k + 5);
+                        const res = await Promise.all(chunk.map((id) => delOne(url, id).catch(() => false)));
+                        await Promise.all(chunk.map((id, n) => {
+                            if (res[n]) { deleted++; return set(ref(database, `discordLog/${name}/${id}`), null).catch(() => { }); }
+                            failed++; return null;
+                        }));
+                    }
+                }));
+                if (failed) showNotification(`Deleted ${deleted}. ${failed} could not be deleted (webhook removed?)`, true);
+                else showNotification(`Deleted ${deleted} message${deleted === 1 ? '' : 's'} from Discord 🧹`);
+            } catch (e) { showNotification('Could not clear: ' + e.message, true); }
+            if (btn) { btn.disabled = false; btn.innerHTML = label; }
         };
         window.admSaveKeepDays = async function () {
             const v = Math.floor(Number(document.getElementById('admKeepDays').value));
@@ -7588,13 +7640,17 @@
         }
 
         // ---- Sending ----
-        async function admPost(url, content) {
-            const res = await fetch(url, {
+        async function admPost(url, content, userName) {
+            const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'wait=true', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: 'Money', content, allowed_mentions: { parse: [] } })
             });
             if (!res.ok) throw new Error(`Discord replied ${res.status}`);
+            try {
+                const m = await res.json();
+                logDiscordMessage(userName, m && m.id);
+            } catch (e) { }
         }
         // msg = text to send to everyone, or null = each user's own normal reminder message.
         // Sending never writes to the database, so nobody's schedule moves.
@@ -7602,7 +7658,7 @@
             const html = btn ? btn.innerHTML : '';
             if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
             const now = Date.now();
-            const results = await Promise.allSettled(targets.map((u) => admPost(u.discordWebhook, msg === null ? admNormalMessage(u, now) : msg)));
+            const results = await Promise.allSettled(targets.map((u) => admPost(u.discordWebhook, msg === null ? admNormalMessage(u, now) : msg, u.name)));
             if (btn) { btn.disabled = false; btn.innerHTML = html; }
             const failed = targets.filter((_, i) => results[i].status === 'rejected').map((u) => u.name);
             const ok = targets.length - failed.length;

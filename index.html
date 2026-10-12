@@ -10946,7 +10946,7 @@ Use the conversation history provided to you to remember what's already been sai
                 const v = snap.val() || {};
                 smsQueue = Object.entries(v)
                     .filter(([, p]) => p && Number(p.amount) > 0)
-                    .map(([id, p]) => ({ id, amount: r2(p.amount), store: String(p.store || 'UrPay purchase'), at: Number(p.purchasedAt) || Number(p.createdAt) || 0 }))
+                    .map(([id, p]) => ({ id, amount: r2(p.amount), store: String(p.store || 'UrPay purchase'), kind: p.type === 'topup' ? 'topup' : 'purchase', at: Number(p.purchasedAt) || Number(p.createdAt) || 0 }))
                     .sort((a, b) => a.at - b.at);
                 renderSmsPopup();
             });
@@ -10976,6 +10976,81 @@ Use the conversation history provided to you to remember what's already been sai
             });
         };
 
+        // Step 1 for every UrPay message: is it money OUT (expense) or money IN (income)?
+        window.smsSetMode = function (id, m) {
+            smsGetDraft(id).mode = m;
+            renderSmsPopup();
+        };
+
+        function renderIncomeExpenseAsk(item) {
+            const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            const hint = (yes) => (yes ? `<span style="display:block;font-size:11px;font-weight:500;opacity:.85;margin-top:2px;">looks like this one</span>` : '');
+            const el = document.createElement('div');
+            el.id = 'smsPopup';
+            el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+            el.innerHTML = `
+                <div style="width:100%;max-width:380px;max-height:92vh;overflow-y:auto;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;">
+                    <div style="font-size:34px;">💳</div>
+                    <div style="font-size:13px;opacity:.7;margin-top:2px;">New UrPay message${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
+                    <div style="font-size:32px;font-weight:800;margin:4px 0;">${item.amount} ⃁</div>
+                    <div style="font-size:14px;opacity:.8;word-break:break-word;">${esc(item.store)}</div>
+                    ${item.at ? `<div style="font-size:12px;opacity:.55;margin-top:4px;">${esc(new Date(item.at).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }))}</div>` : ''}
+                    <div style="font-size:13px;opacity:.6;margin:16px 0 0;">Is this income or an expense?</div>
+                    <button onclick="smsSetMode('${item.id}','expense')" style="width:100%;padding:14px;margin-top:10px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#ff7b5c,#e0483a);cursor:pointer;">➖ Expense<span style="opacity:.85;font-weight:500;"> (I spent it)</span>${hint(item.kind !== 'topup')}</button>
+                    <button onclick="smsSetMode('${item.id}','income')" style="width:100%;padding:14px;margin-top:10px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#2ed573,#17a85a);cursor:pointer;">➕ Income<span style="opacity:.85;font-weight:500;"> (money in)</span>${hint(item.kind === 'topup')}</button>
+                    <button onclick="smsDecline('${item.id}')" style="width:100%;padding:12px;margin-top:14px;border:1px solid rgba(255,255,255,.25);border-radius:14px;font-size:15px;color:#ff6b6b;background:transparent;cursor:pointer;">✖ Decline — this was a mistake</button>
+                </div>`;
+            document.body.appendChild(el);
+        }
+
+        // Money coming IN (a top-up of the UrPay card): pick which bucket it is added to, or ignore it.
+        function renderTopupPopup(item) {
+            const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+            const btn = (bucket, label, bg) => `<button onclick="smsPickTopup('${item.id}','${bucket}')" style="width:100%;padding:14px;margin-top:10px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:${bg};cursor:pointer;">${label} <span style="opacity:.8;font-weight:500;">(${r2(balances[bucket])} ⃁ now)</span></button>`;
+            const el = document.createElement('div');
+            el.id = 'smsPopup';
+            el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+            el.innerHTML = `
+                <div style="width:100%;max-width:380px;max-height:92vh;overflow-y:auto;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;">
+                    <button onclick="smsSetMode('${item.id}',null)" style="display:block;margin:0 0 6px;padding:4px 2px;border:none;background:transparent;color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;text-align:left;">← Back</button>
+                    <div style="font-size:34px;">💵</div>
+                    <div style="font-size:13px;opacity:.7;margin-top:2px;">Money added to your card${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
+                    <div style="font-size:32px;font-weight:800;margin:4px 0;color:#2ed573;">+${item.amount} ⃁</div>
+                    <div style="font-size:14px;opacity:.8;word-break:break-word;">${esc(item.store)}</div>
+                    ${item.at ? `<div style="font-size:12px;opacity:.55;margin-top:4px;">${esc(new Date(item.at).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }))}</div>` : ''}
+                    <div style="font-size:13px;opacity:.6;margin:14px 0 0;">Where should it be added?</div>
+                    ${btn('hangout', '🎉 Hangout', 'linear-gradient(135deg,#2ed573,#17a85a)')}
+                    ${btn('savings', '💰 Savings', 'linear-gradient(135deg,#667eea,#4a5fd0)')}
+                    ${userPreferences.enablePlaystation ? btn('playstation', '🎮 PlayStation', 'linear-gradient(135deg,#8e7cf0,#6a4fd6)') : ''}
+                    <button onclick="smsDecline('${item.id}')" style="width:100%;padding:12px;margin-top:14px;border:1px solid rgba(255,255,255,.25);border-radius:14px;font-size:15px;color:#ff6b6b;background:transparent;cursor:pointer;">✖ Ignore — don't add it</button>
+                </div>`;
+            document.body.appendChild(el);
+        }
+
+        window.smsPickTopup = async function (id, bucket) {
+            if (smsBusy || !currentUser) return;
+            const item = smsQueue.find((x) => x.id === id);
+            if (!item || !BUCKETS.includes(bucket)) return;
+            smsBusy = true;
+            try {
+                // Claim it first, so it can never be added twice (even from two phones).
+                const r = await runTransaction(ref(database, `users/${currentUser.username}/pendingSms/${id}`), (cur) => cur ? null : undefined);
+                if (!r.committed) return;
+                balances[bucket] = r2(balances[bucket] + item.amount);
+                saveBalances();
+                playMoneySound();
+                const when = item.at && item.at < Date.now() ? { date: new Date(item.at).toISOString() } : {};
+                addToHistory('Add Money', item.amount, bucket, 'UrPay top-up', null, when);
+                try { checkHangoutLimit(); } catch (e) { }
+                showNotification(`Added ${item.amount} ⃁ to ${bucket}`);
+            } catch (e) {
+                console.error(e);
+                showNotification('Could not save it — check your connection and try again', true);
+            } finally {
+                smsBusy = false;
+            }
+        };
+
         function renderSmsPopup() {
             const old = document.getElementById('smsPopup');
             const item = smsQueue[0];
@@ -10984,10 +11059,13 @@ Use the conversation history provided to you to remember what's already been sai
                 smsShownKey = '';
                 return;
             }
-            const key = item.id + '|' + smsQueue.length + '|' + (userPreferences.enablePlaystation ? 1 : 0);
+            const key = item.id + '|' + smsQueue.length + '|' + (userPreferences.enablePlaystation ? 1 : 0) + '|' + ((smsDraft[item.id] && smsDraft[item.id].mode) || '');
             if (old && smsShownKey === key) return;
             if (old) old.remove();
             smsShownKey = key;
+            const mode = smsGetDraft(item.id).mode;
+            if (!mode) { renderIncomeExpenseAsk(item); return; }
+            if (mode === 'income') { renderTopupPopup(item); return; }
 
             const draft = smsGetDraft(item.id);
             const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -11003,6 +11081,7 @@ Use the conversation history provided to you to remember what's already been sai
             el.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
             el.innerHTML = `
                 <div style="width:100%;max-width:380px;max-height:92vh;overflow-y:auto;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;">
+                    <button onclick="smsSetMode('${item.id}',null)" style="display:block;margin:0 0 6px;padding:4px 2px;border:none;background:transparent;color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;text-align:left;">← Back</button>
                     <div style="font-size:34px;">💳</div>
                     <div style="font-size:13px;opacity:.7;margin-top:2px;">New UrPay purchase${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
                     <div style="font-size:32px;font-weight:800;margin:4px 0;">${item.amount} ⃁</div>

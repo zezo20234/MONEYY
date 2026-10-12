@@ -7,6 +7,13 @@
 // time is read from the SMS itself ("09-10-2026 12:29", Riyadh time), or from a "received: <ISO time>" line the
 // Shortcut adds, or from ?time=. A queued text that is sent twice is only saved once.
 //
+// CLOUD QUEUE: the SMS Inbox page (inbox/index.html) saves texts straight into Firebase at
+// users/<user>/smsInbox/<id> = { text, savedAt }. Nothing else happens at that moment. When someone opens the
+// Money app, the app calls  GET /api/log-sms?process=1&user=Zezo  and THIS file then reads each waiting text,
+// saves it as a pending purchase (the pop-up), sends the Discord message, and removes it from the queue.
+// That call needs no key: it can only process texts that are already waiting in your database.
+// Texts the server can't use are listed in users/<user>/smsIgnored (reason only, no card digits) so the inbox shows why.
+//
 // Only ONE environment variable is needed: SMS_SECRET.
 // URL (POST, SMS text as the body):  https://moneyy-sdwg.vercel.app/api/log-sms?user=Zezo&key=YOUR_SMS_SECRET
 // The card digits in the SMS are never saved — only the amount and the store name.
@@ -54,7 +61,7 @@ function parseStore(text) {
 const RIYADH_MS = 3 * 60 * 60 * 1000;
 const sane = (ms) => Number.isFinite(ms) && ms < Date.now() + 36e5 && ms > Date.now() - 400 * 864e5;
 function parseSmsTime(text) {
-    const m = text.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})\s+(\d{1,2}):(\d{2})/);
+    const m = text.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})[\s-]+(\d{1,2}):(\d{2})/);
     if (!m) return null;
     let [, a, b, y, hh, mm] = m.map(Number);
     let day = a, month = b;
@@ -71,10 +78,65 @@ function parseReceivedTime(text, queryTime) {
     return sane(ms) ? ms : null;
 }
 
+// ---- Top-ups (money added to the card) ----
+// UrPay's exact wording is unknown, so this looks for common words (English + Arabic).
+// A text that STARTS with "Credit" counts as money in, but "Credit card ..." does not (that is a purchase).
+const TOPUP_RE = /top[\s-]?up|topped|recharg|reload|\bloaded\b|deposit|funds?\s+added|money\s+added|balance\s+added|credited\s+to|credit(?:ed)?\s+(?:via|from)|\bcredit\s+(?:alert|advice|of)\b|^\s*credit\b(?!\s*card)|via\s+wallet|شحن|إيداع|ايداع|تعبئة|اضافة\s*رصيد|إضافة\s*رصيد/im;
+function isTopUp(text) { return TOPUP_RE.test(text); }
+// Refunds / reversals = money coming BACK. They are saved as money-in, so the pop-up asks where to put it.
+const REFUND_RE = /refund|reversal|reversed|مرتجع|استرداد|استرجاع|إرجاع/i;
+function isRefund(text) { return REFUND_RE.test(text); }
+// Amount for a top-up: the "amount:" line if there is one, else the number next to SAR / SR / ⃁ / ر.س
+function parseTopUpAmount(text) {
+    const a = parseAmount(text);
+    if (a) return a;
+    const m = text.replace(/,/g, '').match(/(?:sar|sr|ر\.?\s?س|⃁)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:sar|sr|ر\.?\s?س|⃁)/i);
+    const v = m ? Number(m[1] || m[2]) : NaN;
+    return v > 0 && v < 1e6 ? r2(v) : null;
+}
+async function saveTopUp(text, user, queryTime, refund = false) {
+    const amount = parseTopUpAmount(text);
+    if (!amount) return { ignored: (refund ? 'refund' : 'top-up') + ' text but no amount found', preview: text.slice(0, 150) };
+    const sm = text.match(/^\s*(?:at|from)\s*[:：]\s*(.+)$/im);
+    const store = refund
+        ? ('Refund' + (sm && sm[1].trim() ? ': ' + sm[1].trim() : '')).slice(0, 80)
+        : ((sm && sm[1].trim()) || 'UrPay top-up').slice(0, 80);
+    const smsTime = parseSmsTime(text);
+    const givenTime = smsTime || parseReceivedTime(text, queryTime);
+    const purchasedAt = givenTime || Date.now();
+    const u = encodeURIComponent(user);
+    const hashText = text.replace(/^\s*received\s*[:：].*$/im, '').replace(/\s+/g, ' ').trim();
+    const hash = createHash('sha1').update('topup|' + hashText + (smsTime ? '' : '|' + purchasedAt)).digest('hex').slice(0, 12);
+    const lastSeen = Number(await (await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`)).json()) || 0;
+    const dupWindow = givenTime ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 1000;
+    if (Date.now() - lastSeen < dupWindow) return { ignored: 'same message already received' };
+    await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`, { method: 'PUT', body: JSON.stringify(Date.now()) });
+    const id = hash + Date.now().toString(36);
+    await fetch(`${DB}/users/${u}/pendingSms/${id}.json`, { method: 'PUT', body: JSON.stringify({ type: 'topup', amount, store, createdAt: Date.now(), purchasedAt }) });
+    try {
+        const webhook = await (await fetch(`${DB}/users/${u}/discordWebhook.json`)).json();
+        if (webhook) {
+            const hookUrl = webhook + (webhook.includes('?') ? '&' : '?') + 'wait=true';
+            const hr = await fetch(hookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'Money', content: refund
+                    ? `↩️ Refund received: ${amount} ⃁. Open the app to choose where it goes.`
+                    : `💵 Money added to your card: ${amount} ⃁. Open the app to choose where it goes.`, allowed_mentions: { parse: [] } }),
+            });
+            const hm = await hr.json().catch(() => null);
+            if (hm && hm.id) await fetch(`${DB}/users/${u}/sentMessages/${hm.id}.json`, { method: 'PUT', body: JSON.stringify({ at: Date.now() }) });
+        }
+    } catch { /* ignore */ }
+    return { pending: true, topup: true, amount, store };
+}
+
 // Saves ONE SMS as a pending purchase. Returns a small result object (never throws for "ignored" texts).
 async function saveOne(text, user, queryTime) {
     if (/\botp\b|one.?time|verification|code\s*[:：]/i.test(text)) return { ignored: 'looks like a code message' };
-    if (/refund|reversal|return|credit/i.test(text)) return { ignored: 'refund/credit not handled yet' };
+    // Money coming IN (top-up / card charge / deposit). Saved as a pending top-up; the app asks where to add it.
+    if (isTopUp(text)) return await saveTopUp(text, user, queryTime);
+    if (isRefund(text)) return await saveTopUp(text, user, queryTime, true);
     if (!/amount\s*[:：]/i.test(text)) return { ignored: 'no "amount:" line in the text', preview: text.slice(0, 150) };
     const amount = parseAmount(text);
     if (!amount) return { ignored: 'no amount found', preview: text.slice(0, 150) };
@@ -119,6 +181,57 @@ async function saveOne(text, user, queryTime) {
     return { pending: true, amount, store };
 }
 
+// ---- Cloud queue: texts the SMS Inbox page saved in Firebase while nobody had the Money app open ----
+// Takes ONE waiting text. The conditional delete (ETag) means that if two phones open the app at the
+// same moment, only one of them gets the text, so it can never be handled twice.
+async function claimInboxItem(u, id) {
+    const url = `${DB}/users/${u}/smsInbox/${encodeURIComponent(id)}.json`;
+    const r = await fetch(url, { headers: { 'X-Firebase-ETag': 'true' } });
+    const etag = r.headers.get('ETag');
+    const cur = await r.json().catch(() => null);
+    if (!cur || !etag) return null;
+    const d = await fetch(url, { method: 'DELETE', headers: { 'if-match': etag } });
+    return d.ok ? cur : null;
+}
+async function logIgnored(u, id, reason, text) {
+    const amount = parseAmount(text) || parseTopUpAmount(text) || null; // never the text itself (card digits)
+    await fetch(`${DB}/users/${u}/smsIgnored/${encodeURIComponent(id)}.json`, {
+        method: 'PUT', body: JSON.stringify({ reason: String(reason).slice(0, 200), amount, at: Date.now() }),
+    });
+}
+async function processInbox(user) {
+    const u = encodeURIComponent(user);
+    const out = { processed: 0, saved: 0, results: [] };
+    const inbox = await (await fetch(`${DB}/users/${u}/smsInbox.json`)).json();
+    if (!inbox || typeof inbox !== 'object') return out;
+    for (const id of Object.keys(inbox).slice(0, 25)) {
+        const item = await claimInboxItem(u, id);
+        if (!item) continue;
+        out.processed++;
+        const text = String(item.text || '');
+        const queryTime = item.savedAt ? String(item.savedAt) : undefined; // when the phone saved it = fallback purchase time
+        try {
+            const records = text.includes('~~~') ? text.split('~~~').map((t) => t.trim()).filter((t) => t.length > 10) : [text];
+            for (const rec of records) {
+                const r = await saveOne(rec, user, queryTime);
+                out.results.push(r);
+                if (r.pending) out.saved++;
+                else if (r.ignored && !/already received/i.test(r.ignored)) await logIgnored(u, id, r.ignored, rec);
+            }
+        } catch (e) {
+            // Put it back so the next app open tries again (give up after 5 tries and list it as ignored).
+            const tries = (Number(item.tries) || 0) + 1;
+            if (tries < 5) {
+                await fetch(`${DB}/users/${u}/smsInbox/${encodeURIComponent(id)}.json`, { method: 'PUT', body: JSON.stringify({ ...item, tries }) }).catch(() => { });
+            } else {
+                await logIgnored(u, id, 'server error: ' + e.message, text).catch(() => { });
+            }
+            out.results.push({ error: e.message });
+        }
+    }
+    return out;
+}
+
 export default async function handler(req, res) {
     // The inbox page lives on github.io, so the browser needs permission to read this reply.
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -127,6 +240,14 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     try {
         if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ error: 'use POST' });
+
+        // The Money app asks for this every time it is opened. No key: it only handles texts already waiting in the cloud queue.
+        if (req.query && req.query.process === '1') {
+            const who = String(req.query.user || '').trim();
+            if (!who || /[.#$\[\]\/|]/.test(who)) return res.status(400).json({ error: 'missing or invalid ?user=' });
+            return res.status(200).json({ ok: true, ...(await processInbox(who)) });
+        }
+
         const secret = process.env.SMS_SECRET;
         const given = (req.query && req.query.key) || req.headers['x-key'];
         if (!secret || given !== secret) return res.status(401).json({ error: 'wrong or missing key' });

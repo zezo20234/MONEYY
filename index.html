@@ -7598,7 +7598,7 @@
         // ---- Full stats page ----
         const ADM_KNOWN_KEYS = ['balances', 'preferences', 'goals', 'history', 'missions', 'points', 'missionPrestige',
             'discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
-            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards', 'pendingSms', 'smsSeen'];
+            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards', 'pendingSms', 'smsSeen', 'smsInbox', 'smsIgnored', 'sentMessages'];
         let admStats = null; // { name, node, txs, filter, search, limit }
 
         function admHuman(k) {
@@ -10961,7 +10961,53 @@ Use the conversation history provided to you to remember what's already been sai
             if (document.visibilityState === 'hidden') return;
             try { goOnline(database); } catch (e) { }
             if (currentUser && currentUser.username) listenPendingSms(currentUser.username);
+            startSmsInbox();
+            if (smsInboxHas) processSmsInbox();
         }
+
+        // ===== SMS cloud queue =====
+        // The SMS Inbox page saves texts in Firebase (users/Zezo/smsInbox) and nothing else happens. The moment
+        // ANYONE opens this app (logged in or not), the server is asked to handle them: it saves each one as a
+        // pending purchase (the pop-up for Zezo) and sends the Discord message.
+        const SMS_API = 'https://moneyy-sdwg.vercel.app/api/log-sms';
+        const SMS_INBOX_USER = 'Zezo';
+        let smsInboxUnsub = null, smsInboxHas = false, smsInboxBusy = false, smsInboxTimer = null, smsInboxLast = 0;
+
+        function startSmsInbox() {
+            if (smsInboxUnsub) return;
+            try {
+                smsInboxUnsub = onValue(ref(database, `users/${SMS_INBOX_USER}/smsInbox`), (snap) => {
+                    smsInboxHas = snap.exists();
+                    if (smsInboxHas) processSmsInbox();
+                }, () => { smsInboxUnsub = null; });
+            } catch (e) { smsInboxUnsub = null; }
+        }
+
+        async function processSmsInbox() {
+            if (smsInboxBusy) return;
+            // Never hammer the server: at most one call every 10 seconds.
+            const wait = 10000 - (Date.now() - smsInboxLast);
+            if (wait > 0) { clearTimeout(smsInboxTimer); smsInboxTimer = setTimeout(processSmsInbox, wait + 50); return; }
+            if (!navigator.onLine) return;
+            smsInboxBusy = true;
+            smsInboxLast = Date.now();
+            try {
+                const res = await fetch(`${SMS_API}?process=1&user=${encodeURIComponent(SMS_INBOX_USER)}`);
+                const j = await res.json().catch(() => null);
+                if (!res.ok) throw new Error((j && j.error) || ('server ' + res.status));
+                const bad = ((j && j.results) || []).filter((r) => r && r.ignored && !/already received/i.test(r.ignored));
+                if (bad.length && currentUser && currentUser.username === SMS_INBOX_USER) {
+                    showNotification(`${bad.length} text${bad.length > 1 ? 's' : ''} ignored: ${bad[0].ignored}`, true);
+                }
+            } catch (e) {
+                console.error('SMS inbox:', e);
+                clearTimeout(smsInboxTimer);
+                smsInboxTimer = setTimeout(() => { if (smsInboxHas) processSmsInbox(); }, 30000); // try again in 30s
+            } finally {
+                smsInboxBusy = false;
+            }
+        }
+        startSmsInbox();
         document.addEventListener('visibilitychange', smsWake);
         window.addEventListener('focus', smsWake);
         window.addEventListener('pageshow', smsWake);
@@ -11107,7 +11153,7 @@ Use the conversation history provided to you to remember what's already been sai
                 saveBalances();
                 playMoneySound();
                 const when = item.at && item.at < Date.now() ? { date: new Date(item.at).toISOString() } : {};
-                addToHistory('Add Money', item.amount, bucket, (item.store && item.store !== 'UrPay top-up' ? `Income from ${item.store}` : 'UrPay top-up'), null, when);
+                addToHistory('Add Money', item.amount, bucket, (item.store && item.store !== 'UrPay top-up' ? (/^refund/i.test(item.store) ? item.store : `Income from ${item.store}`) : 'UrPay top-up'), null, when);
                 try { checkHangoutLimit(); } catch (e) { }
                 showNotification(`Added ${item.amount} ⃁ to ${bucket}`);
             } catch (e) {

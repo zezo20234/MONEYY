@@ -75,9 +75,9 @@ function parseReceivedTime(text, queryTime) {
 async function saveOne(text, user, queryTime) {
     if (/\botp\b|one.?time|verification|code\s*[:：]/i.test(text)) return { ignored: 'looks like a code message' };
     if (/refund|reversal|return|credit/i.test(text)) return { ignored: 'refund/credit not handled yet' };
-    if (!/purchase|\bpos\b|mada|apple\s*pay|online|payment/i.test(text)) return { ignored: 'not a purchase message' };
+    if (!/amount\s*[:：]/i.test(text)) return { ignored: 'no "amount:" line in the text', preview: text.slice(0, 150) };
     const amount = parseAmount(text);
-    if (!amount) return { ignored: 'no amount found' };
+    if (!amount) return { ignored: 'no amount found', preview: text.slice(0, 150) };
     const store = parseStore(text);
 
     const smsTime = parseSmsTime(text);
@@ -120,6 +120,11 @@ async function saveOne(text, user, queryTime) {
 }
 
 export default async function handler(req, res) {
+    // The inbox page lives on github.io, so the browser needs permission to read this reply.
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-key');
+    if (req.method === 'OPTIONS') return res.status(200).end();
     try {
         if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ error: 'use POST' });
         const secret = process.env.SMS_SECRET;

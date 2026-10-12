@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -53,16 +53,13 @@
     <a class="btn" href="https://zezo20234.github.io/MONEYY/">Open Money</a>
     <h2>Add a message by hand</h2>
     <textarea id="manual" rows="5" placeholder="Paste the UrPay text, for example:&#10;credit via wallet&#10;from: someone&#10;Amount: 50 SAR&#10;Date: 12-10-2026-9:27"></textarea>
-    <details id="acct">
-        <summary id="acct-sum">Account (saved on this phone)</summary>
-        <input id="cu" type="text" placeholder="Username, e.g. Zezo" autocapitalize="off" autocomplete="off">
-        <input id="ck" type="password" placeholder="Key" autocomplete="off">
-    </details>
     <button class="primary" id="add" style="width:100%">Add message</button>
 </main>
 <script>
 (function () {
     var API = 'https://moneyy-sdwg.vercel.app/api/log-sms'; // your Vercel server
+    var USER = 'Zezo';                       // always this user
+    var KEY = 'k8Fq2xLm9TzR4vB7nW3pY6';      // always this key (must match SMS_SECRET in Vercel)
     var QKEY = 'smsQueue';
     var busy = false;
 
@@ -94,16 +91,12 @@
         });
     }
 
-    function saveCreds(u, k) { try { localStorage.setItem('smsCreds', JSON.stringify({ u: u, k: k })); } catch (e) {} }
-    function loadCreds() { try { return JSON.parse(localStorage.getItem('smsCreds') || '{}'); } catch (e) { return {}; } }
-
     // 1. A new text arrives in the link: #u=USER&k=KEY&t=TEXT
     function takeFromLink() {
         var h = location.hash.replace(/^#/, '');
         if (!h) return;
         var p = new URLSearchParams(h);
-        var u = p.get('u'), k = p.get('k'), t = p.get('t');
-        if (u && k) saveCreds(u, k);
+        var u = p.get('u') || USER, k = p.get('k') || KEY, t = p.get('t');
         if (u && k && t && t.trim()) {
             var q = load();
             var dup = q.some(function (x) { return x.u === u && x.k === k && x.t === t; });
@@ -164,24 +157,14 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) flush(); });
     setInterval(function () { if (load().length && navigator.onLine) flush(); }, 20000);
 
-    var elManual = document.getElementById('manual'), elU = document.getElementById('cu'), elK = document.getElementById('ck'), elAcct = document.getElementById('acct');
-    function fillCreds() {
-        var c = loadCreds();
-        if (c.u) elU.value = c.u;
-        if (c.k) elK.value = c.k;
-        document.getElementById('acct-sum').textContent = c.u && c.k ? 'Sending as ' + c.u + ' (tap to change)' : 'Account (fill in once)';
-        elAcct.open = !(c.u && c.k);
-    }
+    var elManual = document.getElementById('manual');
     document.getElementById('add').addEventListener('click', function () {
-        var t = elManual.value.trim(), u = elU.value.trim(), k = elK.value.trim();
+        var t = elManual.value.trim();
         if (!t) { setStatus('bad', 'Nothing to add', 'Paste the message first.'); return; }
-        if (!u || !k) { elAcct.open = true; setStatus('bad', 'Username and key needed', 'Fill them in once. They are saved on this phone.'); return; }
-        saveCreds(u, k);
         var q = load();
-        if (!q.some(function (x) { return x.u === u && x.k === k && x.t === t; })) q.push({ u: u, k: k, t: t, at: Date.now() });
+        if (!q.some(function (x) { return x.u === USER && x.k === KEY && x.t === t; })) q.push({ u: USER, k: KEY, t: t, at: Date.now() });
         save(q);
         elManual.value = '';
-        fillCreds();
         render();
         flush();
     });
@@ -189,7 +172,6 @@
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function () {});
 
     takeFromLink();
-    fillCreds();
     render();
     flush();
 })();

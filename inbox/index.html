@@ -81,7 +81,12 @@
         <button class="primary" id="send">Save to cloud now</button>
         <button id="clear">Clear phone list</button>
     </div>
+    <div class="row" style="margin-top:10px">
+        <button id="refresh">Refresh app (clear cache)</button>
+        <button id="export">Save list to Files</button>
+    </div>
     <a class="btn" href="https://zezo20234.github.io/MONEYY/">Open Money</a>
+    <a class="btn" href="https://zezo20234.github.io/MONEYY/?reset=1" style="border-color:var(--line);color:var(--muted)">Open Money + refresh it (clear cache)</a>
 
     <h2>Add a message by hand</h2>
     <textarea id="manual" rows="5" placeholder="Paste the UrPay text, for example:&#10;credit via wallet&#10;from: someone&#10;Amount: 50 SAR&#10;Date: 12-10-2026-9:27"></textarea>
@@ -217,6 +222,31 @@
         else if (cloudCount === 0) setStatus('ok', 'All caught up', uploaded ? 'The Money app already picked them up.' : 'Nothing is waiting.');
         else setStatus('wait', 'Saved', 'Could not check the cloud right now.');
     }
+
+    // Hard refresh: removes the service worker and the cached copy of this page, then reloads it from the internet.
+    // The texts waiting on this phone are kept (only the app files are cleared, not the saved list).
+    $('refresh').addEventListener('click', async function () {
+        if (!confirm('Refresh the app and clear its cache? Texts waiting on this phone are kept.')) return;
+        try { var regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(function (r) { return r.unregister(); })); } catch (e) {}
+        try { var keys = await caches.keys(); await Promise.all(keys.map(function (k) { return caches.delete(k); })); } catch (e) {}
+        location.replace(location.pathname + '?r=' + Date.now());
+    });
+    if (/[?&]r=\d+/.test(location.search)) history.replaceState(null, '', location.pathname);
+
+    // A web page can't write into a Files folder by itself. This opens the share sheet: pick "Save to Files" > Money.
+    // (The Shortcut can write into Files/Money on its own: see the steps I sent.)
+    $('export').addEventListener('click', async function () {
+        var q = load();
+        if (!q.length) { setStatus('wait', 'Nothing to save', 'The phone list is empty.'); return; }
+        var text = q.map(function (x) { return x.t; }).join('\n~~~\n') + '\n~~~\n';
+        var file = new File([text], 'queue.txt', { type: 'text/plain' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file] }); } catch (e) {}
+        } else {
+            var a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = 'queue.txt';
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+    });
 
     $('send').addEventListener('click', flush);
     $('clear').addEventListener('click', function () {

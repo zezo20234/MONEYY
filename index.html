@@ -10,6 +10,18 @@
     <meta name="apple-mobile-web-app-title" content="Zezo UI">
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-touch-fullscreen" content="yes">
+    <script>
+        // Hard refresh: open the app with ?reset=1 to wipe the service worker + cache and load the newest version.
+        // (Your data and login are NOT touched: only the cached app files are removed.)
+        (function () {
+            if (!/[?&]reset=1\b/.test(location.search)) return;
+            var go = function () { location.replace(location.pathname + '?v=' + Date.now()); };
+            Promise.resolve()
+                .then(function () { return navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }) : null; })
+                .then(function () { return window.caches ? caches.keys().then(function (k) { return Promise.all(k.map(function (x) { return caches.delete(x); })); }) : null; })
+                .then(go, go);
+        })();
+    </script>
     <title id="appTitle">Zezo UI 1.0</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./MONEY2.png">

@@ -120,6 +120,11 @@ async function saveOne(text, user, queryTime) {
 }
 
 export default async function handler(req, res) {
+    // The inbox page lives on github.io, so the browser needs permission to read this reply.
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-key');
+    if (req.method === 'OPTIONS') return res.status(200).end();
     try {
         if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ error: 'use POST' });
         const secret = process.env.SMS_SECRET;

@@ -32,7 +32,7 @@ const get = async (path, query = '') => {
 const patch = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
 const del = (path) => fetch(`${DB}/${path}.json`, { method: 'DELETE' });
 const put = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PUT', body: JSON.stringify(body) });
-const KEEP_MS = 14 * DAY_MS; // webhook messages are deleted after this long
+const DEFAULT_KEEP_DAYS = 7; // webhook messages are deleted after this many days (Admin Panel can change it: reminderSettings/keepDays)
 
 // Posts to a user's webhook and remembers the message id so it can be deleted later.
 async function sendHook(hook, u, content) {
@@ -51,11 +51,13 @@ async function sendHook(hook, u, content) {
     return res;
 }
 
-// Deletes webhook messages older than 14 days. Runs at most once every 6 hours.
+// Deletes webhook messages older than 7 days. Runs at most once every 6 hours.
 async function cleanupOldMessages(usernames, nowMs) {
     const last = Number(await get('reminderSettings/lastCleanupAt')) || 0;
     if (nowMs - last < 6 * 60 * 60 * 1000) return { skipped: true };
     await put('reminderSettings/lastCleanupAt', nowMs);
+    const kd = Number(await get('reminderSettings/keepDays'));
+    const KEEP_MS = (kd >= 1 && kd <= 365 ? kd : DEFAULT_KEEP_DAYS) * DAY_MS;
 
     let deleted = 0;
     for (const name of usernames) {

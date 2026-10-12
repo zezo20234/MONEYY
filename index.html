@@ -6136,6 +6136,8 @@
                     <input class="adm-input" id="admKeepDays" type="number" inputmode="numeric" min="1" max="365" placeholder="7">
                     <button class="adm-mini" onclick="admSaveKeepDays()">Save</button>
                 </div>
+                <div class="adm-row"><button class="adm-mini ghost" onclick="admClearDiscordNow()">🧹 Clear all app messages from Discord now</button></div>
+                <small class="adm-hint">Deletes every message the app sent (reminders and purchase alerts) within about 5 minutes. It can't delete messages the app didn't send.</small>
                 <div class="adm-lab">Next reminder time (Riyadh)</div>
                 <div class="adm-row">
                     <input class="adm-input" id="admGlobalNext" type="datetime-local">
@@ -7360,6 +7362,13 @@
                 admUsers.forEach((u) => { u.reminderIntervalDays = null; });
                 admRenderList();
                 showNotification(`Everyone is now reminded every ${v} day${v === 1 ? '' : 's'}`);
+            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+        };
+        window.admClearDiscordNow = async function () {
+            if (!confirm('Delete ALL Discord messages the app has sent to everyone? This cannot be undone.')) return;
+            try {
+                await admWrite([['reminderSettings/clearNow', { at: Date.now(), by: (currentUser && currentUser.username) || 'admin' }]]);
+                showNotification('Clearing started. It finishes within about 5 minutes');
             } catch (e) { showNotification('Could not save: ' + e.message, true); }
         };
         window.admSaveKeepDays = async function () {

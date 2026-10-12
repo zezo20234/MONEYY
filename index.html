@@ -10,18 +10,6 @@
     <meta name="apple-mobile-web-app-title" content="Zezo UI">
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-touch-fullscreen" content="yes">
-    <script>
-        // Hard refresh: open the app with ?reset=1 to wipe the service worker + cache and load the newest version.
-        // (Your data and login are NOT touched: only the cached app files are removed.)
-        (function () {
-            if (!/[?&]reset=1\b/.test(location.search)) return;
-            var go = function () { location.replace(location.pathname + '?v=' + Date.now()); };
-            Promise.resolve()
-                .then(function () { return navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }) : null; })
-                .then(function () { return window.caches ? caches.keys().then(function (k) { return Promise.all(k.map(function (x) { return caches.delete(x); })); }) : null; })
-                .then(go, go);
-        })();
-    </script>
     <title id="appTitle">Zezo UI 1.0</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./MONEY2.png">
@@ -6143,6 +6131,11 @@
                     <input class="adm-input" id="admGlobalDays" type="number" inputmode="numeric" min="1" max="60" placeholder="3">
                     <button class="adm-mini" onclick="admSaveGlobalDays()">Save for all</button>
                 </div>
+                <div class="adm-lab">Delete Discord messages after (days)</div>
+                <div class="adm-row">
+                    <input class="adm-input" id="admKeepDays" type="number" inputmode="numeric" min="1" max="365" placeholder="7">
+                    <button class="adm-mini" onclick="admSaveKeepDays()">Save</button>
+                </div>
                 <div class="adm-lab">Next reminder time (Riyadh)</div>
                 <div class="adm-row">
                     <input class="adm-input" id="admGlobalNext" type="datetime-local">
@@ -6825,6 +6818,7 @@
         let admUsers = [];
         let admCycleStartDay = null;
         let admGlobalDays = 3;
+        let admKeepDays = 7;
         let admGWins = {};   // everyone's weekday hours  (reminderSettings/windows)
         let admGDays = {};   // everyone's one-day hours (reminderSettings/dayOverrides)
         const admSelected = new Set();
@@ -7088,6 +7082,12 @@
                 const inp = document.getElementById('admGlobalDays');
                 if (inp && document.activeElement !== inp) inp.value = admGlobalDays;
             });
+            g('reminderSettings/keepDays', (v) => {
+                const kd = Number(v);
+                admKeepDays = kd >= 1 ? kd : 7;
+                const inp = document.getElementById('admKeepDays');
+                if (inp && document.activeElement !== inp) inp.value = admKeepDays;
+            });
             g('reminderSettings/windows', (v) => { admGWins = v || {}; });
             g('reminderSettings/dayOverrides', (v) => { admGDays = v || {}; });
             g('financialCycle/history', (v) => {
@@ -7139,13 +7139,16 @@
             sumEl.textContent = 'Loading users…';
             listEl.innerHTML = '';
             try {
-                const [namesRes, histSnap, daysSnap, winSnap, dayOvSnap] = await Promise.all([
+                const [namesRes, histSnap, daysSnap, winSnap, dayOvSnap, keepSnap] = await Promise.all([
                     fetch(`${firebaseConfig.databaseURL}/users.json?shallow=true`).then((r) => r.json()),
                     get(ref(database, 'financialCycle/history')),
                     get(ref(database, 'reminderSettings/intervalDays')),
                     get(ref(database, 'reminderSettings/windows')),
-                    get(ref(database, 'reminderSettings/dayOverrides'))
+                    get(ref(database, 'reminderSettings/dayOverrides')),
+                    get(ref(database, 'reminderSettings/keepDays'))
                 ]);
+                const kd0 = keepSnap.exists() ? Number(keepSnap.val()) : 7;
+                admKeepDays = kd0 >= 1 ? kd0 : 7;
                 admGWins = winSnap.exists() ? winSnap.val() : {};
                 admGDays = dayOvSnap.exists() ? dayOvSnap.val() : {};
                 const gd = daysSnap.exists() ? Number(daysSnap.val()) : 3;
@@ -7174,6 +7177,7 @@
                 admUsers = all.filter((u) => u.discordWebhook);
                 admUpdateSummary();
                 document.getElementById('admGlobalDays').value = admGlobalDays;
+                document.getElementById('admKeepDays').value = admKeepDays;
                 document.getElementById('admGlobalNext').value = '';
                 admRenderList();
                 admRenderHoursSummary();
@@ -7356,6 +7360,15 @@
                 admUsers.forEach((u) => { u.reminderIntervalDays = null; });
                 admRenderList();
                 showNotification(`Everyone is now reminded every ${v} day${v === 1 ? '' : 's'}`);
+            } catch (e) { showNotification('Could not save: ' + e.message, true); }
+        };
+        window.admSaveKeepDays = async function () {
+            const v = Math.floor(Number(document.getElementById('admKeepDays').value));
+            if (!(v >= 1 && v <= 365)) { showNotification('Enter a number of days from 1 to 365', true); return; }
+            try {
+                await admWrite([['reminderSettings/keepDays', v]]);
+                admKeepDays = v;
+                showNotification(`Discord messages will be deleted after ${v} day${v === 1 ? '' : 's'}`);
             } catch (e) { showNotification('Could not save: ' + e.message, true); }
         };
         function admOpenEdit(u) {
@@ -7610,7 +7623,7 @@
         // ---- Full stats page ----
         const ADM_KNOWN_KEYS = ['balances', 'preferences', 'goals', 'history', 'missions', 'points', 'missionPrestige',
             'discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
-            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards', 'pendingSms', 'smsSeen', 'smsInbox', 'smsIgnored', 'sentMessages'];
+            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards', 'pendingSms', 'smsSeen'];
         let admStats = null; // { name, node, txs, filter, search, limit }
 
         function admHuman(k) {
@@ -10973,53 +10986,7 @@ Use the conversation history provided to you to remember what's already been sai
             if (document.visibilityState === 'hidden') return;
             try { goOnline(database); } catch (e) { }
             if (currentUser && currentUser.username) listenPendingSms(currentUser.username);
-            startSmsInbox();
-            if (smsInboxHas) processSmsInbox();
         }
-
-        // ===== SMS cloud queue =====
-        // The SMS Inbox page saves texts in Firebase (users/Zezo/smsInbox) and nothing else happens. The moment
-        // ANYONE opens this app (logged in or not), the server is asked to handle them: it saves each one as a
-        // pending purchase (the pop-up for Zezo) and sends the Discord message.
-        const SMS_API = 'https://moneyy-sdwg.vercel.app/api/log-sms';
-        const SMS_INBOX_USER = 'Zezo';
-        let smsInboxUnsub = null, smsInboxHas = false, smsInboxBusy = false, smsInboxTimer = null, smsInboxLast = 0;
-
-        function startSmsInbox() {
-            if (smsInboxUnsub) return;
-            try {
-                smsInboxUnsub = onValue(ref(database, `users/${SMS_INBOX_USER}/smsInbox`), (snap) => {
-                    smsInboxHas = snap.exists();
-                    if (smsInboxHas) processSmsInbox();
-                }, () => { smsInboxUnsub = null; });
-            } catch (e) { smsInboxUnsub = null; }
-        }
-
-        async function processSmsInbox() {
-            if (smsInboxBusy) return;
-            // Never hammer the server: at most one call every 10 seconds.
-            const wait = 10000 - (Date.now() - smsInboxLast);
-            if (wait > 0) { clearTimeout(smsInboxTimer); smsInboxTimer = setTimeout(processSmsInbox, wait + 50); return; }
-            if (!navigator.onLine) return;
-            smsInboxBusy = true;
-            smsInboxLast = Date.now();
-            try {
-                const res = await fetch(`${SMS_API}?process=1&user=${encodeURIComponent(SMS_INBOX_USER)}`);
-                const j = await res.json().catch(() => null);
-                if (!res.ok) throw new Error((j && j.error) || ('server ' + res.status));
-                const bad = ((j && j.results) || []).filter((r) => r && r.ignored && !/already received/i.test(r.ignored));
-                if (bad.length && currentUser && currentUser.username === SMS_INBOX_USER) {
-                    showNotification(`${bad.length} text${bad.length > 1 ? 's' : ''} ignored: ${bad[0].ignored}`, true);
-                }
-            } catch (e) {
-                console.error('SMS inbox:', e);
-                clearTimeout(smsInboxTimer);
-                smsInboxTimer = setTimeout(() => { if (smsInboxHas) processSmsInbox(); }, 30000); // try again in 30s
-            } finally {
-                smsInboxBusy = false;
-            }
-        }
-        startSmsInbox();
         document.addEventListener('visibilitychange', smsWake);
         window.addEventListener('focus', smsWake);
         window.addEventListener('pageshow', smsWake);
@@ -11165,7 +11132,7 @@ Use the conversation history provided to you to remember what's already been sai
                 saveBalances();
                 playMoneySound();
                 const when = item.at && item.at < Date.now() ? { date: new Date(item.at).toISOString() } : {};
-                addToHistory('Add Money', item.amount, bucket, (item.store && item.store !== 'UrPay top-up' ? (/^refund/i.test(item.store) ? item.store : `Income from ${item.store}`) : 'UrPay top-up'), null, when);
+                addToHistory('Add Money', item.amount, bucket, (item.store && item.store !== 'UrPay top-up' ? `Income from ${item.store}` : 'UrPay top-up'), null, when);
                 try { checkHangoutLimit(); } catch (e) { }
                 showNotification(`Added ${item.amount} ⃁ to ${bucket}`);
             } catch (e) {

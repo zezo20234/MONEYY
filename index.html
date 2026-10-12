@@ -4486,6 +4486,9 @@
                     <button class="action-btn" onclick="openGoalsModal()">
                         🎯 Goals
                     </button>
+                    <button class="action-btn" onclick="openSmsManual()">
+                        📩 Add Message
+                    </button>
                 </div>
             </div>
 
@@ -10976,6 +10979,70 @@ Use the conversation history provided to you to remember what's already been sai
             });
         };
 
+        // ===== Manual add: paste a UrPay message by hand =====
+        // It is read in the app and saved as a pending item, then the normal Income / Expense pop-up appears.
+        function smsParseManual(text) {
+            const t = String(text || '');
+            let amount = null;
+            const am = t.match(/amount\s*[:：]?\s*([^\n\r]*)/i);
+            if (am) { const n = am[1].replace(/,/g, '').match(/\d+(?:\.\d+)?/g); if (n) amount = Number(n[n.length - 1]); }
+            if (!amount) {
+                const m = t.replace(/,/g, '').match(/(?:sar|sr|ر\.?\s?س|⃁)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:sar|sr|ر\.?\s?س|⃁)/i);
+                if (m) amount = Number(m[1] || m[2]);
+            }
+            if (!(amount > 0 && amount < 1e6)) return null;
+            const sm = t.match(/^\s*(?:at|from)\s*[:：]\s*(.+)$/im);
+            let at = 0;
+            const tm = t.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})[\s-]+(\d{1,2}):(\d{2})/);
+            if (tm) {
+                let d = Number(tm[1]), mo = Number(tm[2]);
+                if (mo > 12 && d <= 12) { const x = d; d = mo; mo = x; }
+                const ms = Date.UTC(Number(tm[3]), mo - 1, d, Number(tm[4]), Number(tm[5])) - 3 * 3600 * 1000; // Riyadh = UTC+3
+                if (Number.isFinite(ms) && ms < Date.now() + 36e5 && ms > Date.now() - 400 * 864e5) at = ms;
+            }
+            const income = /credit(?:ed)?\s+(?:via|to)|via\s+wallet|top[\s-]?up|topped|recharg|reload|\bloaded\b|deposit|funds?\s+added|money\s+added|شحن|إيداع|ايداع|تعبئة/i.test(t);
+            return { amount: r2(amount), store: ((sm && sm[1].trim()) || 'Manual message').slice(0, 80), at, income };
+        }
+
+        window.openSmsManual = function () {
+            if (!currentUser) { showNotification('Please login first', true); return; }
+            const old = document.getElementById('smsManualModal');
+            if (old) old.remove();
+            const el = document.createElement('div');
+            el.id = 'smsManualModal';
+            el.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+            el.innerHTML = `
+                <div style="width:100%;max-width:380px;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);">
+                    <div style="font-size:18px;font-weight:700;">📩 Add a message</div>
+                    <div style="font-size:13px;opacity:.65;margin:6px 0 10px;">Paste the UrPay text. The app reads the amount, then asks if it is income or an expense.</div>
+                    <textarea id="smsManualText" rows="6" placeholder="credit via wallet&#10;from: someone&#10;Amount: 50 SAR&#10;Date: 12-10-2026-9:27"
+                        style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:15px;font-family:inherit;resize:vertical;"></textarea>
+                    <button onclick="smsManualSubmit()" style="width:100%;padding:14px;margin-top:12px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#667eea,#4a5fd0);cursor:pointer;">Add</button>
+                    <button onclick="document.getElementById('smsManualModal').remove()" style="width:100%;padding:12px;margin-top:10px;border:1px solid rgba(255,255,255,.25);border-radius:14px;font-size:15px;color:#fff;background:transparent;cursor:pointer;">Cancel</button>
+                </div>`;
+            document.body.appendChild(el);
+            setTimeout(() => { const ta = document.getElementById('smsManualText'); if (ta) ta.focus(); }, 50);
+        };
+
+        window.smsManualSubmit = async function () {
+            if (!currentUser) return;
+            const ta = document.getElementById('smsManualText');
+            const p = smsParseManual(ta ? ta.value : '');
+            if (!p) { showNotification('Could not find an amount (look for "Amount: 50 SAR")', true); return; }
+            try {
+                const id = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+                await set(ref(database, `users/${currentUser.username}/pendingSms/${id}`), {
+                    ...(p.income ? { type: 'topup' } : {}),
+                    amount: p.amount, store: p.store, createdAt: Date.now(), purchasedAt: p.at || Date.now()
+                });
+                const m = document.getElementById('smsManualModal');
+                if (m) m.remove();
+            } catch (e) {
+                console.error(e);
+                showNotification('Could not save it — check your connection and try again', true);
+            }
+        };
+
         // Step 1 for every UrPay message: is it money OUT (expense) or money IN (income)?
         window.smsSetMode = function (id, m) {
             smsGetDraft(id).mode = m;
@@ -11040,7 +11107,7 @@ Use the conversation history provided to you to remember what's already been sai
                 saveBalances();
                 playMoneySound();
                 const when = item.at && item.at < Date.now() ? { date: new Date(item.at).toISOString() } : {};
-                addToHistory('Add Money', item.amount, bucket, 'UrPay top-up', null, when);
+                addToHistory('Add Money', item.amount, bucket, (item.store && item.store !== 'UrPay top-up' ? `Income from ${item.store}` : 'UrPay top-up'), null, when);
                 try { checkHangoutLimit(); } catch (e) { }
                 showNotification(`Added ${item.amount} ⃁ to ${bucket}`);
             } catch (e) {

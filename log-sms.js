@@ -54,7 +54,7 @@ function parseStore(text) {
 const RIYADH_MS = 3 * 60 * 60 * 1000;
 const sane = (ms) => Number.isFinite(ms) && ms < Date.now() + 36e5 && ms > Date.now() - 400 * 864e5;
 function parseSmsTime(text) {
-    const m = text.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})\s+(\d{1,2}):(\d{2})/);
+    const m = text.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})[\s-]+(\d{1,2}):(\d{2})/);
     if (!m) return null;
     let [, a, b, y, hh, mm] = m.map(Number);
     let day = a, month = b;
@@ -71,9 +71,56 @@ function parseReceivedTime(text, queryTime) {
     return sane(ms) ? ms : null;
 }
 
+// ---- Top-ups (money added to the card) ----
+// UrPay's exact wording is unknown, so this looks for common words (English + Arabic).
+const TOPUP_RE = /top[\s-]?up|topped|recharg|reload|\bloaded\b|deposit|funds?\s+added|money\s+added|balance\s+added|credited\s+to|credit(?:ed)?\s+via|via\s+wallet|شحن|إيداع|ايداع|تعبئة|اضافة\s*رصيد|إضافة\s*رصيد/i;
+function isTopUp(text) { return TOPUP_RE.test(text); }
+// Amount for a top-up: the "amount:" line if there is one, else the number next to SAR / SR / ⃁ / ر.س
+function parseTopUpAmount(text) {
+    const a = parseAmount(text);
+    if (a) return a;
+    const m = text.replace(/,/g, '').match(/(?:sar|sr|ر\.?\s?س|⃁)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:sar|sr|ر\.?\s?س|⃁)/i);
+    const v = m ? Number(m[1] || m[2]) : NaN;
+    return v > 0 && v < 1e6 ? r2(v) : null;
+}
+async function saveTopUp(text, user, queryTime) {
+    const amount = parseTopUpAmount(text);
+    if (!amount) return { ignored: 'top-up text but no amount found', preview: text.slice(0, 150) };
+    const sm = text.match(/^\s*(?:at|from)\s*[:：]\s*(.+)$/im);
+    const store = ((sm && sm[1].trim()) || 'UrPay top-up').slice(0, 80);
+    const smsTime = parseSmsTime(text);
+    const givenTime = smsTime || parseReceivedTime(text, queryTime);
+    const purchasedAt = givenTime || Date.now();
+    const u = encodeURIComponent(user);
+    const hashText = text.replace(/^\s*received\s*[:：].*$/im, '').replace(/\s+/g, ' ').trim();
+    const hash = createHash('sha1').update('topup|' + hashText + (smsTime ? '' : '|' + purchasedAt)).digest('hex').slice(0, 12);
+    const lastSeen = Number(await (await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`)).json()) || 0;
+    const dupWindow = givenTime ? 7 * 24 * 60 * 60 * 1000 : 2 * 60 * 1000;
+    if (Date.now() - lastSeen < dupWindow) return { ignored: 'same message already received' };
+    await fetch(`${DB}/users/${u}/smsSeen/${hash}.json`, { method: 'PUT', body: JSON.stringify(Date.now()) });
+    const id = hash + Date.now().toString(36);
+    await fetch(`${DB}/users/${u}/pendingSms/${id}.json`, { method: 'PUT', body: JSON.stringify({ type: 'topup', amount, store, createdAt: Date.now(), purchasedAt }) });
+    try {
+        const webhook = await (await fetch(`${DB}/users/${u}/discordWebhook.json`)).json();
+        if (webhook) {
+            const hookUrl = webhook + (webhook.includes('?') ? '&' : '?') + 'wait=true';
+            const hr = await fetch(hookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: 'Money', content: `💵 Money added to your card: ${amount} ⃁. Open the app to choose where it goes.`, allowed_mentions: { parse: [] } }),
+            });
+            const hm = await hr.json().catch(() => null);
+            if (hm && hm.id) await fetch(`${DB}/users/${u}/sentMessages/${hm.id}.json`, { method: 'PUT', body: JSON.stringify({ at: Date.now() }) });
+        }
+    } catch { /* ignore */ }
+    return { pending: true, topup: true, amount, store };
+}
+
 // Saves ONE SMS as a pending purchase. Returns a small result object (never throws for "ignored" texts).
 async function saveOne(text, user, queryTime) {
     if (/\botp\b|one.?time|verification|code\s*[:：]/i.test(text)) return { ignored: 'looks like a code message' };
+    // Money coming IN (top-up / card charge / deposit). Saved as a pending top-up; the app asks where to add it.
+    if (isTopUp(text)) return await saveTopUp(text, user, queryTime);
     if (/refund|reversal|return|credit/i.test(text)) return { ignored: 'refund/credit not handled yet' };
     if (!/amount\s*[:：]/i.test(text)) return { ignored: 'no "amount:" line in the text', preview: text.slice(0, 150) };
     const amount = parseAmount(text);

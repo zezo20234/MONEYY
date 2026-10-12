@@ -1,9 +1,9 @@
 // inbox/sw.js - lets the SMS inbox page open with no internet.
-const CACHE = 'sms-inbox-v1';
+const CACHE = 'sms-inbox-v3';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();
-    e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./index.html'])));
+    e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-180.png'])));
 });
 
 self.addEventListener('activate', (e) => {

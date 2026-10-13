@@ -32,7 +32,7 @@ const get = async (path, query = '') => {
 const patch = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PATCH', body: JSON.stringify(body) });
 const del = (path) => fetch(`${DB}/${path}.json`, { method: 'DELETE' });
 const put = (path, body) => fetch(`${DB}/${path}.json`, { method: 'PUT', body: JSON.stringify(body) });
-const KEEP_MS = 14 * DAY_MS; // webhook messages are deleted after this long
+const DEFAULT_KEEP_DAYS = 7; // webhook messages are deleted after this many days (Admin Panel can change it: reminderSettings/keepDays)
 
 // Posts to a user's webhook and remembers the message id so it can be deleted later.
 async function sendHook(hook, u, content) {
@@ -51,11 +51,17 @@ async function sendHook(hook, u, content) {
     return res;
 }
 
-// Deletes webhook messages older than 14 days. Runs at most once every 6 hours.
-async function cleanupOldMessages(usernames, nowMs) {
-    const last = Number(await get('reminderSettings/lastCleanupAt')) || 0;
-    if (nowMs - last < 6 * 60 * 60 * 1000) return { skipped: true };
-    await put('reminderSettings/lastCleanupAt', nowMs);
+// Deletes webhook messages older than the keep time (default 7 days). Normally runs at most once every 6 hours.
+// clearAll = true (Admin Panel "Clear now"): ignores the age and the 6-hour wait and deletes every message
+// the app saved an id for. Only messages the app itself sent can be deleted this way.
+async function cleanupOldMessages(usernames, nowMs, clearAll = false) {
+    if (!clearAll) {
+        const last = Number(await get('reminderSettings/lastCleanupAt')) || 0;
+        if (nowMs - last < 6 * 60 * 60 * 1000) return { skipped: true };
+        await put('reminderSettings/lastCleanupAt', nowMs);
+    }
+    const kd = Number(await get('reminderSettings/keepDays'));
+    const KEEP_MS = clearAll ? 0 : (kd >= 1 && kd <= 365 ? kd : DEFAULT_KEEP_DAYS) * DAY_MS;
 
     let deleted = 0;
     for (const name of usernames) {
@@ -64,7 +70,7 @@ async function cleanupOldMessages(usernames, nowMs) {
         const msgs = (await get(`users/${u}/sentMessages`)) || {};
         const [base, qs] = hook ? String(hook).split('?') : [null, ''];
         for (const [id, m] of Object.entries(msgs)) {
-            if (!m || nowMs - m.at < KEEP_MS) continue;
+            if (!m || (!clearAll && nowMs - m.at < KEEP_MS)) continue;
             if (base) {
                 const res = await fetch(`${base}/messages/${id}${qs ? '?' + qs : ''}`, { method: 'DELETE' }).catch(() => null);
                 if (res && res.status === 429) return { deleted, rateLimited: true }; // try again next time
@@ -260,8 +266,19 @@ async function run(force) {
         const results = await Promise.all(usernames.slice(i, i + 10).map((n) => handleUser(n).catch(() => false)));
         sent += results.filter(Boolean).length;
     }
+    // Admin Panel "Clear now": reminderSettings/clearNow = { at, by }. Claimed (deleted) first so it runs once;
+    // if more than 40 messages are left (or Discord rate-limits), the flag is put back and the next run continues.
+    let clearedNow = null;
+    if (!force) {
+        const flag = await get('reminderSettings/clearNow');
+        if (flag) {
+            await del('reminderSettings/clearNow');
+            clearedNow = await cleanupOldMessages(usernames, nowMs, true).catch((e) => ({ error: e.message }));
+            if (clearedNow && (clearedNow.more || clearedNow.rateLimited)) await put('reminderSettings/clearNow', flag);
+        }
+    }
     const cleanup = force ? null : await cleanupOldMessages(usernames, nowMs).catch((e) => ({ error: e.message }));
-    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, manualMessages: manual, scheduledUpdate: update, cleanup };
+    return { ok: true, force, riyadhTime: r.toISOString().replace('T', ' ').slice(0, 16), sent, manualMessages: manual, scheduledUpdate: update, cleanup, clearedNow };
 }
 
 export default async function handler(req, res) {

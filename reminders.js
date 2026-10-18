@@ -84,19 +84,14 @@ async function cleanupOldMessages(usernames, nowMs, clearAll = false) {
     return { deleted };
 }
 
-// Allowance day is the SAME for every user: every 4th Friday counted from the shared anchor
-// (the latest month-cycle start, or the day Zezo last set the week, whichever is later).
-// Exactly the same rule as the app's Week counter. Per-user anchors are ignored.
-function isAllowanceDay(cycleStartDay, anchor, todayStr) {
-    const d = new Date(anchor + 'T00:00:00Z');
-    let fridays = 0, last = null;
-    for (let i = 0; i < 800; i++) {
-        d.setUTCDate(d.getUTCDate() + 1);
-        const s = d.toISOString().slice(0, 10);
-        if (s > todayStr) break;
-        if (d.getUTCDay() === 5 && ++fridays % 4 === 0) last = s;
-    }
-    return last === todayStr;
+// Allowance time is the SAME for every user: the 28th up to the 1st of the next month (Riyadh time).
+// Returns the period id ("YYYY-MM-28" of the month it started in) or null. The app stores the period a user
+// already handled at users/<n>/allowanceDonePeriod, so reminders continue every day until they add it.
+function allowancePeriod(todayStr) {
+    const y = Number(todayStr.slice(0, 4)), m = Number(todayStr.slice(5, 7)), dom = Number(todayStr.slice(8, 10));
+    if (dom >= 28) return todayStr.slice(0, 7) + '-28';
+    if (dom === 1) return new Date(Date.UTC(y, m - 2, 28)).toISOString().slice(0, 10);
+    return null;
 }
 
 const MESSAGES = [
@@ -105,7 +100,7 @@ const MESSAGES = [
     (n) => `Hey ${n}, have you added your spending yet? Take a minute to log it.`,
 ];
 function buildMessage(name, allowanceDay, idx) {
-    if (allowanceDay) return `Hey ${name}, today is allowance day. Add your allowance and your spending.`;
+    if (allowanceDay) return `Hey ${name}, did you get your allowance yet? Add it and your spending.`;
     return MESSAGES[((Number(idx) || 0) % 3 + 3) % 3](name);
 }
 
@@ -175,13 +170,7 @@ async function run(force) {
     const g = Number(await get('reminderSettings/intervalDays'));
     const globalDays = g >= 1 ? g : 3;
 
-    const cycles = Object.values((await get('financialCycle/history')) || {});
-    const latestCycle = cycles.map((c) => new Date(c.startDate).getTime()).filter(Boolean).sort((a, b) => a - b).pop();
-    const cycleStartDay = latestCycle ? dayStr(new Date(latestCycle + OFFSET_MS)) : today.slice(0, 8) + '01';
-    const cycleStartMs = latestCycle || (Date.parse(today.slice(0, 8) + '01T00:00:00Z') - OFFSET_MS);
-    const wk = await get('financialCycle/weekAnchor');
-    const sharedAnchor = wk && wk.day && wk.setAt >= cycleStartMs ? wk.day : cycleStartDay;
-    const allowanceToday = isAllowanceDay(cycleStartDay, sharedAnchor, today);
+    const period = allowancePeriod(today);
 
     const update = force ? null : await publishScheduledUpdate(nowMs);
 
@@ -205,7 +194,8 @@ async function run(force) {
 
     async function handleUser(name) {
         const u = encodeURIComponent(name);
-        const [webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt, lastMsgIndex, userWins, userDayWins] = await Promise.all([
+        const [doneRaw, webhook, lastPurchaseAt, lastReminderDay, lastReminderAt, clockStart, anchor, ownDays, nextReminderAt, lastMsgIndex, userWins, userDayWins] = await Promise.all([
+            get(`users/${u}/allowanceDonePeriod`),
             get(`users/${u}/discordWebhook`),
             get(`users/${u}/lastPurchaseAt`),
             get(`users/${u}/lastReminderDay`),
@@ -219,6 +209,7 @@ async function run(force) {
             get(`users/${u}/reminderDayOverrides`),
         ]);
         if (!webhook) return false;
+        const allowanceToday = !!period && doneRaw !== period; // allowance time and not added yet
 
         const intervalMs = (Number(ownDays) >= 1 ? Number(ownDays) : globalDays) * DAY_MS;
         const baseline = lastPurchaseAt || clockStart;

@@ -5326,14 +5326,14 @@
         </div>
     </div>
 
-    <!-- Allowance day pop-up (4th Friday of the 4-week cycle) -->
+    <!-- Allowance pop-up (every day from the 28th to the 1st, until the allowance is added) -->
     <div class="modal" id="allowanceDayModal" style="z-index: 1150;">
         <div class="modal-content" style="text-align:center;">
-            <div class="modal-title" style="font-size:24px; margin-bottom:8px;">💰 Allowance day</div>
-            <div class="ac-sub" style="margin-bottom:18px;">It's the 4th Friday — time to add your allowance.</div>
+            <div class="modal-title" style="font-size:24px; margin-bottom:8px;">💰 Got your allowance yet?</div>
+            <div class="ac-sub" style="margin-bottom:18px;">It's allowance time (28th – 1st). Have you received it?</div>
             <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="allowanceDayLater()">Later</button>
-                <button class="modal-btn confirm" onclick="allowanceDayAdd()">Add</button>
+                <button class="modal-btn cancel" onclick="allowanceDayLater()">Not yet</button>
+                <button class="modal-btn confirm" onclick="allowanceDayAdd()">Yes, add it</button>
             </div>
         </div>
     </div>
@@ -5634,14 +5634,8 @@
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Current Week</div>
                     <div id="weekSettingsCurrent" style="font-size: 19px; font-weight: 800; margin: 4px 0 10px; color: var(--accent-1, #00f5d4);">—</div>
-                    <div id="weekPickerBtns" style="display:flex; gap:8px;">
-                        <button type="button" class="modal-btn cancel" data-week="1" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(1)">1</button>
-                        <button type="button" class="modal-btn cancel" data-week="2" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(2)">2</button>
-                        <button type="button" class="modal-btn cancel" data-week="3" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(3)">3</button>
-                        <button type="button" class="modal-btn cancel" data-week="4" style="flex:1; padding:12px 0;" onclick="setCurrentWeek(4)">4</button>
-                    </div>
-                    <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Sets the week for everyone.
-                        It then moves on by itself every Friday; the 4th Friday is Allowance day.</small>
+                    <small style="color: rgba(255,255,255,0.5); display:block; margin-top:2px;">The week follows the date: 1-7 = Week 1, 8-14 = Week 2,
+                        15-21 = Week 3, 22 onwards = Week 4. From the 28th to the 1st the app asks every day if you got your allowance yet.</small>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button type="button" class="modal-btn confirm" style="flex:1; min-width:140px;"
@@ -6555,85 +6549,72 @@
                 || (dow === 4 ? DEFAULT_THURSDAY_WINDOW : DEFAULT_REMINDER_WINDOW);
         }
 
-        // ===== Week counter + Allowance day =====
-        // A 4-week cycle that ticks over every Friday (Riyadh time), the same for everyone:
-        //   Week 1 until the 1st Friday, then Week 2, Week 3, Week 4. The 4th Friday is
-        //   Allowance day and a new cycle (Week 1) starts. Only Zezo can set which week it is.
-        // Shared anchor = the month cycle's start, or the day Zezo last set the week
-        // (whichever happened later). Stored at financialCycle/weekAnchor.
-        let weekAnchorGlobal = null;       // { day: 'YYYY-MM-DD', week, setAt }
-        let allowanceDoneFriday = '';      // per user: the allowance Friday already handled
+        // ===== Week counter + Allowance days (based on the calendar date, Riyadh time) =====
+        //   Week 1 = days 1-7, Week 2 = 8-14, Week 3 = 15-21, Week 4 = 22 to the end of the month.
+        //   Allowance time = the 28th up to the 1st of the next month. On each of those days the app asks
+        //   "Got your allowance yet?" until the allowance is added (one allowance per 28th-1st period).
+        let allowanceDonePeriod = '';      // per user: the allowance period (its "28th" date) already handled
         let allowanceDoneLoaded = false;
-        let allowancePopupLater = false;   // "Later" hides it until the app is opened again
+        let allowancePopupLater = false;   // "Not yet" hides it until the app is opened again
 
         function riyadhDayOf(dateLike) {
             return riyadhDayString(new Date(new Date(dateLike).getTime() + RIYADH_OFFSET_MS));
         }
         function getWeekInfo(todayOverride) {
             const today = todayOverride || riyadhDayString(riyadhNow());
-            const cycle = getCurrentCycle();
-            let anchor = riyadhDayOf(cycle.startDate);
-            if (weekAnchorGlobal && weekAnchorGlobal.day && weekAnchorGlobal.setAt >= cycle.startDate.getTime()) {
-                anchor = weekAnchorGlobal.day;
-            }
-            const fridays = [];
-            const d = new Date(anchor + 'T00:00:00Z');
-            for (let i = 0; i < 800; i++) {
-                d.setUTCDate(d.getUTCDate() + 1);
-                const s = d.toISOString().slice(0, 10);
-                if (s > today) break;
-                if (d.getUTCDay() === 5) fridays.push(s);
-            }
-            const n = fridays.length;
-            const m = Math.floor(n / 4) * 4; // Fridays that were allowance days so far
-            const allowanceFriday = m >= 4 ? fridays[m - 1] : null;
-            return { today, anchor, week: (n % 4) + 1, allowanceFriday, n };
+            const y = Number(today.slice(0, 4)), m = Number(today.slice(5, 7)), dom = Number(today.slice(8, 10));
+            const week = dom <= 7 ? 1 : dom <= 14 ? 2 : dom <= 21 ? 3 : 4;
+            let period = null; // "YYYY-MM-28" of the month the allowance period started in
+            if (dom >= 28) period = today.slice(0, 7) + '-28';
+            else if (dom === 1) period = new Date(Date.UTC(y, m - 2, 28)).toISOString().slice(0, 10);
+            return { today, week, allowancePeriod: period, allowanceFriday: period };
         }
-        // ONE allowance schedule for everybody (shared anchor, every 4th Friday).
-        // Nth upcoming allowance (1 = the next one; counts today's if it is not handled yet).
+        // Nth upcoming allowance date (1 = the next one; counts the current one if it is not handled yet).
         function allowanceDateNth(N) {
             const w = getWeekInfo();
-            const due = isAllowanceDue();
-            if (due && N === 1) return w.allowanceFriday;
-            const idx = N - (due ? 1 : 0);               // 1 = next allowance after today
-            const k = (Math.floor(w.n / 4) + idx) * 4;   // which Friday (counted from the anchor)
-            const d = new Date(w.anchor + 'T00:00:00Z');
-            do { d.setUTCDate(d.getUTCDate() + 1); } while (d.getUTCDay() !== 5);
-            d.setUTCDate(d.getUTCDate() + 7 * (k - 1));
-            return d.toISOString().slice(0, 10);
+            const y = Number(w.today.slice(0, 4)), m = Number(w.today.slice(5, 7));
+            let mi; // month index (year*12 + month0) of the first allowance still to come
+            if (w.allowancePeriod) {
+                const pm = Number(w.allowancePeriod.slice(0, 4)) * 12 + Number(w.allowancePeriod.slice(5, 7)) - 1;
+                mi = isAllowanceDue() ? pm : pm + 1;
+            } else {
+                mi = y * 12 + (m - 1);
+            }
+            mi += N - 1;
+            return new Date(Date.UTC(Math.floor(mi / 12), mi % 12, 28)).toISOString().slice(0, 10);
         }
         function fmtAllowanceDay(str) {
             return new Date(str + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
         }
         function isAllowanceDue() {
             const w = getWeekInfo();
-            return !!w.allowanceFriday && allowanceDoneFriday !== w.allowanceFriday;
+            return !!w.allowancePeriod && allowanceDonePeriod !== w.allowancePeriod;
         }
-        function doneKey() { return currentUser ? `moneyAllowanceDone:${currentUser.username}` : null; }
+        function doneKey() { return currentUser ? `moneyAllowanceDonePeriod:${currentUser.username}` : null; }
         function loadAllowanceDone() {
             if (!currentUser) return;
             const username = currentUser.username;
             allowanceDoneLoaded = false;
             allowancePopupLater = false;
-            try { allowanceDoneFriday = localStorage.getItem(doneKey()) || ''; } catch (e) { allowanceDoneFriday = ''; }
-            get(ref(database, `users/${username}/allowanceDoneFriday`)).then((snap) => {
-                if (currentUser && currentUser.username === username && snap.exists() && snap.val() > allowanceDoneFriday) {
-                    allowanceDoneFriday = snap.val();
-                    try { localStorage.setItem(doneKey(), allowanceDoneFriday); } catch (e) { }
+            try { allowanceDonePeriod = localStorage.getItem(doneKey()) || ''; } catch (e) { allowanceDonePeriod = ''; }
+            get(ref(database, `users/${username}/allowanceDonePeriod`)).then((snap) => {
+                if (currentUser && currentUser.username === username && snap.exists() && snap.val() > allowanceDonePeriod) {
+                    allowanceDonePeriod = snap.val();
+                    try { localStorage.setItem(doneKey(), allowanceDonePeriod); } catch (e) { }
                 }
             }).catch(() => { }).finally(() => {
                 allowanceDoneLoaded = true;
                 renderMonthCycleUI();
             });
         }
-        // Called whenever an allowance is added: this user's pop-up is handled for this allowance Friday.
+        // Called whenever an allowance is added: this user is done for the current 28th-1st period.
         function markAllowanceDone() {
             if (!currentUser) return;
             const w = getWeekInfo();
-            if (!w.allowanceFriday) return;
-            allowanceDoneFriday = w.allowanceFriday;
-            try { localStorage.setItem(doneKey(), allowanceDoneFriday); } catch (e) { }
-            set(ref(database, `users/${currentUser.username}/allowanceDoneFriday`), allowanceDoneFriday).catch(() => { });
+            if (!w.allowancePeriod) return;
+            allowanceDonePeriod = w.allowancePeriod;
+            try { localStorage.setItem(doneKey(), allowanceDonePeriod); } catch (e) { }
+            set(ref(database, `users/${currentUser.username}/allowanceDonePeriod`), allowanceDonePeriod).catch(() => { });
             renderMonthCycleUI();
         }
         function renderWeekBadge() {
@@ -6644,14 +6625,8 @@
             weekEl.textContent = ` · Week ${w.week}`;
             dots.style.display = 'flex';
             dots.querySelectorAll('i').forEach((el, i) => el.classList.toggle('on', i < w.week));
-
-            // Zezo-only control in Settings
             const cur = document.getElementById('weekSettingsCurrent');
             if (cur) cur.textContent = `Week ${w.week}`;
-            document.querySelectorAll('#weekPickerBtns button').forEach((b) => {
-                b.classList.toggle('confirm', Number(b.dataset.week) === w.week);
-                b.classList.toggle('cancel', Number(b.dataset.week) !== w.week);
-            });
         }
         function maybeShowAllowanceDayPopup() {
             if (!currentUser || !allowanceDoneLoaded || allowancePopupLater) return;
@@ -6668,37 +6643,9 @@
             addUsualAllowance(); // adds the usual allowance (commitAllowance then marks it done)
         };
 
-        // Zezo only: choose which week it is, for everyone. Re-anchors the count so that
-        // today is the chosen week, and the next Fridays carry on from there.
-        window.setCurrentWeek = function (week) {
-            if (!currentUser || currentUser.username.toLowerCase() !== 'zezo') {
-                showNotification('Only Zezo can change the week', true);
-                return;
-            }
-            week = Number(week);
-            if (!(week >= 1 && week <= 4)) return;
-            // Anchor so exactly (week - 1) Fridays fall after it, up to today.
-            const d = new Date(riyadhDayString(riyadhNow()) + 'T00:00:00Z');
-            let back = week - 1, guard = 0;
-            if (back === 0) {
-                while (d.getUTCDay() !== 5 && guard++ < 8) d.setUTCDate(d.getUTCDate() - 1); // most recent Friday
-            } else {
-                while (guard++ < 400) {
-                    if (d.getUTCDay() === 5 && --back === 0) break; // the (week-1)th most recent Friday
-                    d.setUTCDate(d.getUTCDate() - 1);
-                }
-                d.setUTCDate(d.getUTCDate() - 1); // day before it, so that Friday counts
-            }
-            const payload = { day: d.toISOString().slice(0, 10), week, setAt: Date.now() };
-            set(ref(database, 'financialCycle/weekAnchor'), payload).then(() => {
-                showNotification(`It's now Week ${week} for everyone`);
-            }).catch((err) => showNotification('Could not change the week: ' + err.message, true));
-        };
-
-        // Allowance day = today is a 4th-Friday allowance day and this user hasn't added it yet.
+        // Allowance time = today is between the 28th and the 1st and this user hasn't added the allowance yet.
         function isAllowanceDayToday() {
-            const w = getWeekInfo();
-            return w.allowanceFriday === w.today && allowanceDoneFriday !== w.allowanceFriday;
+            return isAllowanceDue();
         }
 
         let discordReminderRunning = false;
@@ -6710,7 +6657,7 @@
             (n) => `Hey ${n}, have you added your spending yet? Take a minute to log it.`
         ];
         function buildReminderMessage(name, allowanceDay, idx) {
-            if (allowanceDay) return `Hey ${name}, today is allowance day. Add your allowance and your spending.`;
+            if (allowanceDay) return `Hey ${name}, did you get your allowance yet? Add it and your spending.`;
             return REMINDER_MESSAGES[((Number(idx) || 0) % 3 + 3) % 3](name);
         }
         async function checkDiscordReminders() {
@@ -6890,7 +6837,7 @@
         // Everyone gets allowance on the SAME day, so this ignores any per-user anchor
         // and uses the shared schedule (same rule as the app's Week counter).
         function admIsAllowanceDay(cycleStartDay, anchor, todayStr) {
-            return getWeekInfo(todayStr).allowanceFriday === todayStr;
+            return !!getWeekInfo(todayStr).allowancePeriod;
         }
 
         // When will this user next be reminded?
@@ -7688,7 +7635,7 @@
         // ---- Full stats page ----
         const ADM_KNOWN_KEYS = ['balances', 'preferences', 'goals', 'history', 'missions', 'points', 'missionPrestige',
             'discordWebhook', 'lastPurchaseAt', 'lastActive', 'lastReminderDay', 'lastReminderAt', 'reminderClockStart',
-            'allowanceAnchor', 'allowanceDoneFriday', 'reminderIntervalDays', 'nextReminderAt', 'rewards', 'pendingSms', 'smsSeen'];
+            'allowanceAnchor', 'allowanceDoneFriday', 'allowanceDonePeriod', 'reminderIntervalDays', 'nextReminderAt', 'rewards', 'pendingSms', 'smsSeen'];
         let admStats = null; // { name, node, txs, filter, search, limit }
 
         function admHuman(k) {
@@ -7851,7 +7798,7 @@
                 }).join('') : '<div class="adm-none">No missions</div>');
 
             const activity = {};
-            ['lastActive', 'lastPurchaseAt', 'lastReminderAt', 'lastReminderDay', 'reminderClockStart', 'allowanceAnchor', 'allowanceDoneFriday'].forEach((k) => { if (node[k] !== undefined) activity[k] = node[k]; });
+            ['lastActive', 'lastPurchaseAt', 'lastReminderAt', 'lastReminderDay', 'reminderClockStart', 'allowanceAnchor', 'allowanceDoneFriday', 'allowanceDonePeriod'].forEach((k) => { if (node[k] !== undefined) activity[k] = node[k]; });
             activity.discordWebhook = node.discordWebhook ? 'Connected (' + '••••' + String(node.discordWebhook).slice(-6) + ')' : 'Not connected';
             activity.reminderEveryDays = (Number(node.reminderIntervalDays) >= 1 ? node.reminderIntervalDays + ' (custom)' : admGlobalDays + ' (default)');
             activity.nextReminderTime = node.nextReminderAt ? admFmtFull(node.nextReminderAt) + ' (custom)' : 'Automatic';
@@ -11060,6 +11007,28 @@ Use the conversation history provided to you to remember what's already been sai
         const smsDefaultTag = () => (userHasAI() ? 'auto' : 'Other');
         function smsGetDraft(id) { return smsDraft[id] || (smsDraft[id] = { desc: '', tag: smsDefaultTag() }); }
 
+        // The amount can be edited in the pop-up (the SMS amount is only the starting value).
+        function smsAmountOf(item) {
+            const d = smsDraft[item.id];
+            const n = d && d.amount !== undefined ? Number(d.amount) : NaN;
+            return n > 0 && n < 1e6 ? r2(n) : item.amount;
+        }
+        window.smsEditAmount = function (id, v) { smsGetDraft(id).amount = v; };
+        function smsAmountInput(item, color) {
+            return `<div style="margin:6px 0 2px;"><input id="smsAmt" type="number" inputmode="decimal" step="0.01" min="0" value="${smsAmountOf(item)}" oninput="smsEditAmount('${item.id}', this.value)" style="width:62%;box-sizing:border-box;padding:6px 8px;text-align:center;font-size:30px;font-weight:800;color:${color || '#fff'};background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.35);border-radius:12px;font-family:inherit;"> <span style="font-size:26px;font-weight:800;">⃁</span><div style="font-size:11px;opacity:.5;margin-top:3px;">Tap the amount to edit it</div></div>`;
+        }
+        // Reads the (possibly edited) amount; returns null and warns if it is not a valid number.
+        function smsReadAmount(item) {
+            const inp = document.getElementById('smsAmt');
+            if (inp) {
+                const n = Number(inp.value);
+                if (!(n > 0 && n < 1e6)) { showNotification('Enter a valid amount', true); return null; }
+                smsGetDraft(item.id).amount = inp.value;
+                return r2(n);
+            }
+            return smsAmountOf(item);
+        }
+
         window.smsSetTag = function (id, t) {
             smsGetDraft(id).tag = t;
             document.querySelectorAll('#smsPopup [data-smstag]').forEach((b) => {
@@ -11149,7 +11118,7 @@ Use the conversation history provided to you to remember what's already been sai
                 <div style="width:100%;max-width:380px;max-height:92vh;overflow-y:auto;background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center;">
                     <div style="font-size:34px;">💳</div>
                     <div style="font-size:13px;opacity:.7;margin-top:2px;">New UrPay message${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
-                    <div style="font-size:32px;font-weight:800;margin:4px 0;">${item.amount} ⃁</div>
+                    ${smsAmountInput(item)}
                     <div style="font-size:14px;opacity:.8;word-break:break-word;">${esc(item.store)}</div>
                     ${item.at ? `<div style="font-size:12px;opacity:.55;margin-top:4px;">${esc(new Date(item.at).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }))}</div>` : ''}
                     <div style="font-size:13px;opacity:.6;margin:16px 0 0;">Is this income or an expense?</div>
@@ -11172,7 +11141,7 @@ Use the conversation history provided to you to remember what's already been sai
                     <button onclick="smsSetMode('${item.id}',null)" style="display:block;margin:0 0 6px;padding:4px 2px;border:none;background:transparent;color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;text-align:left;">← Back</button>
                     <div style="font-size:34px;">💵</div>
                     <div style="font-size:13px;opacity:.7;margin-top:2px;">Money added to your card${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
-                    <div style="font-size:32px;font-weight:800;margin:4px 0;color:#2ed573;">+${item.amount} ⃁</div>
+                    ${smsAmountInput(item, '#2ed573')}
                     <div style="font-size:14px;opacity:.8;word-break:break-word;">${esc(item.store)}</div>
                     ${item.at ? `<div style="font-size:12px;opacity:.55;margin-top:4px;">${esc(new Date(item.at).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }))}</div>` : ''}
                     <div style="font-size:13px;opacity:.6;margin:14px 0 0;">Where should it be added?</div>
@@ -11188,18 +11157,21 @@ Use the conversation history provided to you to remember what's already been sai
             if (smsBusy || !currentUser) return;
             const item = smsQueue.find((x) => x.id === id);
             if (!item || !BUCKETS.includes(bucket)) return;
+            const amount = smsReadAmount(item);
+            if (amount === null) return;
             smsBusy = true;
             try {
                 // Claim it first, so it can never be added twice (even from two phones).
                 const r = await runTransaction(ref(database, `users/${currentUser.username}/pendingSms/${id}`), (cur) => cur ? null : undefined);
                 if (!r.committed) return;
-                balances[bucket] = r2(balances[bucket] + item.amount);
+                balances[bucket] = r2(balances[bucket] + amount);
                 saveBalances();
                 playMoneySound();
                 const when = item.at && item.at < Date.now() ? { date: new Date(item.at).toISOString() } : {};
-                addToHistory('Add Money', item.amount, bucket, (item.store && item.store !== 'UrPay top-up' ? `Income from ${item.store}` : 'UrPay top-up'), null, when);
+                addToHistory('Add Money', amount, bucket, (item.store && item.store !== 'UrPay top-up' ? `Income from ${item.store}` : 'UrPay top-up'), null, when);
                 try { checkHangoutLimit(); } catch (e) { }
-                showNotification(`Added ${item.amount} ⃁ to ${bucket}`);
+                delete smsDraft[id];
+                showNotification(`Added ${amount} ⃁ to ${bucket}`);
             } catch (e) {
                 console.error(e);
                 showNotification('Could not save it — check your connection and try again', true);
@@ -11241,7 +11213,7 @@ Use the conversation history provided to you to remember what's already been sai
                     <button onclick="smsSetMode('${item.id}',null)" style="display:block;margin:0 0 6px;padding:4px 2px;border:none;background:transparent;color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;text-align:left;">← Back</button>
                     <div style="font-size:34px;">💳</div>
                     <div style="font-size:13px;opacity:.7;margin-top:2px;">New UrPay purchase${smsQueue.length > 1 ? ` · ${smsQueue.length - 1} more waiting` : ''}</div>
-                    <div style="font-size:32px;font-weight:800;margin:4px 0;">${item.amount} ⃁</div>
+                    ${smsAmountInput(item)}
                     <div style="font-size:14px;opacity:.8;word-break:break-word;">${esc(item.store)}</div>
                     ${item.at ? `<div style="font-size:12px;opacity:.55;margin-top:4px;">${esc(new Date(item.at).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }))}</div>` : ''}
                     <input id="smsDesc" type="text" maxlength="60" placeholder="What was it? (e.g. chips)" value="${esc(draft.desc)}"
@@ -11262,8 +11234,10 @@ Use the conversation history provided to you to remember what's already been sai
             if (smsBusy || !currentUser) return;
             const item = smsQueue.find((x) => x.id === id);
             if (!item || !BUCKETS.includes(bucket)) return;
+            const amount = smsReadAmount(item);
+            if (amount === null) return;
             const have = r2(balances[bucket]);
-            const cost = r2(Math.min(have, item.amount));
+            const cost = r2(Math.min(have, amount));
             if (cost <= 0) { showNotification(`There is no money in ${bucket} — pick another one`, true); return; }
             const inp = document.getElementById('smsDesc');
             const draft = smsGetDraft(id);
@@ -11278,7 +11252,7 @@ Use the conversation history provided to you to remember what's already been sai
                 saveBalances();
                 playMoneySound();
                 const base = desc || item.store;
-                const note = cost < item.amount ? `${base} (only ${cost} of ${item.amount} was in ${bucket})` : base;
+                const note = cost < amount ? `${base} (only ${cost} of ${amount} was in ${bucket})` : base;
                 // Use the time the purchase really happened (it may have been queued on the phone while offline).
                 const when = item.at && item.at < Date.now() ? { date: new Date(item.at).toISOString() } : {};
                 addToHistory('Purchase', -cost, bucket, note, null, { ...(tag ? { tag } : {}), ...when }, true);
@@ -12859,11 +12833,6 @@ Use the conversation history provided to you to remember what's already been sai
                     .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
                 renderMonthCycleUI();
                 if (currentUser) updateUI();
-            });
-            // Zezo-controlled week (shared by everyone)
-            onValue(ref(database, 'financialCycle/weekAnchor'), (snapshot) => {
-                weekAnchorGlobal = snapshot.exists() ? snapshot.val() : null;
-                renderMonthCycleUI();
             });
 
             // Live-updating clock in the header/settings (every 30s is plenty).

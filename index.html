@@ -224,6 +224,7 @@
         .wb-bar i { display: block; height: 100%; width: 0; border-radius: 8px; transition: width .3s ease; background: linear-gradient(90deg, #00f5d4, #2ed573); }
         .wb-bar i.warn { background: linear-gradient(90deg, #feca57, #ff9f43); }
         .wb-bar i.over { background: linear-gradient(90deg, #ff6b6b, #ee5a24); }
+        .wb-ends { font-size: 13px; font-weight: 700; color: var(--accent-1, #00f5d4); margin-top: 10px; }
         .wb-note { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 10px; }
         .week-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0 10px; }
         .week-pick button { padding: 12px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; }
@@ -290,15 +291,6 @@
 
         .balance-card.savings:hover {
             box-shadow: 0 0 30px rgba(0, 245, 212, 0.3);
-        }
-
-        .balance-card.playstation {
-            border-color: rgba(239, 68, 68, 0.3);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
-        }
-
-        .balance-card.playstation:hover {
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
         }
 
         .card-header {
@@ -3176,12 +3168,6 @@
             box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
         }
 
-        .category-pill[data-category="playstation"].selected {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
-            border-color: rgba(239, 68, 68, 0.6);
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
-        }
-
         .pill-icon {
             font-size: 20px;
         }
@@ -3300,12 +3286,6 @@
             background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(0, 217, 245, 0.3) 100%);
             border-color: rgba(0, 245, 212, 0.5);
             box-shadow: 0 0 15px rgba(0, 245, 212, 0.3);
-        }
-
-        .filter-chip[data-filter="playstation"].active {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
-            border-color: rgba(239, 68, 68, 0.5);
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
         }
 
         /* Live Summary Bar */
@@ -4444,31 +4424,20 @@
                         <div class="savings-ring" id="savingsRing" onclick="openGoalsModal()"></div>
                     </div>
 
-                    <div class="balance-card playstation">
-                        <div class="card-header">
-                            <div class="card-title">PlayStation / Mobily</div>
-                            <div class="card-amount" id="playstationBalance">0 ⃁</div>
-                        </div>
-                        <div class="card-limit">Gaming & Mobile</div>
-                    </div>
                 </div>
 
                 <!-- Weekly Budget Card -->
                 <div class="balance-card week-budget-card" id="weekBudgetCard">
                     <div class="card-header">
                         <div class="card-title">🗓️ <span id="wbTitle">This Week</span></div>
-                        <div class="card-amount" id="wbSince" style="font-size:12px; font-weight:600; opacity:.7;"></div>
+                        <div class="card-amount" id="wbSince" style="font-size:13px; font-weight:700; opacity:.85;"></div>
                     </div>
                     <div class="wb-row">
-                        <div class="wb-row-top"><span>Hangout</span><span id="wbHangoutText">—</span></div>
+                        <div class="wb-row-top"><span>Left to spend this week</span><span id="wbHangoutText">—</span></div>
                         <div class="wb-bar"><i id="wbHangoutBar"></i></div>
                         <div class="wb-row-top"><small id="wbHangoutSub"></small></div>
                     </div>
-                    <div class="wb-row">
-                        <div class="wb-row-top"><span>Savings spending</span><span id="wbSavingsText">—</span></div>
-                        <div class="wb-bar"><i id="wbSavingsBar"></i></div>
-                        <div class="wb-row-top"><small id="wbSavingsSub"></small></div>
-                    </div>
+                    <div class="wb-ends" id="wbEnds"></div>
                     <div class="wb-note" id="wbNote"></div>
                     <button type="button" style="margin-top:12px; width:100%; padding:11px; background: rgba(0,245,212,0.18); border: 1px solid rgba(0,245,212,0.45); border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;" onclick="openWeekAddModal()">➕ Money from parents (this week's Hangout)</button>
                 </div>
@@ -4547,11 +4516,6 @@
                             <span class="pill-icon">💰</span>
                             <span class="pill-label">Savings</span>
                         </button>
-                        <button type="button" class="category-pill" data-category="playstation"
-                            onclick="selectPurchaseCategory('playstation')">
-                            <span class="pill-icon">🎯</span>
-                            <span class="pill-label">PlayStation</span>
-                        </button>
                     </div>
                 </div>
 
@@ -4613,8 +4577,6 @@
                         onclick="applyTransactionFilter('hangout', 'all')">Hangout</button>
                     <button class="filter-chip" data-filter="savings" data-type="all"
                         onclick="applyTransactionFilter('savings', 'all')">Savings</button>
-                    <button class="filter-chip" data-filter="playstation" data-type="all"
-                        onclick="applyTransactionFilter('playstation', 'all')">PlayStation</button>
                     <button class="filter-chip" data-filter="all" data-type="purchase"
                         onclick="applyTransactionFilter('all', 'purchase')">Purchases</button>
                     <button class="filter-chip" data-filter="all" data-type="deposit"
@@ -4684,7 +4646,7 @@
                                 <p>👋 Hi! I'm your AI financial assistant. I can help you with:</p>
                                 <ul>
                                     <li>💡 Purchase advice ("Can I buy X with my savings?")</li>
-                                    <li>💰 Transfer suggestions ("Should I move PlayStation money to savings?")</li>
+                                    <li>💰 Transfer suggestions ("Should I move Hangout money to savings?")</li>
                                     <li>📊 Spending analysis ("How am I doing this month?")</li>
                                     <li>⚠️ Budget warnings and tips</li>
                                 </ul>
@@ -4875,59 +4837,6 @@
                     <input type="range" class="slider" id="savingsSlider" min="0" max="120" step="0.01" value="25"
                         oninput="updateAllowanceSplit()">
                 </div>
-                <div class="slider-container" id="playstationSliderContainer">
-                    <div class="slider-label">
-                        <span>PlayStation / Mobily (<span id="playstationPercentLabel">12.5%</span>)</span>
-                        <span id="playstationSplit">0 ⃁</span>
-                    </div>
-                    <input type="range" class="slider" id="playstationSlider" min="0" max="120" step="0.01" value="0"
-                        oninput="updateAllowanceSplit()">
-                </div>
-                <div class="modal-actions">
-                    <button class="modal-btn cancel" onclick="closeModal('allowanceModal')">Cancel</button>
-                    <button class="modal-btn confirm" onclick="addAllowance()">Add Allowance</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add Mission Modal (Zezo only) -->
-        <div class="modal" id="addMissionModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Add Mission</div>
-                    <button class="close-btn" onclick="closeModal('addMissionModal')">&times;</button>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Mission Title</label>
-                    <input type="text" class="form-input" id="missionTitle" placeholder="e.g. Clean my room">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Time (optional)</label>
-                    <div class="time-toggle-row">
-                        <input type="checkbox" id="missionNoTimeCheck" onchange="toggleMissionTimeInput()">
-                        <label for="missionNoTimeCheck" style="cursor:pointer;">No specific time</label>
-                    </div>
-                    <input type="time" class="form-input" id="missionTime">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Repeat</label>
-                    <button type="button" class="everyday-btn" onclick="setMissionEveryDay()">Set to every day</button>
-                    <div class="day-chips" id="missionDayChips">
-                        <button type="button" class="day-chip" data-day="0" onclick="toggleMissionDay(0)">Sun</button>
-                        <button type="button" class="day-chip" data-day="1" onclick="toggleMissionDay(1)">Mon</button>
-                        <button type="button" class="day-chip" data-day="2" onclick="toggleMissionDay(2)">Tue</button>
-                        <button type="button" class="day-chip" data-day="3" onclick="toggleMissionDay(3)">Wed</button>
-                        <button type="button" class="day-chip" data-day="4" onclick="toggleMissionDay(4)">Thu</button>
-                        <button type="button" class="day-chip" data-day="5" onclick="toggleMissionDay(5)">Fri</button>
-                        <button type="button" class="day-chip" data-day="6" onclick="toggleMissionDay(6)">Sat</button>
-                    </div>
-                    <small style="color: rgba(255,255,255,0.5); display:block; margin-top: 6px;">Tap any days you want
-                        (Mon, Tue, etc. are all optional to pick). Leave none selected for any day.</small>
-                </div>
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label class="form-label">Reward</label>
-                    <div style="font-size: 14px; color: rgba(255,255,255,0.8);">🏅 10 points per completion</div>
-                </div>
                 <div class="form-group" style="margin-bottom: 8px;">
                     <div class="mission-notify-row">
                         <input type="checkbox" id="missionNotifyCheck" checked onchange="toggleMissionNotifyOptions()">
@@ -5020,7 +4929,6 @@
                     <select class="form-select" id="addMoneyBucket">
                         <option value="hangout">Hangout</option>
                         <option value="savings">Savings</option>
-                        <option value="playstation">PlayStation / Mobily</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -5064,7 +4972,6 @@
                     <select class="form-select" id="transferFrom">
                         <option value="hangout">Hangout</option>
                         <option value="savings">Savings</option>
-                        <option value="playstation">PlayStation / Mobily</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -5072,7 +4979,6 @@
                     <select class="form-select" id="transferTo">
                         <option value="savings">Savings</option>
                         <option value="hangout">Hangout</option>
-                        <option value="playstation">PlayStation / Mobily</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -5106,10 +5012,6 @@
                 <div class="form-group">
                     <label class="form-label">Savings Balance (⃁)</label>
                     <input type="number" class="form-input" id="editSavings" step="any" inputmode="decimal" placeholder="Current balance">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">PlayStation Balance (⃁)</label>
-                    <input type="number" class="form-input" id="editPlaystation" step="any" inputmode="decimal" placeholder="Current balance">
                 </div>
                 <div class="modal-actions">
                     <button class="modal-btn cancel" onclick="closeModal('editModal')">Cancel</button>
@@ -5176,7 +5078,6 @@
                 <select class="form-select" id="editTransactionCategory">
                     <option value="hangout">Hangout</option>
                     <option value="savings">Savings</option>
-                    <option value="playstation">PlayStation / Mobily</option>
                 </select>
             </div>
             <div class="form-group">
@@ -5288,13 +5189,23 @@
         </div>
     </div>
 
+    <!-- Leftovers of the removed PlayStation bucket (never shown; keep older code from failing on a missing element) -->
+    <div id="psLegacyStubs" hidden aria-hidden="true">
+        <span id="playstationBalance"></span>
+        <input type="number" id="editPlaystation" value="0">
+        <div id="playstationSliderContainer"><span id="playstationPercentLabel"></span><span id="playstationSplit"></span><input type="range" class="slider" id="playstationSlider" min="0" max="120" step="0.01" value="0"></div>
+        <select id="settingsEnablePlaystation"><option value="false" selected>No</option><option value="true">Yes</option></select>
+        <div id="settingsPlaystationAmountGroup"><input type="number" id="settingsPlaystationAmount" disabled></div>
+        <div id="budgetPlaystationPercentGroup"><input type="number" id="budgetPlaystationPercent" value="0"></div>
+    </div>
+
     <!-- Setup wizard: shown on open until monthly income + split are set -->
     <div class="modal" id="setupModal">
         <div class="modal-content setup-wizard">
             <div class="sw-top">
                 <button type="button" class="sw-back" id="swBack" onclick="setupBack()" aria-label="Back"
                     style="visibility:hidden;">&#8249;</button>
-                <div class="sw-progress" id="swProgress"><span></span><span></span><span></span></div>
+                <div class="sw-progress" id="swProgress"><span></span><span></span></div>
                 <button type="button" class="sw-skip" onclick="skipSetupWizard()">Later</button>
             </div>
 
@@ -5313,27 +5224,11 @@
                 <button type="button" class="modal-btn confirm sw-next" onclick="setupNext()">Next</button>
             </section>
 
-            <!-- 2. PlayStation / Mobily bucket -->
-            <section class="sw-step" data-step="2">
-                <div class="sw-title">Do you want a PlayStation bucket?</div>
-                <div class="sw-sub">A separate pot for PlayStation or Mobily bills, so it doesn't mix with your hangout money.</div>
-                <div class="sw-choices">
-                    <button type="button" class="sw-choice" id="swPsYes" onclick="swChoosePs(true)">
-                        <span class="sw-ico">🎮</span>
-                        <span><b>Yes</b><small>Add the PlayStation / Mobily bucket</small></span>
-                    </button>
-                    <button type="button" class="sw-choice" id="swPsNo" onclick="swChoosePs(false)">
-                        <span class="sw-ico">🙅</span>
-                        <span><b>No</b><small>Only Hangout and Savings</small></span>
-                    </button>
-                </div>
-            </section>
-
             <!-- 3. Split -->
             <section class="sw-step" data-step="3">
                 <div class="sw-title">Split</div>
                 <div class="sw-sub">Choose how each allowance is divided. <span id="swIncomeEcho"></span></div>
-                <div class="sw-bar" id="swBar"><i class="sw-c-h" id="swBarH"></i><i class="sw-c-s" id="swBarS"></i><i class="sw-c-p" id="swBarP"></i></div>
+                <div class="sw-bar" id="swBar"><i class="sw-c-h" id="swBarH"></i><i class="sw-c-s" id="swBarS"></i></div>
 
                 <div class="slider-container">
                     <div class="slider-label">
@@ -5350,10 +5245,6 @@
                     </div>
                     <input type="range" class="slider" id="swSaveSlider" min="0" max="100" step="1" value="38"
                         oninput="swSplitInput('save')">
-                </div>
-                <div class="sw-remainder" id="swPsRow">
-                    <span><span class="sw-dot sw-c-p"></span>PlayStation gets the rest</span>
-                    <span id="swPsText">20%</span>
                 </div>
                 <div class="sw-note" id="swNote"></div>
                 <button type="button" class="modal-btn confirm sw-next" id="swFinishBtn" onclick="swFinish()">Finish setup</button>
@@ -5516,34 +5407,10 @@
                 <small style="color: rgba(255,255,255,0.5);">Maximum amount before excess moves to Savings</small>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">🗓️ Weekly Budget (⃁)</label>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout / week</label>
-                        <input type="number" class="form-input" id="settingsWeekHangout" inputmode="decimal" min="0" step="any" placeholder="Auto">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings spend / week</label>
-                        <input type="number" class="form-input" id="settingsWeekSavings" inputmode="decimal" min="0" step="any" placeholder="Auto">
-                    </div>
-                </div>
-                <small id="settingsWeekAutoNote" style="color: rgba(255,255,255,0.5); display:block; margin-top:6px;">Leave empty for Auto: your monthly Hangout / Savings split divided by 4 weeks.</small>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Enable PlayStation/Mobily Bucket</label>
-                <select class="form-select" id="settingsEnablePlaystation"
-                    onchange="toggleSettingsPlaystationVisibility()">
-                    <option value="true">Yes, I need this bucket</option>
-                    <option value="false">No, I don't use this</option>
-                </select>
-            </div>
-
             <div class="form-group" id="fixedAmountSettings">
                 <label class="form-label">Default Allowance Split (⃁)</label>
                 <div id="settingsAmountSplitGrid"
-                    style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout</label>
                         <input type="number" class="form-input" id="settingsFixedHangout" inputmode="numeric" min="0"
@@ -5553,10 +5420,6 @@
                         <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings</label>
                         <input type="number" class="form-input" id="settingsFixedSavings" inputmode="numeric" min="0"
                             placeholder="25" oninput="updateSettingsSplitRemainder()">
-                    </div>
-                    <div id="settingsPlaystationAmountGroup">
-                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation</label>
-                        <input type="number" class="form-input" id="settingsPlaystationAmount" disabled>
                     </div>
                 </div>
                 <small id="settingsSplitNote" style="color: rgba(255,255,255,0.5); display:block; margin-top:6px;"></small>
@@ -5663,7 +5526,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Budget Category Breakdown</label>
-                        <div id="budgetCategoryGrid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div id="budgetCategoryGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                             <div>
                                 <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout %</label>
                                 <input type="number" class="form-input" id="budgetHangoutPercent" value="50" min="0" max="100" oninput="updateBudgetCustomTotal()">
@@ -5671,10 +5534,6 @@
                             <div>
                                 <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings %</label>
                                 <input type="number" class="form-input" id="budgetSavingsPercent" value="30" min="0" max="100" oninput="updateBudgetCustomTotal()">
-                            </div>
-                            <div id="budgetPlaystationPercentGroup">
-                                <label style="font-size: 12px; color: rgba(255,255,255,0.6);">PlayStation %</label>
-                                <input type="number" class="form-input" id="budgetPlaystationPercent" value="20" min="0" max="100" oninput="updateBudgetCustomTotal()">
                             </div>
                         </div>
                         <small id="budgetCustomTotal" style="display:block; margin-top: 8px; color: rgba(255,255,255,0.5);"></small>
@@ -6668,62 +6527,68 @@
             return Math.max(Date.UTC(y, m - 1, startDay) - RIYADH_OFFSET_MS, cycleStart);
         }
 
-        // Weekly limits: what the user typed in Settings, or (Auto) the monthly split divided by 4 weeks.
-        function getWeeklyLimits() {
-            const p = userPreferences || {};
-            const inc = p.monthlyIncome || p.defaultAllowanceAmount || 0;
-            let h = p.fixedHangoutAmount, s = p.fixedSavingsAmount;
-            if (!p.useFixedAmounts && inc > 0) {
-                h = inc * (p.hangoutPercent != null ? p.hangoutPercent : 50) / 100;
-                s = inc * (p.savingsPercent != null ? p.savingsPercent : 37.5) / 100;
+        // ===== Weekly budget =====
+        // Based on the money you have RIGHT NOW in Hangout, spread evenly over the days left until the end
+        // of the month. Spend less and tomorrow's share grows; money from parents raises it straight away.
+        function getWeekEndInfo() {
+            const w = getWeekInfo();
+            const y = Number(w.today.slice(0, 4)), m = Number(w.today.slice(5, 7)), dom = Number(w.today.slice(8, 10));
+            const dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            let endDom = [7, 14, 21, dim][dateWeekOf(dom) - 1];
+            if (w.manual) {
+                if (w.week === 4) endDom = dim;
+                else {
+                    const st = new Date(getWeekStartMs() + RIYADH_OFFSET_MS);
+                    const sameMonth = st.getUTCFullYear() === y && st.getUTCMonth() === m - 1;
+                    const e = Math.min(dim, (sameMonth ? st.getUTCDate() : 1) + 6);
+                    if (e >= dom) endDom = e; // a pinned week that already ran out falls back to the calendar week
+                }
             }
-            const autoH = r2((h != null ? h : 35) / 4), autoS = r2((s != null ? s : 25) / 4);
-            const customH = p.weekHangoutLimit != null && p.weekHangoutLimit !== '' && Number(p.weekHangoutLimit) >= 0;
-            const customS = p.weekSavingsLimit != null && p.weekSavingsLimit !== '' && Number(p.weekSavingsLimit) >= 0;
+            const fmt = (d) => new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
             return {
-                hangout: r2((customH ? Number(p.weekHangoutLimit) : autoH) + getWeekExtraHangout() + getWeekRollover()),
-                savings: customS ? r2(Number(p.weekSavingsLimit)) : autoS,
-                autoHangout: autoH, autoSavings: autoS, customH, customS, extra: getWeekExtraHangout(), rollover: getWeekRollover()
+                week: w.week, endDom, endLabel: fmt(endDom), monthEndLabel: fmt(dim),
+                daysLeftWeek: Math.max(1, endDom - dom + 1), daysLeftMonth: Math.max(1, dim - dom + 1)
             };
         }
 
         // Spent so far this week, per bucket (purchases only).
         function getWeekSpent() {
             const since = getWeekStartMs();
-            const out = { hangout: 0, savings: 0, playstation: 0 };
+            const out = { hangout: 0, savings: 0 };
             (history || []).forEach((item) => {
                 if (item.type !== 'Purchase' || !(item.category in out)) return;
                 const t = new Date(item.date).getTime();
                 if (t >= since) out[item.category] += Math.abs(item.amount);
             });
-            out.hangout = r2(out.hangout); out.savings = r2(out.savings); out.playstation = r2(out.playstation);
+            out.hangout = r2(out.hangout); out.savings = r2(out.savings);
             return out;
+        }
+
+        function getWeekBudget() {
+            const e = getWeekEndInfo();
+            const balance = Math.max(0, r2(Number(balances.hangout) || 0));
+            const perDay = balance / e.daysLeftMonth;
+            const left = r2(perDay * e.daysLeftWeek);
+            const spent = getWeekSpent().hangout;
+            return Object.assign({}, e, { balance, perDay: r2(perDay), left, spent, total: r2(left + spent) });
         }
 
         function renderWeekBudget() {
             const card = document.getElementById('weekBudgetCard');
             if (!card || !currentUser) return;
-            maybeRollWeek();
             const w = getWeekInfo();
-            const lim = getWeeklyLimits();
-            const sp = getWeekSpent();
+            const b = getWeekBudget();
             document.getElementById('wbTitle').textContent = `Week ${w.week} budget`;
-            document.getElementById('wbSince').textContent = 'since ' + new Date(getWeekStartMs() + RIYADH_OFFSET_MS).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-            const fill = (key, barId, textId, subId) => {
-                const limit = lim[key], spent = sp[key];
-                const left = r2(limit - spent);
-                const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : (spent > 0 ? 100 : 0);
-                const bar = document.getElementById(barId);
-                bar.style.width = pct + '%';
-                bar.className = spent > limit ? 'over' : pct >= 80 ? 'warn' : '';
-                document.getElementById(textId).textContent = left >= 0 ? `${left} ⃁ left` : `${r2(-left)} ⃁ over`;
-                document.getElementById(subId).textContent = `${spent} spent of ${limit} ⃁ this week`;
-            };
-            fill('hangout', 'wbHangoutBar', 'wbHangoutText', 'wbHangoutSub');
-            fill('savings', 'wbSavingsBar', 'wbSavingsText', 'wbSavingsSub');
-            const ex = lim.extra, ro = lim.rollover;
-            document.getElementById('wbNote').textContent = (w.manual ? 'Week set by Zezo' : 'Week follows the date')
-                + (ro > 0 ? ` · +${ro} ⃁ left over from last week` : '') + (ex > 0 ? ` · +${ex} ⃁ from parents` : '');
+            document.getElementById('wbSince').textContent = `Ends ${b.endLabel}`;
+            const pct = b.total > 0 ? Math.min(100, (b.spent / b.total) * 100) : (b.balance <= 0 ? 100 : 0);
+            const bar = document.getElementById('wbHangoutBar');
+            bar.style.width = pct + '%';
+            bar.className = b.balance <= 0 ? 'over' : pct >= 80 ? 'warn' : '';
+            document.getElementById('wbHangoutText').textContent = b.balance <= 0 ? 'Nothing left' : `${b.left} ⃁ left`;
+            document.getElementById('wbHangoutSub').textContent = `${b.spent} ⃁ spent so far this week`;
+            document.getElementById('wbEnds').textContent = `📅 Week ${b.week} ends ${b.endLabel} · ${b.daysLeftWeek} ${b.daysLeftWeek === 1 ? 'day' : 'days'} left`;
+            document.getElementById('wbNote').textContent = `Your ${b.balance} ⃁ Hangout money spread over ${b.daysLeftMonth} ${b.daysLeftMonth === 1 ? 'day' : 'days'} until the month ends on ${b.monthEndLabel} (about ${b.perDay} ⃁ a day).`
+                + (w.manual ? ' · Week set by Zezo' : '');
         }
 
         function renderWeekSettings() {
@@ -6767,40 +6632,11 @@
         }
         // Runs when a new week has started (the date moved on, or Zezo picked a week): whatever was left of last
         // week's Hangout budget is saved as this week's carry-over. Waits until the real data has loaded.
-        function maybeRollWeek() {
-            if (!currentUser || weekRolling || !isOnline) return;
-            if (!(weekReady.prefs && weekReady.history && weekReady.extra)) return;
-            const start = getWeekStartMs();
-            if (weekExtra && weekExtra.since === start) return;
-            weekRolling = true;
-            let rollover = 0;
-            const old = weekExtra;
-            if (old && Number.isFinite(old.since) && old.since < start) {
-                const cycleStart = getCurrentCycle().startDate.getTime();
-                const skipped = !getWeekInfo().manual && (start - old.since) > 9 * 86400000; // app not opened for whole weeks
-                if (old.since >= cycleStart && !skipped) {
-                    const p = userPreferences || {};
-                    const lim = getWeeklyLimits();
-                    const base = lim.customH ? Number(p.weekHangoutLimit) : lim.autoHangout;
-                    const limitOld = base + (Number(old.hangout) || 0) + (Number(old.rollover) || 0);
-                    let spent = 0;
-                    (history || []).forEach((item) => {
-                        if (item.type !== 'Purchase' || item.category !== 'hangout') return;
-                        const t = new Date(item.date).getTime();
-                        if (t >= old.since && t < start) spent += Math.abs(item.amount);
-                    });
-                    rollover = Math.max(0, r2(limitOld - spent));
-                }
-            }
-            weekExtra = { since: start, hangout: 0, rollover };
-            set(ref(database, `users/${currentUser.username}/weekExtra`), weekExtra)
-                .catch(() => { })
-                .finally(() => { weekRolling = false; });
-        }
+        function maybeRollWeek() { /* not needed any more: unspent Hangout money stays in the balance and is re-spread every day */ }
         window.openWeekAddModal = function () {
             if (!currentUser) { showNotification('Please login first', true); return; }
             document.getElementById('weekAddAmount').value = '';
-            document.getElementById('weekAddNote').textContent = "New money goes straight into Hangout and raises this week's Hangout budget by the same amount. It only counts for this week.";
+            document.getElementById('weekAddNote').textContent = "New money goes straight into Hangout, so your weekly budget goes up too (it is spread over the days left until the end of the month).";
             document.getElementById('weekAddModal').classList.add('active');
         };
         window.confirmWeekAdd = function () {
@@ -6814,7 +6650,6 @@
                 newLimit = r2(userPreferences.hangoutLimit + over);
                 if (!confirm(`This is more than your Hangout limit (${userPreferences.hangoutLimit} ⃁).\n\nRaise the limit to ${newLimit} ⃁ so it all stays in Hangout?`)) return;
             }
-            maybeRollWeek();
             const total = r2(getWeekExtraHangout() + amount);
             if (newLimit !== null) {
                 userPreferences.hangoutLimit = newLimit;
@@ -6828,7 +6663,7 @@
             set(ref(database, `users/${currentUser.username}/weekExtra`), weekExtra).catch(() => { });
             closeModal('weekAddModal');
             updateUI();
-            showNotification(`Added ${amount} ⃁ to this week's Hangout`);
+            showNotification(`Added ${amount} ⃁ to Hangout`);
         };
         window.setWeekAuto = function () {
             if (!isZezoUser()) { showNotification('Only Zezo can change the week', true); return; }
@@ -8031,7 +7866,7 @@
             const bucketsHtml = buckets + (otherBalances.length ? admRows(Object.fromEntries(otherBalances)) : '') + `
                 <button class="adm-mini" id="admEditMoneyBtn" style="width:100%; margin-top:10px;" onclick="admToggleMoneyEdit(true)">✏️ Edit money</button>
                 <div id="admMoneyEdit" style="display:none; margin-top:10px;">
-                    ${['hangout', 'savings', 'playstation'].map((k) => `<label class="adm-kv" style="align-items:center;"><span>${admEsc(bucketLabel[k])} (⃁)</span>
+                    ${['hangout', 'savings'].map((k) => `<label class="adm-kv" style="align-items:center;"><span>${admEsc(bucketLabel[k])} (⃁)</span>
                         <input class="adm-input" type="number" min="0" step="any" inputmode="decimal" data-bucket="${k}" value="${Number(balances[k]) || 0}" style="width:110px; text-align:right;"></label>`).join('')}
                     <div style="display:flex; gap:8px; margin-top:10px;">
                         <button class="adm-mini ghost" style="flex:1" onclick="admToggleMoneyEdit(false)">Cancel</button>
@@ -9827,8 +9662,7 @@ Rules:
                     totalBalance: r2(totalBalance),
                     balances: {
                         hangout: r2(balances.hangout),
-                        savings: r2(balances.savings),
-                        playstation: r2(balances.playstation)
+                        savings: r2(balances.savings)
                     },
                     preferences: userPreferences
                 },
@@ -9899,9 +9733,9 @@ Rules:
                 '- Include at most one zezo-action block. Put every task the user asked for in the same "actions" array so they get one card with all of them — don\'t send several blocks across a reply.',
                 '- Only propose actions explicitly asked for; don\'t add extra ones the user didn\'t request.',
                 '- "action" must be exactly one of: log_purchase, add_money, transfer, update_setting, add_goal, delete_goal, delete_last_transaction.',
-                '- log_purchase params: category (hangout|savings|playstation), amount (positive number), name (short string).',
-                '- add_money params: category (hangout|savings|playstation), amount (positive number).',
-                '- transfer params: from, to (hangout|savings|playstation, must differ), amount (positive number).',
+                '- log_purchase params: category (hangout|savings), amount (positive number), name (short string).',
+                '- add_money params: category (hangout|savings), amount (positive number).',
+                '- transfer params: from, to (hangout|savings, must differ), amount (positive number).',
                 `- update_setting params: key (one of ${Object.keys(AI_SETTING_KEYS).join(', ')}), value (the new value; true/false for ${AI_BOOLEAN_SETTING_KEYS.join(' and ')}, otherwise a number).`,
                 '- add_goal params: name (short string), amount (positive number).',
                 '- delete_goal params: name (must match an existing goal\'s name).',
@@ -9917,7 +9751,6 @@ Current Financial Context:
 - Total Balance: ${context.userProfile.totalBalance} ⃁
 - Hangout Balance: ${context.userProfile.balances.hangout} ⃁ (Limit: ${context.spendingAnalysis.hangoutLimit} ⃁)
 - Savings Balance: ${context.userProfile.balances.savings} ⃁
-- PlayStation Balance: ${context.userProfile.balances.playstation} ⃁
 - Financial month (custom cycle): ${context.spendingAnalysis.currentMonth} (started ${context.spendingAnalysis.financialMonthStarted})
 - Monthly Spending (this financial month): ${context.spendingAnalysis.monthlySpending} ⃁
 - Weekly Spending: ${context.spendingAnalysis.weeklySpending} ⃁
@@ -10001,8 +9834,7 @@ Use the conversation history provided to you to remember what's already been sai
                 response += `💰 **Current Balances:**\n`;
                 response += `• Total Balance: ${context.userProfile.totalBalance} ⃁\n`;
                 response += `• Hangout: ${context.userProfile.balances.hangout} ⃁ (Limit: ${context.spendingAnalysis.hangoutLimit} ⃁)\n`;
-                response += `• Savings: ${context.userProfile.balances.savings} ⃁\n`;
-                response += `• PlayStation: ${context.userProfile.balances.playstation} ⃁\n\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} ⃁\n\n`;
 
                 response += `📈 **Spending Patterns:**\n`;
                 response += `• This Month: ${context.spendingAnalysis.monthlySpending} ⃁\n`;
@@ -10031,8 +9863,7 @@ Use the conversation history provided to you to remember what's already been sai
                 response += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
                 response += `📋 **Your Available Funds:**\n`;
                 response += `• Hangout: ${context.userProfile.balances.hangout} ⃁\n`;
-                response += `• Savings: ${context.userProfile.balances.savings} ⃁\n`;
-                response += `• PlayStation: ${context.userProfile.balances.playstation} ⃁\n\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} ⃁\n\n`;
 
                 response += `🎯 **Decision Framework:**\n`;
                 response += `1. **Can you afford it?** Check if the bucket has enough funds\n`;
@@ -10047,13 +9878,11 @@ Use the conversation history provided to you to remember what's already been sai
                 response += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
                 response += `📊 **Current Distribution:**\n`;
                 response += `• Hangout: ${context.userProfile.balances.hangout} ⃁ (${((context.userProfile.balances.hangout / context.userProfile.totalBalance) * 100).toFixed(1)}%)\n`;
-                response += `• Savings: ${context.userProfile.balances.savings} ⃁ (${((context.userProfile.balances.savings / context.userProfile.totalBalance) * 100).toFixed(1)}%)\n`;
-                response += `• PlayStation: ${context.userProfile.balances.playstation} ⃁ (${((context.userProfile.balances.playstation / context.userProfile.totalBalance) * 100).toFixed(1)}%)\n\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} ⃁ (${((context.userProfile.balances.savings / context.userProfile.totalBalance) * 100).toFixed(1)}%)\n\n`;
 
                 response += `🎯 **Transfer Strategies:**\n`;
                 response += `• **To Savings:** Builds long-term wealth and helps reach goals\n`;
-                response += `• **From Hangout:** Use excess before it hits the limit\n`;
-                response += `• **To PlayStation:** For gaming/phone expenses only\n\n`;
+                response += `• **From Hangout:** Use excess before it hits the limit\n\n`;
 
                 if (context.userProfile.balances.hangout > context.spendingAnalysis.hangoutLimit * 0.8) {
                     response += `💡 **Tip:** Your hangout balance is high. Consider transferring excess to savings!\n`;
@@ -10109,8 +9938,7 @@ Use the conversation history provided to you to remember what's already been sai
                 response += `💰 **Your Money:**\n`;
                 response += `• Total: ${context.userProfile.totalBalance} ⃁\n`;
                 response += `• Hangout: ${context.userProfile.balances.hangout} ⃁ (${context.spendingAnalysis.hangoutRemaining} ⃁ remaining)\n`;
-                response += `• Savings: ${context.userProfile.balances.savings} ⃁\n`;
-                response += `• PlayStation: ${context.userProfile.balances.playstation} ⃁\n\n`;
+                response += `• Savings: ${context.userProfile.balances.savings} ⃁\n\n`;
 
                 response += `📊 **This Month:**\n`;
                 response += `• Spent: ${context.spendingAnalysis.monthlySpending} ⃁\n`;
@@ -10506,7 +10334,7 @@ Use the conversation history provided to you to remember what's already been sai
         let currentUser = null;
         let userPreferences = {
             hangoutLimit: 140,
-            enablePlaystation: true,
+            enablePlaystation: false,
             useFixedAmounts: false,
             hangoutPercent: 50,
             savingsPercent: 37.5,
@@ -11556,11 +11384,20 @@ Use the conversation history provided to you to remember what's already been sai
         // Update UI
         function updateUI() {
             clampBalances(); // rounds to 2 decimals (no more 48.980000000000004)
+            // The PlayStation / Mobily bucket was removed: keep it off, and move any money left in it to Savings.
+            if (userPreferences && userPreferences.enablePlaystation) {
+                userPreferences.enablePlaystation = false;
+                if (currentUser) set(ref(database, `users/${currentUser.username}/preferences/enablePlaystation`), false).catch(() => { });
+            }
+            if (currentUser && balances && Number(balances.playstation) > 0) {
+                balances.savings = r2((Number(balances.savings) || 0) + Number(balances.playstation));
+                balances.playstation = 0;
+                saveBalances();
+            }
             const total = r2(balances.hangout + balances.savings + balances.playstation);
             document.getElementById('totalBalance').textContent = `${total} ⃁`;
             document.getElementById('hangoutBalance').textContent = `${r2(balances.hangout)} ⃁`;
             document.getElementById('savingsBalance').textContent = `${r2(balances.savings)} ⃁`;
-            document.getElementById('playstationBalance').textContent = `${r2(balances.playstation)} ⃁`;
 
             // Update budget progress
             updateBudgetProgress();
@@ -11841,13 +11678,13 @@ Use the conversation history provided to you to remember what's already been sai
                 spendingChart.destroy();
             }
 
-            const hasSpending = spendingByCategory.hangout > 0 || spendingByCategory.savings > 0 || spendingByCategory.playstation > 0;
+            const hasSpending = spendingByCategory.hangout > 0 || spendingByCategory.savings > 0;
             const spendingData = hasSpending ?
-                [spendingByCategory.hangout, spendingByCategory.savings, spendingByCategory.playstation] :
-                [1, 1, 1]; // Placeholder if no spending
+                [spendingByCategory.hangout, spendingByCategory.savings] :
+                [1, 1]; // Placeholder if no spending
             const spendingLabels = hasSpending ?
-                ['Hangout', 'Savings', 'PlayStation'] :
-                ['No spending yet', 'No spending yet', 'No spending yet'];
+                ['Hangout', 'Savings'] :
+                ['No spending yet', 'No spending yet'];
 
             spendingChart = new Chart(spendingCtx, {
                 type: 'doughnut',
@@ -14996,19 +14833,16 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         // Every action here is only ever run after the user taps "Approve" on the
         // confirmation card in chat (see handleAIActionBlock / renderAIActionCard).
         // None of these run automatically, no matter what the AI says.
-        const BUCKETS = ['hangout', 'savings', 'playstation'];
+        const BUCKETS = ['hangout', 'savings'];
         const AI_SETTING_KEYS = {
             hangoutLimit: 'Hangout Limit',
             monthlyBudgetTarget: 'Monthly Budget Target',
             budgetAlertThreshold: 'Budget Alert Threshold (%)',
             budgetHangoutPercent: 'Hangout Budget %',
             budgetSavingsPercent: 'Savings Budget %',
-            budgetPlaystationPercent: 'PlayStation Budget %',
-            enablePlaystation: 'PlayStation Bucket Enabled',
             useFixedAmounts: 'Use Fixed Split Amounts',
             hangoutPercent: 'Hangout Split %',
             savingsPercent: 'Savings Split %',
-            playstationPercent: 'PlayStation Split %',
             fixedHangoutAmount: 'Fixed Hangout Amount',
             fixedSavingsAmount: 'Fixed Savings Amount',
             weeklyHangoutBudget: 'Hangout Days Per Week',
@@ -15016,7 +14850,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             minimumSavings: 'Minimum Savings Requirement'
         };
         // Settings whose value is a true/false toggle rather than a number.
-        const AI_BOOLEAN_SETTING_KEYS = ['enablePlaystation', 'useFixedAmounts'];
+        const AI_BOOLEAN_SETTING_KEYS = ['useFixedAmounts'];
 
         function aiActionValidate(action, params) {
             if (!params || typeof params !== 'object') return 'Missing parameters.';
@@ -15101,7 +14935,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                     } else {
                         value = Number(value);
                     }
-                    if (['monthlyBudgetTarget', 'budgetHangoutPercent', 'budgetSavingsPercent', 'budgetPlaystationPercent'].includes(params.key)) {
+                    if (['monthlyBudgetTarget', 'budgetHangoutPercent', 'budgetSavingsPercent'].includes(params.key)) {
                         seedCustomBudgetFromPlan(); // editing a budget number means the user wants Custom
                     }
                     userPreferences[params.key] = value;
@@ -15755,7 +15589,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                             // Reset to default for other users
                             userPreferences = {
                                 hangoutLimit: 140,
-                                enablePlaystation: true,
+                                enablePlaystation: false,
                                 hangoutPercent: 50,
                                 savingsPercent: 37.5,
                                 playstationPercent: 12.5,
@@ -15904,7 +15738,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                             // Reset to default for other users
                             userPreferences = {
                                 hangoutLimit: 140,
-                                enablePlaystation: true,
+                                enablePlaystation: false,
                                 hangoutPercent: 50,
                                 savingsPercent: 37.5,
                                 playstationPercent: 12.5,
@@ -15932,7 +15766,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             currentUser = null;
             userPreferences = {
                 hangoutLimit: 140,
-                enablePlaystation: true,
+                enablePlaystation: false,
                 hangoutPercent: 50,
                 savingsPercent: 37.5,
                 playstationPercent: 12.5,
@@ -15960,7 +15794,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                             <p>👋 Hi! I'm your AI financial assistant. I can help you with:</p>
                             <ul>
                                 <li>💡 Purchase advice ("Can I buy X with my savings?")</li>
-                                <li>💰 Transfer suggestions ("Should I move PlayStation money to savings?")</li>
+                                <li>💰 Transfer suggestions ("Should I move Hangout money to savings?")</li>
                                 <li>📊 Spending analysis ("How am I doing this month?")</li>
                                 <li>⚠️ Budget warnings and tips</li>
                             </ul>
@@ -16009,7 +15843,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             const p = userPreferences || {};
             swState.fromSettings = !!fromSettings;
             swState.step = 1;
-            swState.ps = p.enablePlaystation !== false;
+            swState.ps = false;
 
             let income = p.monthlyIncome > 0 ? p.monthlyIncome : (fromSettings && p.defaultAllowanceAmount > 0 ? p.defaultAllowanceAmount : '');
             swState.income = income;
@@ -16044,14 +15878,12 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 el.classList.toggle('on', i < swState.step);
             });
             document.getElementById('swBack').style.visibility = swState.step > 1 ? 'visible' : 'hidden';
-            document.getElementById('swPsYes').classList.toggle('selected', swState.ps === true);
-            document.getElementById('swPsNo').classList.toggle('selected', swState.ps === false);
             if (swState.step === 3) swRenderSplit();
         }
 
         window.setupBack = function () {
             if (swState.step > 1) {
-                swState.step -= 1;
+                swState.step = 1;
                 swRender('back');
             }
         };
@@ -16064,19 +15896,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 return;
             }
             swState.income = Math.round(v);
-            swState.step = 2;
+            swState.ps = false;
+            swState.save = 100 - swState.hang;
+            swState.step = 3;
             swRender('fwd');
-        };
-
-        window.swChoosePs = function (yes) {
-            swState.ps = !!yes;
-            if (!swState.ps) swState.save = 100 - swState.hang; // no third bucket: Save gets the rest
-            else if (swState.hang + swState.save > 100) swState.save = 100 - swState.hang;
-            swRender('fwd');
-            setTimeout(() => {
-                swState.step = 3;
-                swRender('fwd');
-            }, 180);
         };
 
         window.swSplitInput = function (which) {
@@ -16106,11 +15929,8 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('swSaveSlider').value = swState.save;
             document.getElementById('swHangText').textContent = `${swState.hang}%  ·  ${a.ha} ${'\u20c1'}`;
             document.getElementById('swSaveText').textContent = `${swState.save}%  ·  ${a.sa} ${'\u20c1'}`;
-            document.getElementById('swPsText').textContent = `${a.pp}%  ·  ${a.pa} ${'\u20c1'}`;
-            document.getElementById('swPsRow').style.display = swState.ps ? 'flex' : 'none';
             document.getElementById('swBarH').style.width = swState.hang + '%';
             document.getElementById('swBarS').style.width = swState.save + '%';
-            document.getElementById('swBarP').style.width = (swState.ps ? a.pp : 0) + '%';
             document.getElementById('swIncomeEcho').textContent = `Based on ${swState.income} ${'\u20c1'} a month.`;
             document.getElementById('swNote').textContent = swState.ps
                 ? 'You can change this anytime in Settings.'
@@ -16167,14 +15987,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         window.openSettingsModal = function () {
             // Load current preferences
             document.getElementById('settingsHangoutLimit').value = userPreferences.hangoutLimit;
-            {
-                const wl = getWeeklyLimits();
-                document.getElementById('settingsWeekHangout').value = wl.customH ? r2(wl.hangout - wl.extra - wl.rollover) : '';
-                document.getElementById('settingsWeekSavings').value = wl.customS ? wl.savings : '';
-                document.getElementById('settingsWeekHangout').placeholder = `Auto (${wl.autoHangout})`;
-                document.getElementById('settingsWeekSavings').placeholder = `Auto (${wl.autoSavings})`;
-            }
-            document.getElementById('settingsEnablePlaystation').value = userPreferences.enablePlaystation.toString();
+            document.getElementById('settingsEnablePlaystation').value = 'false';
             document.getElementById('settingsMonthlyIncome').value = userPreferences.monthlyIncome || userPreferences.defaultAllowanceAmount || '';
 
             // Load budget settings (Auto follows the allowance split; Custom uses the saved numbers)
@@ -16432,13 +16245,6 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 budgetSavingsPercent: budgetVals.savings,
                 budgetPlaystationPercent: budgetVals.playstation
             };
-            // Weekly budget (empty = Auto)
-            {
-                const wh = parseFloat(document.getElementById('settingsWeekHangout').value);
-                const ws = parseFloat(document.getElementById('settingsWeekSavings').value);
-                if (!isNaN(wh) && wh >= 0) newPreferences.weekHangoutLimit = r2(wh);
-                if (!isNaN(ws) && ws >= 0) newPreferences.weekSavingsLimit = r2(ws);
-            }
 
             // Monthly income = the usual allowance used by the one-tap "Usual" option
             const incomeInput = parseFloat(document.getElementById('settingsMonthlyIncome').value);
@@ -17283,14 +17089,11 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 }
             }
 
-            // Weekly budget check (hangout + savings): warn, but let the user go ahead
-            if (category === 'hangout' || category === 'savings') {
-                const lim = getWeeklyLimits()[category];
-                const spentNow = getWeekSpent()[category];
-                if (spentNow + cost > lim + 0.001) {
-                    const label = category === 'hangout' ? 'Hangout' : 'Savings';
-                    const left = Math.max(0, r2(lim - spentNow));
-                    if (!confirm(`⚠️ Weekly ${label} budget\n\n• Budget this week: ${lim} ⃁\n• Already spent: ${spentNow} ⃁\n• Left: ${left} ⃁\n• This purchase: ${cost} ⃁ (${r2(spentNow + cost - lim)} ⃁ over)\n\nBuy it anyway?`)) {
+            // Weekly budget check (Hangout only): warn, but let the user go ahead
+            if (category === 'hangout') {
+                const b = getWeekBudget();
+                if (cost > b.left + 0.001) {
+                    if (!confirm(`⚠️ Weekly spending budget\n\n• Left this week: ${b.left} ⃁ (about ${b.perDay} ⃁ a day until ${b.monthEndLabel})\n• Week ends: ${b.endLabel}\n• This purchase: ${cost} ⃁ (${r2(cost - b.left)} ⃁ over)\n\nBuy it anyway?`)) {
                         return;
                     }
                 }
@@ -17319,10 +17122,10 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
 
             const hangout = r2(parseFloat(document.getElementById('editHangout').value));
             const savings = r2(parseFloat(document.getElementById('editSavings').value));
-            const playstation = r2(parseFloat(document.getElementById('editPlaystation').value));
+            const playstation = 0;
 
-            if (isNaN(hangout) || isNaN(savings) || isNaN(playstation) ||
-                hangout < 0 || savings < 0 || playstation < 0) {
+            if (isNaN(hangout) || isNaN(savings) ||
+                hangout < 0 || savings < 0) {
                 showNotification('Please enter valid amounts', true);
                 return;
             }
@@ -18382,12 +18185,6 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                                 <div class="card-header">
                                     <div class="card-title">Savings</div>
                                     <div class="card-amount">${userBalances.savings} ⃁</div>
-                                </div>
-                            </div>
-                            <div class="balance-card playstation">
-                                <div class="card-header">
-                                    <div class="card-title">PlayStation</div>
-                                    <div class="card-amount">${userBalances.playstation} ⃁</div>
                                 </div>
                             </div>
                         </div>

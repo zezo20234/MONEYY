@@ -4470,6 +4470,7 @@
                         <div class="wb-row-top"><small id="wbSavingsSub"></small></div>
                     </div>
                     <div class="wb-note" id="wbNote"></div>
+                    <button type="button" style="margin-top:12px; width:100%; padding:11px; background: rgba(0,245,212,0.18); border: 1px solid rgba(0,245,212,0.45); border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;" onclick="openWeekAddModal()">➕ Money from parents (this week's Hangout)</button>
                 </div>
 
                 <!-- Budget Progress Card -->
@@ -5034,6 +5035,24 @@
         </div>
 
         <!-- Transfer Modal -->
+        <div class="modal" id="weekAddModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">➕ Money from parents</div>
+                    <button class="close-btn" onclick="closeModal('weekAddModal')">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (⃁)</label>
+                    <input type="number" class="form-input" id="weekAddAmount" step="any" inputmode="decimal" placeholder="10">
+                    <small id="weekAddNote" style="color: rgba(255,255,255,0.5); display:block; margin-top:6px;"></small>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel" onclick="closeModal('weekAddModal')">Cancel</button>
+                    <button class="modal-btn confirm" onclick="confirmWeekAdd()">Add</button>
+                </div>
+            </div>
+        </div>
+
         <div class="modal" id="transferModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -6662,9 +6681,9 @@
             const customH = p.weekHangoutLimit != null && p.weekHangoutLimit !== '' && Number(p.weekHangoutLimit) >= 0;
             const customS = p.weekSavingsLimit != null && p.weekSavingsLimit !== '' && Number(p.weekSavingsLimit) >= 0;
             return {
-                hangout: customH ? r2(Number(p.weekHangoutLimit)) : autoH,
+                hangout: r2((customH ? Number(p.weekHangoutLimit) : autoH) + getWeekExtraHangout() + getWeekRollover()),
                 savings: customS ? r2(Number(p.weekSavingsLimit)) : autoS,
-                autoHangout: autoH, autoSavings: autoS, customH, customS
+                autoHangout: autoH, autoSavings: autoS, customH, customS, extra: getWeekExtraHangout(), rollover: getWeekRollover()
             };
         }
 
@@ -6684,6 +6703,7 @@
         function renderWeekBudget() {
             const card = document.getElementById('weekBudgetCard');
             if (!card || !currentUser) return;
+            maybeRollWeek();
             const w = getWeekInfo();
             const lim = getWeeklyLimits();
             const sp = getWeekSpent();
@@ -6701,7 +6721,9 @@
             };
             fill('hangout', 'wbHangoutBar', 'wbHangoutText', 'wbHangoutSub');
             fill('savings', 'wbSavingsBar', 'wbSavingsText', 'wbSavingsSub');
-            document.getElementById('wbNote').textContent = w.manual ? 'Week set by Zezo' : 'Week follows the date';
+            const ex = lim.extra, ro = lim.rollover;
+            document.getElementById('wbNote').textContent = (w.manual ? 'Week set by Zezo' : 'Week follows the date')
+                + (ro > 0 ? ` · +${ro} ⃁ left over from last week` : '') + (ex > 0 ? ` · +${ex} ⃁ from parents` : '');
         }
 
         function renderWeekSettings() {
@@ -6719,6 +6741,94 @@
             set(ref(database, 'financialCycle/week'), { mode: 'manual', week: n, startedAt: new Date().toISOString(), by: currentUser.username })
                 .then(() => showNotification(`🗓️ Week ${n} started for everyone`))
                 .catch((e) => showNotification('Could not change the week: ' + e.message, true));
+        };
+        // Extra Hangout money added to ONE week: users/<n>/weekExtra = { since: weekStartMs, hangout }
+        let weekExtra = null;
+        let weekExtraUnsub = null;
+        let weekReady = { prefs: false, history: false, extra: false };
+        let weekRolling = false;
+        function listenWeekExtra(username) {
+            if (weekExtraUnsub) { try { weekExtraUnsub(); } catch (e) { } }
+            weekExtra = null;
+            weekReady.extra = false;
+            weekExtraUnsub = onValue(ref(database, `users/${username}/weekExtra`), (snap) => {
+                weekExtra = snap.exists() ? snap.val() : null;
+                weekReady.extra = true;
+                renderWeekBudget();
+            });
+        }
+        // Only counts while it is still the same week (a new week starts from 0 again).
+        function getWeekExtraHangout() {
+            return weekExtra && weekExtra.since === getWeekStartMs() ? r2(Number(weekExtra.hangout) || 0) : 0;
+        }
+        // Unused Hangout budget from the week before, carried into this week.
+        function getWeekRollover() {
+            return weekExtra && weekExtra.since === getWeekStartMs() ? r2(Math.max(0, Number(weekExtra.rollover) || 0)) : 0;
+        }
+        // Runs when a new week has started (the date moved on, or Zezo picked a week): whatever was left of last
+        // week's Hangout budget is saved as this week's carry-over. Waits until the real data has loaded.
+        function maybeRollWeek() {
+            if (!currentUser || weekRolling || !isOnline) return;
+            if (!(weekReady.prefs && weekReady.history && weekReady.extra)) return;
+            const start = getWeekStartMs();
+            if (weekExtra && weekExtra.since === start) return;
+            weekRolling = true;
+            let rollover = 0;
+            const old = weekExtra;
+            if (old && Number.isFinite(old.since) && old.since < start) {
+                const cycleStart = getCurrentCycle().startDate.getTime();
+                const skipped = !getWeekInfo().manual && (start - old.since) > 9 * 86400000; // app not opened for whole weeks
+                if (old.since >= cycleStart && !skipped) {
+                    const p = userPreferences || {};
+                    const lim = getWeeklyLimits();
+                    const base = lim.customH ? Number(p.weekHangoutLimit) : lim.autoHangout;
+                    const limitOld = base + (Number(old.hangout) || 0) + (Number(old.rollover) || 0);
+                    let spent = 0;
+                    (history || []).forEach((item) => {
+                        if (item.type !== 'Purchase' || item.category !== 'hangout') return;
+                        const t = new Date(item.date).getTime();
+                        if (t >= old.since && t < start) spent += Math.abs(item.amount);
+                    });
+                    rollover = Math.max(0, r2(limitOld - spent));
+                }
+            }
+            weekExtra = { since: start, hangout: 0, rollover };
+            set(ref(database, `users/${currentUser.username}/weekExtra`), weekExtra)
+                .catch(() => { })
+                .finally(() => { weekRolling = false; });
+        }
+        window.openWeekAddModal = function () {
+            if (!currentUser) { showNotification('Please login first', true); return; }
+            document.getElementById('weekAddAmount').value = '';
+            document.getElementById('weekAddNote').textContent = "New money goes straight into Hangout and raises this week's Hangout budget by the same amount. It only counts for this week.";
+            document.getElementById('weekAddModal').classList.add('active');
+        };
+        window.confirmWeekAdd = function () {
+            if (!currentUser) return;
+            const amount = r2(parseFloat(document.getElementById('weekAddAmount').value));
+            if (isNaN(amount) || amount <= 0) { showNotification('Please enter a valid amount', true); return; }
+            // New money above the Hangout limit would be moved to Savings automatically, so offer to raise the limit instead.
+            const over = r2(balances.hangout + amount - userPreferences.hangoutLimit);
+            let newLimit = null;
+            if (over > 0) {
+                newLimit = r2(userPreferences.hangoutLimit + over);
+                if (!confirm(`This is more than your Hangout limit (${userPreferences.hangoutLimit} ⃁).\n\nRaise the limit to ${newLimit} ⃁ so it all stays in Hangout?`)) return;
+            }
+            maybeRollWeek();
+            const total = r2(getWeekExtraHangout() + amount);
+            if (newLimit !== null) {
+                userPreferences.hangoutLimit = newLimit;
+                set(ref(database, `users/${currentUser.username}/preferences/hangoutLimit`), newLimit).catch(() => { });
+            }
+            balances.hangout += amount;
+            saveBalances();
+            playMoneySound();
+            addToHistory('Add Money', amount, 'hangout', 'Money from parents');
+            weekExtra = { since: getWeekStartMs(), hangout: total, rollover: getWeekRollover() };
+            set(ref(database, `users/${currentUser.username}/weekExtra`), weekExtra).catch(() => { });
+            closeModal('weekAddModal');
+            updateUI();
+            showNotification(`Added ${amount} ⃁ to this week's Hangout`);
         };
         window.setWeekAuto = function () {
             if (!isZezoUser()) { showNotification('Only Zezo can change the week', true); return; }
@@ -10939,6 +11049,7 @@ Use the conversation history provided to you to remember what's already been sai
             renderSavedChatHistory();
 
             // Clear previous user data before loading new user
+            weekReady = { prefs: false, history: false, extra: false };
             balances = {
                 hangout: 0,
                 savings: 0,
@@ -10961,6 +11072,7 @@ Use the conversation history provided to you to remember what's already been sai
             // Load user preferences
             const prefsRef = ref(database, `users/${username}/preferences`);
             get(prefsRef).then((snapshot) => {
+                weekReady.prefs = true;
                 if (snapshot.exists()) {
                     userPreferences = snapshot.val();
                     // Ensure minimumSavings is set (default to 0 if not present)
@@ -11053,6 +11165,7 @@ Use the conversation history provided to you to remember what's already been sai
 
             const historyRef = ref(database, `users/${username}/history`);
             onValue(historyRef, (snapshot) => {
+                weekReady.history = true;
                 if (snapshot.exists()) {
                     const historyData = snapshot.val();
                     const pendDel = getPendingDeletes(username);
@@ -11074,6 +11187,7 @@ Use the conversation history provided to you to remember what's already been sai
             });
 
             listenPendingSms(username);
+            listenWeekExtra(username);
             listenSharedGoals(username);
             const goalsRef = ref(database, `users/${username}/goals`);
             onValue(goalsRef, (snapshot) => {
@@ -16055,7 +16169,7 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
             document.getElementById('settingsHangoutLimit').value = userPreferences.hangoutLimit;
             {
                 const wl = getWeeklyLimits();
-                document.getElementById('settingsWeekHangout').value = wl.customH ? wl.hangout : '';
+                document.getElementById('settingsWeekHangout').value = wl.customH ? r2(wl.hangout - wl.extra - wl.rollover) : '';
                 document.getElementById('settingsWeekSavings').value = wl.customS ? wl.savings : '';
                 document.getElementById('settingsWeekHangout').placeholder = `Auto (${wl.autoHangout})`;
                 document.getElementById('settingsWeekSavings').placeholder = `Auto (${wl.autoSavings})`;

@@ -215,6 +215,23 @@
             background: var(--accent-1, #00f5d4);
         }
 
+        /* Weekly budget card + week picker */
+        .week-budget-card { background: linear-gradient(135deg, rgba(0,245,212,0.12), rgba(102,126,234,0.16)); border: 1px solid rgba(0,245,212,0.25); }
+        .wb-row { margin-top: 12px; }
+        .wb-row-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; font-weight: 700; }
+        .wb-row-top small { font-weight: 500; color: rgba(255,255,255,0.55); font-size: 12px; }
+        .wb-bar { background: rgba(255,255,255,0.1); border-radius: 8px; height: 10px; margin: 6px 0 4px; overflow: hidden; }
+        .wb-bar i { display: block; height: 100%; width: 0; border-radius: 8px; transition: width .3s ease; background: linear-gradient(90deg, #00f5d4, #2ed573); }
+        .wb-bar i.warn { background: linear-gradient(90deg, #feca57, #ff9f43); }
+        .wb-bar i.over { background: linear-gradient(90deg, #ff6b6b, #ee5a24); }
+        .wb-note { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 10px; }
+        .week-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0 10px; }
+        .week-pick button { padding: 12px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; }
+        .week-pick button.sel { background: var(--accent-1, #00f5d4); color: #000; border-color: transparent; }
+        .week-mode-row { display: flex; gap: 8px; margin-top: 4px; }
+        .week-mode-row button { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: #fff; font-size: 13px; cursor: pointer; }
+        .week-mode-row button.sel { border-color: var(--accent-1, #00f5d4); color: var(--accent-1, #00f5d4); }
+
         .total-label {
             font-size: 14px;
             color: rgba(255, 255, 255, 0.7);
@@ -4436,6 +4453,25 @@
                     </div>
                 </div>
 
+                <!-- Weekly Budget Card -->
+                <div class="balance-card week-budget-card" id="weekBudgetCard">
+                    <div class="card-header">
+                        <div class="card-title">🗓️ <span id="wbTitle">This Week</span></div>
+                        <div class="card-amount" id="wbSince" style="font-size:12px; font-weight:600; opacity:.7;"></div>
+                    </div>
+                    <div class="wb-row">
+                        <div class="wb-row-top"><span>Hangout</span><span id="wbHangoutText">—</span></div>
+                        <div class="wb-bar"><i id="wbHangoutBar"></i></div>
+                        <div class="wb-row-top"><small id="wbHangoutSub"></small></div>
+                    </div>
+                    <div class="wb-row">
+                        <div class="wb-row-top"><span>Savings spending</span><span id="wbSavingsText">—</span></div>
+                        <div class="wb-bar"><i id="wbSavingsBar"></i></div>
+                        <div class="wb-row-top"><small id="wbSavingsSub"></small></div>
+                    </div>
+                    <div class="wb-note" id="wbNote"></div>
+                </div>
+
                 <!-- Budget Progress Card -->
                 <div class="balance-card" id="budgetProgressCard" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(46, 213, 115, 0.2)); border: 1px solid rgba(102, 126, 234, 0.3);">
                     <div class="card-header">
@@ -5462,6 +5498,21 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label">🗓️ Weekly Budget (⃁)</label>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Hangout / week</label>
+                        <input type="number" class="form-input" id="settingsWeekHangout" inputmode="decimal" min="0" step="any" placeholder="Auto">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: rgba(255,255,255,0.6);">Savings spend / week</label>
+                        <input type="number" class="form-input" id="settingsWeekSavings" inputmode="decimal" min="0" step="any" placeholder="Auto">
+                    </div>
+                </div>
+                <small id="settingsWeekAutoNote" style="color: rgba(255,255,255,0.5); display:block; margin-top:6px;">Leave empty for Auto: your monthly Hangout / Savings split divided by 4 weeks.</small>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label">Enable PlayStation/Mobily Bucket</label>
                 <select class="form-select" id="settingsEnablePlaystation"
                     onchange="toggleSettingsPlaystationVisibility()">
@@ -5634,8 +5685,17 @@
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px;">Current Week</div>
                     <div id="weekSettingsCurrent" style="font-size: 19px; font-weight: 800; margin: 4px 0 10px; color: var(--accent-1, #00f5d4);">—</div>
-                    <small style="color: rgba(255,255,255,0.5); display:block; margin-top:2px;">The week follows the date: 1-7 = Week 1, 8-14 = Week 2,
-                        15-21 = Week 3, 22 onwards = Week 4. From the 28th to the 1st the app asks every day if you got your allowance yet.</small>
+                    <div id="weekSettingsMode" style="font-size:12px; color: rgba(255,255,255,0.55); margin-bottom:6px;"></div>
+                    <div class="week-pick" id="weekPick">
+                        <button type="button" onclick="setWeekManually(1)">1</button>
+                        <button type="button" onclick="setWeekManually(2)">2</button>
+                        <button type="button" onclick="setWeekManually(3)">3</button>
+                        <button type="button" onclick="setWeekManually(4)">4</button>
+                    </div>
+                    <div class="week-mode-row">
+                        <button type="button" id="weekAutoBtn" onclick="setWeekAuto()">🔄 Follow the date (Auto)</button>
+                    </div>
+                    <small style="color: rgba(255,255,255,0.5); display:block; margin-top:8px;">Tap a week number to switch everyone to it. It stays on that week until you change it, and the weekly Hangout / Savings budgets start counting from that moment. Auto = by date: 1-7 = Week 1, 8-14 = Week 2, 15-21 = Week 3, 22 onwards = Week 4. Starting a new month puts a manual week back to Week 1. From the 28th to the 1st the app asks every day if you got your allowance yet.</small>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button type="button" class="modal-btn confirm" style="flex:1; min-width:140px;"
@@ -6560,15 +6620,112 @@
         function riyadhDayOf(dateLike) {
             return riyadhDayString(new Date(new Date(dateLike).getTime() + RIYADH_OFFSET_MS));
         }
+        // Zezo can pin the week by hand (shared for everyone): financialCycle/week = { mode:'manual', week, startedAt, by }
+        let weekState = null;
+        function dateWeekOf(dom) { return dom <= 7 ? 1 : dom <= 14 ? 2 : dom <= 21 ? 3 : 4; }
         function getWeekInfo(todayOverride) {
             const today = todayOverride || riyadhDayString(riyadhNow());
             const y = Number(today.slice(0, 4)), m = Number(today.slice(5, 7)), dom = Number(today.slice(8, 10));
-            const week = dom <= 7 ? 1 : dom <= 14 ? 2 : dom <= 21 ? 3 : 4;
+            let week = dateWeekOf(dom);
+            const manual = !todayOverride && weekState && weekState.mode === 'manual' && weekState.week >= 1 && weekState.week <= 4;
+            if (manual) week = weekState.week;
             let period = null; // "YYYY-MM-28" of the month the allowance period started in
             if (dom >= 28) period = today.slice(0, 7) + '-28';
             else if (dom === 1) period = new Date(Date.UTC(y, m - 2, 28)).toISOString().slice(0, 10);
-            return { today, week, allowancePeriod: period, allowanceFriday: period };
+            return { today, week, manual: !!manual, allowancePeriod: period, allowanceFriday: period };
         }
+
+        // When the current week started (ms). Manual: the moment Zezo picked it. Auto: Riyadh midnight of day 1/8/15/22.
+        // Never earlier than the start of the current financial month.
+        function getWeekStartMs() {
+            const cycleStart = getCurrentCycle().startDate.getTime();
+            if (weekState && weekState.mode === 'manual' && weekState.startedAt) {
+                const t = Date.parse(weekState.startedAt);
+                if (Number.isFinite(t)) return Math.max(t, cycleStart);
+            }
+            const today = riyadhDayString(riyadhNow());
+            const y = Number(today.slice(0, 4)), m = Number(today.slice(5, 7)), dom = Number(today.slice(8, 10));
+            const startDay = dom <= 7 ? 1 : dom <= 14 ? 8 : dom <= 21 ? 15 : 22;
+            return Math.max(Date.UTC(y, m - 1, startDay) - RIYADH_OFFSET_MS, cycleStart);
+        }
+
+        // Weekly limits: what the user typed in Settings, or (Auto) the monthly split divided by 4 weeks.
+        function getWeeklyLimits() {
+            const p = userPreferences || {};
+            const inc = p.monthlyIncome || p.defaultAllowanceAmount || 0;
+            let h = p.fixedHangoutAmount, s = p.fixedSavingsAmount;
+            if (!p.useFixedAmounts && inc > 0) {
+                h = inc * (p.hangoutPercent != null ? p.hangoutPercent : 50) / 100;
+                s = inc * (p.savingsPercent != null ? p.savingsPercent : 37.5) / 100;
+            }
+            const autoH = r2((h != null ? h : 35) / 4), autoS = r2((s != null ? s : 25) / 4);
+            const customH = p.weekHangoutLimit != null && p.weekHangoutLimit !== '' && Number(p.weekHangoutLimit) >= 0;
+            const customS = p.weekSavingsLimit != null && p.weekSavingsLimit !== '' && Number(p.weekSavingsLimit) >= 0;
+            return {
+                hangout: customH ? r2(Number(p.weekHangoutLimit)) : autoH,
+                savings: customS ? r2(Number(p.weekSavingsLimit)) : autoS,
+                autoHangout: autoH, autoSavings: autoS, customH, customS
+            };
+        }
+
+        // Spent so far this week, per bucket (purchases only).
+        function getWeekSpent() {
+            const since = getWeekStartMs();
+            const out = { hangout: 0, savings: 0, playstation: 0 };
+            (history || []).forEach((item) => {
+                if (item.type !== 'Purchase' || !(item.category in out)) return;
+                const t = new Date(item.date).getTime();
+                if (t >= since) out[item.category] += Math.abs(item.amount);
+            });
+            out.hangout = r2(out.hangout); out.savings = r2(out.savings); out.playstation = r2(out.playstation);
+            return out;
+        }
+
+        function renderWeekBudget() {
+            const card = document.getElementById('weekBudgetCard');
+            if (!card || !currentUser) return;
+            const w = getWeekInfo();
+            const lim = getWeeklyLimits();
+            const sp = getWeekSpent();
+            document.getElementById('wbTitle').textContent = `Week ${w.week} budget`;
+            document.getElementById('wbSince').textContent = 'since ' + new Date(getWeekStartMs() + RIYADH_OFFSET_MS).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+            const fill = (key, barId, textId, subId) => {
+                const limit = lim[key], spent = sp[key];
+                const left = r2(limit - spent);
+                const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : (spent > 0 ? 100 : 0);
+                const bar = document.getElementById(barId);
+                bar.style.width = pct + '%';
+                bar.className = spent > limit ? 'over' : pct >= 80 ? 'warn' : '';
+                document.getElementById(textId).textContent = left >= 0 ? `${left} ⃁ left` : `${r2(-left)} ⃁ over`;
+                document.getElementById(subId).textContent = `${spent} spent of ${limit} ⃁ this week`;
+            };
+            fill('hangout', 'wbHangoutBar', 'wbHangoutText', 'wbHangoutSub');
+            fill('savings', 'wbSavingsBar', 'wbSavingsText', 'wbSavingsSub');
+            document.getElementById('wbNote').textContent = w.manual ? 'Week set by Zezo' : 'Week follows the date';
+        }
+
+        function renderWeekSettings() {
+            const w = getWeekInfo();
+            document.querySelectorAll('#weekPick button').forEach((b, i) => b.classList.toggle('sel', w.manual && i + 1 === w.week));
+            const auto = document.getElementById('weekAutoBtn');
+            if (auto) auto.classList.toggle('sel', !w.manual);
+            const modeEl = document.getElementById('weekSettingsMode');
+            if (modeEl) modeEl.textContent = w.manual ? 'Manual: set by you, stays until you change it' : 'Auto: following the date';
+        }
+
+        function isZezoUser() { return !!currentUser && currentUser.username.toLowerCase() === 'zezo'; }
+        window.setWeekManually = function (n) {
+            if (!isZezoUser()) { showNotification('Only Zezo can change the week', true); return; }
+            set(ref(database, 'financialCycle/week'), { mode: 'manual', week: n, startedAt: new Date().toISOString(), by: currentUser.username })
+                .then(() => showNotification(`🗓️ Week ${n} started for everyone`))
+                .catch((e) => showNotification('Could not change the week: ' + e.message, true));
+        };
+        window.setWeekAuto = function () {
+            if (!isZezoUser()) { showNotification('Only Zezo can change the week', true); return; }
+            remove(ref(database, 'financialCycle/week'))
+                .then(() => showNotification('🔄 Week now follows the date'))
+                .catch((e) => showNotification('Could not change the week: ' + e.message, true));
+        };
         // Nth upcoming allowance date (1 = the next one; counts the current one if it is not handled yet).
         function allowanceDateNth(N) {
             const w = getWeekInfo();
@@ -6627,6 +6784,8 @@
             dots.querySelectorAll('i').forEach((el, i) => el.classList.toggle('on', i < w.week));
             const cur = document.getElementById('weekSettingsCurrent');
             if (cur) cur.textContent = `Week ${w.week}`;
+            renderWeekSettings();
+            renderWeekBudget();
         }
         function maybeShowAllowanceDayPopup() {
             if (!currentUser || !allowanceDoneLoaded || allowancePopupLater) return;
@@ -11294,6 +11453,7 @@ Use the conversation history provided to you to remember what's already been sai
             updateCategoryBudgetAlerts();
             updateExpenseForecast();
             renderMonthCycleUI();
+            renderWeekBudget();
 
             // Check Hangout limit
             const hangoutLimit = document.getElementById('hangoutLimit');
@@ -12835,6 +12995,12 @@ Use the conversation history provided to you to remember what's already been sai
                 if (currentUser) updateUI();
             });
 
+            // Zezo's manual week (shared, same idea as the month cycle)
+            onValue(ref(database, 'financialCycle/week'), (snapshot) => {
+                weekState = snapshot.exists() ? snapshot.val() : null;
+                renderMonthCycleUI();
+            });
+
             // Live-updating clock in the header/settings (every 30s is plenty).
             if (!cycleClockInterval) {
                 cycleClockInterval = setInterval(renderMonthCycleUI, 30000);
@@ -13001,6 +13167,9 @@ Use the conversation history provided to you to remember what's already been sai
             }).then(() => {
                 closeModal('startNewMonthModal');
                 localStorage.setItem('newMonthStartedOn', getTodayDateStr());
+                if (weekState && weekState.mode === 'manual') {
+                    set(ref(database, 'financialCycle/week'), { mode: 'manual', week: 1, startedAt: new Date().toISOString(), by: currentUser.username }).catch(() => { });
+                }
                 showNotification(`📅 ${label} started! New activity now counts toward it.`);
             }).catch((error) => {
                 showNotification('Failed to start new month: ' + error.message, true);
@@ -15884,6 +16053,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
         window.openSettingsModal = function () {
             // Load current preferences
             document.getElementById('settingsHangoutLimit').value = userPreferences.hangoutLimit;
+            {
+                const wl = getWeeklyLimits();
+                document.getElementById('settingsWeekHangout').value = wl.customH ? wl.hangout : '';
+                document.getElementById('settingsWeekSavings').value = wl.customS ? wl.savings : '';
+                document.getElementById('settingsWeekHangout').placeholder = `Auto (${wl.autoHangout})`;
+                document.getElementById('settingsWeekSavings').placeholder = `Auto (${wl.autoSavings})`;
+            }
             document.getElementById('settingsEnablePlaystation').value = userPreferences.enablePlaystation.toString();
             document.getElementById('settingsMonthlyIncome').value = userPreferences.monthlyIncome || userPreferences.defaultAllowanceAmount || '';
 
@@ -16142,6 +16318,13 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 budgetSavingsPercent: budgetVals.savings,
                 budgetPlaystationPercent: budgetVals.playstation
             };
+            // Weekly budget (empty = Auto)
+            {
+                const wh = parseFloat(document.getElementById('settingsWeekHangout').value);
+                const ws = parseFloat(document.getElementById('settingsWeekSavings').value);
+                if (!isNaN(wh) && wh >= 0) newPreferences.weekHangoutLimit = r2(wh);
+                if (!isNaN(ws) && ws >= 0) newPreferences.weekSavingsLimit = r2(ws);
+            }
 
             // Monthly income = the usual allowance used by the one-tap "Usual" option
             const incomeInput = parseFloat(document.getElementById('settingsMonthlyIncome').value);
@@ -16981,6 +17164,19 @@ Reply with ONLY the single emoji character. No words, no explanation, no quotes 
                 } else if (monthlyAnalysis.warningLevel === 'medium') {
                     const confirmation = confirm(`💡 Budget Tip: ${monthlyAnalysis.message}\n\n${monthlyAnalysis.suggestion}\n\nContinue?`);
                     if (!confirmation) {
+                        return;
+                    }
+                }
+            }
+
+            // Weekly budget check (hangout + savings): warn, but let the user go ahead
+            if (category === 'hangout' || category === 'savings') {
+                const lim = getWeeklyLimits()[category];
+                const spentNow = getWeekSpent()[category];
+                if (spentNow + cost > lim + 0.001) {
+                    const label = category === 'hangout' ? 'Hangout' : 'Savings';
+                    const left = Math.max(0, r2(lim - spentNow));
+                    if (!confirm(`⚠️ Weekly ${label} budget\n\n• Budget this week: ${lim} ⃁\n• Already spent: ${spentNow} ⃁\n• Left: ${left} ⃁\n• This purchase: ${cost} ⃁ (${r2(spentNow + cost - lim)} ⃁ over)\n\nBuy it anyway?`)) {
                         return;
                     }
                 }
